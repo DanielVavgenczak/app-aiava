@@ -53,7 +53,7 @@ new class extends Component {
         @endforeach
     </div>
     <div>
-        <a href="{{ route('teacher.content.create') }}"
+        <a href="{{ route('teacher.content.create') }}" wire:navigate
             class="px-2 py-3 text-sm font-semibold text-white no-underline bg-pink-600 rounded-md">nova
             disciplina</a>
     </div>

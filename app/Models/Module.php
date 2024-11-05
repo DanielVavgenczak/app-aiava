@@ -11,7 +11,7 @@ class Module extends Model
     use HasFactory, UuidTrait;
     public $incrementing = false;
     protected $keyType = "uuid";
-    protected $fillable = ['title'];
+    protected $fillable = ['title','discipline_id'];
 
     public function discipline()
     {

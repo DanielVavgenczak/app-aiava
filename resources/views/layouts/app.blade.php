@@ -17,6 +17,7 @@
 </head>
 
 <body class="bg-base-100/50 dark:bg-slate-900">
+    <x-mary-toast />
     <div class="flex flex-col">
         <livewire:layout.header-top-app />
         <div class="flex w-full bg-gray-200 dark:bg-slate-700">

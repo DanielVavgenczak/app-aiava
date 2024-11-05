@@ -2,7 +2,7 @@
     <div class="py-6">
         <div class="space-y-2 max-w-7xl sm:px-6 lg:px-8">
             <div>
-                <a href="{{ route('teacher.content') }}">
+                <a href="{{ route('teacher.content') }}" wire:navigate>
                     <x-mary-icon name="o-arrow-left" class="w-4" />
                     <span class="text-sm font-semibold text-gray-600">voltar</span>
                 </a>
