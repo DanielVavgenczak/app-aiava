@@ -13,7 +13,7 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/tourboard.js'])
 </head>
 
 <body class="bg-base-100/50 dark:bg-slate-900">
@@ -26,8 +26,9 @@
                 {{ $slot }}
             </main>
         </div>
-        <button class="fixed bottom-0 right-0 z-30">
-            <img src="{{ asset('images/ai-sos.png') }}" class="w-80">
+        <button class="fixed z-30 bg-pink-700 right-5 bottom-5 btn-circle" x-dat
+            @click="$store.tourguide.toggleTourguide()" id="ativation-mai" x-show="!$store.tourguide.openMai">
+            <x-mary-icon name="o-question-mark-circle" class="w-8 text-white" />
         </button>
     </div>
 </body>
