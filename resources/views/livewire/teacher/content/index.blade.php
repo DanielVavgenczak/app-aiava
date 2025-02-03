@@ -43,14 +43,13 @@ new class extends Component {
             link="{{ route('teacher.content.create') }}" />
     </div>
 @endif
-<div class="flex flex-col w-3/4 gap-8" id="content-intial">
+<div class="flex flex-col gap-8" id="content-intial">
     <div class="flex items-center justify-between">
         <x-text-input placeholder="Pesquisar" wire:model.live="search" id="content-input-search" />
-
         <x-mary-button label="Disciplina" class="bg-pink-600 text-gray-50 content-discipline-new" icon-right="o-plus"
             link="{{ route('teacher.content.create') }}" />
     </div>
-    <div class="relative grid w-full grid-cols-4 gap-4 mt-8">
+    <div class="relative grid w-full grid-cols-5 gap-3 mt-8">
         @forelse ($disciplines as $discipline)
             <div class="border-[1px] shadow-lg  rounded-sm flex flex-col" id="content-card-discipline">
                 <div class="flex items-center justify-between">
@@ -72,19 +71,12 @@ new class extends Component {
             </div>
         @endforeach
     </div>
-
-    <!-- Overlay tourguide -->
-    <div x-data x-show="$store.tourguide.openMai" class="fixed inset-0 z-50 "
-        :class="!$store.tourguide.helperContentInit ? 'bg-black bg-opacity-80' : 'bg-none'">
-        <img src="{{ asset('images/ai-sos.png') }}" class="absolute right-0 w-64 bottom-4 ">
-    </div>
-    <!-- Popover do Tour -->
-    <div id="tour-popover" x-data x-show="$store.tourguide.popoverContent"
+    <div id="tour-popover" x-data x-show="$store.tourguide.showOptionsPageContent"
         class="absolute z-50 flex flex-col w-auto gap-4 p-6 text-gray-800 bg-white rounded-tl-lg rounded-tr-lg rounded-bl-lg">
-        <p id="tour-message" class="break-all"></p>
-        <div class="flex items-center justify-between gap-4 p-3 bg-gray-200" x-show="$store.tourguide.helperContent">
+        <h2>Quais das tarefas precisa de ajuda?</h2>
+        <div class="flex items-center justify-between gap-4 p-3 bg-gray-200">
             <x-mary-button class="btn-outline" label="Pesquisar uma disciplina ?"
-                @click="$store.tourguide.searchDiscipline()" />
+                @click="$store.tourguide.contenSearchDiscipline()" />
             <x-mary-button class="btn-outline" label="Criar uma disciplina ?"
                 @click="$store.tourguide.tourHelpNewDiscipline()" />
             <x-mary-button class="btn-outline" label="Gerenciar uma disciplina ?"

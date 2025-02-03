@@ -28,23 +28,10 @@ new class extends Component {
                 name="description" required />
             <x-input-error :messages="$errors->get('form.description')" class="mt-2" />
         </div>
-        <div class="flex justify-end my-3" id="content-input-save" id="content-input-save">
-            <x-mary-button class="text-white bg-pink-600 hover:bg-pink-900" type="submit">
+        <div class="flex justify-end my-3">
+            <x-mary-button class="text-white bg-pink-600 hover:bg-pink-900" type="submit" id="content-input-save">
                 registrar
             </x-mary-button>
         </div>
     </form>
-    <!-- Overlay tourguide -->
-    <div x-data x-show="$store.tourguide.openMai" class="fixed inset-0 z-50 "
-        :class="!$store.tourguide.helperContentInit ? 'bg-black bg-opacity-80' : 'bg-none'">
-        <img src="{{ asset('images/ai-sos.png') }}" class="absolute right-0 w-64 bottom-4 ">
-    </div>
-    <!-- Popover do Tour -->
-    <div id="tour-popover" x-data x-show="$store.tourguide.popoverContentCreate"
-        class="absolute z-50 flex flex-col w-auto gap-4 p-6 text-gray-800 bg-white rounded-tl-lg rounded-tr-lg rounded-bl-lg">
-        <p id="tour-message" class="break-all"></p>
-        <div class="flex items-center justify-between gap-4 p-3 bg-gray-200" x-show="$store.tourguide.helperContent">
-            ver com o paulo aqui
-        </div>
-    </div>
 </div>

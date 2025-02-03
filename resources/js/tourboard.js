@@ -1,20 +1,14 @@
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
-/**
- * equanto o usuario não interagir com a pagina ele não vai para frente
- *
- *
- */
 document.addEventListener("alpine:init", () => {
     Alpine.store("tourguide", {
+        helperInit: false,
         openMai: false,
-        popoverContent: false,
+        showOptionsPageContent: false,
         popoverContentCreate: false,
-        helperContent: false,
-        helperContentInit: false,
+        driverObj: null, // Adicionamos o driverObj como propriedade do store
 
-        // Configurações globais do Driver.js
         driverConfig: {
             showProgress: false,
             animate: true,
@@ -27,17 +21,23 @@ document.addEventListener("alpine:init", () => {
             prevBtnText: 'Anterior',
         },
 
-        // Inicia o tour com base na página atual
+        closeTour() {
+            this.openMai = false;
+            this.showOptionsPageContent = false;
+            this.popoverContentCreate = false;
+        },
+
         toggleTourguide() {
             this.openMai = true;
-
-            // Verifica a página atual e inicia o tour correspondente
             const currentPath = window.location.pathname;
             switch (currentPath) {
                 case "/app/teacher/content":
-                    this.startContentPageTour();
+                    this.helperInit = true;
+                    this.popoverContentPage = true;
+                    this.startContentPageTour()
                     break;
                 case "/app/teacher/content/create":
+                    this.popoverContentCreate = true;
                     this.startCreatePageTour();
                     break;
                 default:
@@ -45,15 +45,12 @@ document.addEventListener("alpine:init", () => {
             }
         },
 
-        // Tour para a página de conteúdo
         startContentPageTour() {
-            this.resetTourState();
-
+            this.showOptionsPageContent = true
+            //this.contenSearchDiscipline();
         },
 
-        // Tour para a página de criação de conteúdo
         startCreatePageTour() {
-            this.resetTourState();
             this.startDriverTour([
                 {
                     element: "#content-input-title",
@@ -62,6 +59,17 @@ document.addEventListener("alpine:init", () => {
                         description: "Insira o título da disciplina aqui.",
                         side: "bottom",
                         align: "start",
+                        onNextClick: () => {
+                            const titleInput = document.querySelector("#content-input-title input");
+                            if (titleInput.value !=='') {
+                                this.intective = true
+                                this.driverObj.moveNext(); // Avança para o próximo passo
+                            }
+                            const nextButton = document.querySelector(".driver-popover-navigation-btns button+button");
+                            nextButton.style.backgroundColor = "#ccc";
+                            nextButton.style.cursor = "not-allowed";
+
+                        }
                     },
                 },
                 {
@@ -71,6 +79,16 @@ document.addEventListener("alpine:init", () => {
                         description: "Agora, crie uma breve descrição para a disciplina.",
                         side: "bottom",
                         align: "start",
+                        onNextClick: () => {
+                            const descriptionInput = document.querySelector("#content-input-description textarea");
+                            if (descriptionInput.value !=='') {
+                                this.driverObj.moveNext(); // Avança para o próximo passo
+                            }
+                            const nextButton = document.querySelector(".driver-popover-navigation-btns button+button");
+                            nextButton.style.backgroundColor = "#ccc";
+                            nextButton.style.cursor = "not-allowed";
+                            console.log('usuario não interagiu')
+                        }
                     },
                 },
                 {
@@ -85,49 +103,48 @@ document.addEventListener("alpine:init", () => {
             ]);
         },
 
-        // Efeito de digitação para as mensagens
-        typeWriter(txt) {
-            const tourMessage = document.getElementById("tour-message");
-            const tempDiv = document.createElement("div");
-            let charIndex = 0;
-            tourMessage.innerHTML = "";
+        contenSearchDiscipline(){
+            this.showOptionsPageContent = false;
+            this.openMai = false;
+            this.startDriverTour([
+                {
+                    element: "#content-input-search",
+                    popover: {
+                        description: "Insira o título da disciplina que deseja encontrar.",
+                        side: "bottom",
+                        align: "start",
+                        onNextClick: () => {
+                            const searchInput = document.querySelector("#content-input-search");
+                            if (searchInput.value !=='') {
+                                this.driverObj.moveNext(); // Avança para o próximo passo
+                            }
+                            const nextButton = document.querySelector(".driver-popover-navigation-btns button+button");
+                            nextButton.style.backgroundColor = "#ccc";
+                            nextButton.style.cursor = "not-allowed";
+                        }
+                    },
+                },
+            ]);
 
-            const typingInterval = setInterval(() => {
-                if (charIndex < txt.length) {
-                    tempDiv.innerHTML += txt[charIndex];
-                    charIndex++;
-                    tourMessage.innerHTML = tempDiv.innerHTML;
-                } else {
-                    clearInterval(typingInterval);
-                }
-            }, 50);
         },
-
-        // Função para iniciar o Driver.js com os passos fornecidos
         startDriverTour(steps) {
-            const driverObj = driver({
+            this.driverObj = driver({
                 ...this.driverConfig,
                 steps: steps,
-                onNext: (step) => {
-                    console.log("Próximo passo:", step);
-                },
-                onPrevious: (step) => {
-                    console.log("Passo anterior:", step);
-                },
                 onDestroyed: () => {
-                    console.log("Tour concluído!");
-                    this.resetTourState();
+                    this.resetTourState(); // Reinicia o estado ao concluir o tour
                 },
             });
-            driverObj.drive();
+            this.driverObj.drive();
         },
 
-        // Reinicia o estado do tour
         resetTourState() {
-            this.popoverContent = false;
-            this.helperContent = false;
-            this.helperContentInit = true;
             this.openMai = false;
+            this.popoverContentPage = false;
+            this.popoverContentCreate = false;
+            this.helperInit = false;
         },
     });
 });
+
+
