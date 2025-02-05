@@ -26,18 +26,10 @@
                 {{ $slot }}
             </main>
         </div>
-        <div x-data>
-            <!-- Overlay tourguide -->
-            <div x-show="$store.tourguide.openMai" class="fixed inset-0 z-40 bg-black bg-opacity-50 backdrop-blur-sm">
-                <img src="{{ asset('images/ai-sos.png') }}" class="absolute right-0 w-64 bottom-4 ">
-                <x-mary-button label="Fechar" class="fixed py-2 bg-pink-600 top-4 right-4"
-                    x-show="$store.tourguide.openMai" @click="$store.tourguide.closeTour()" />
-            </div>
-            <button class="fixed z-40 bg-pink-600 right-5 bottom-5 btn-circle" x-data
-                @click="$store.tourguide.toggleTourguide()" id="ativation-mai" x-show="!$store.tourguide.openMai">
-                <x-mary-icon name="o-question-mark-circle" class="w-8 text-white" />
-            </button>
-        </div>
+        <button class="fixed z-40 bg-pink-600 right-5 bottom-5 btn-circle" x-data
+            @click="$store.tourguide.toggleTourguide()" id="ativation-mai" x-show="!$store.tourguide.openMai">
+            <x-mary-icon name="o-question-mark-circle" class="w-8 text-white" />
+        </button>
     </div>
 </body>
 

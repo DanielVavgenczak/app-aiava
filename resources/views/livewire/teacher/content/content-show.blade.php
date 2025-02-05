@@ -66,7 +66,7 @@ new #[Layout('layouts.app')] class extends Component {
                         <x-mary-button class="text-sm bg-pink-600 text-gray-50" label="Nova aula"
                             wire:click="$dispatch('open-modal-module')" icon-right="o-plus" />
                     </div>
-                    <div class="w-1/3 bg-gray-400 rounded-sm">
+                    <div class="w-1/3 bg-gray-200 rounded-sm">
                         @forelse($discipline->modules as $module)
                             <div class="w-full bg-white border-[1px] border-gray-200 px-3 py-2"
                                 :key="{{ $module->id }}" x-data="{ isExpanded: false }" x-show="true"
@@ -113,7 +113,9 @@ new #[Layout('layouts.app')] class extends Component {
                                 </div>
                             </div>
                         @empty
-                            <p>nenhum modulo</p>
+                            <p class="text-lg text-gray-600 font-light absolute text-center">Esse conteudo não possue
+                                nenhum modulo
+                            </p>
                         @endforelse
                     </div>
                 </div>

@@ -6,7 +6,7 @@ document.addEventListener("alpine:init", () => {
         helperInit: false,
         openMai: false,
         showOptionsPageContent: false,
-        popoverContentCreate: false,
+        showOptionsPageContentCreate: false,
         driverObj: null, // Adicionamos o driverObj como propriedade do store
 
         driverConfig: {
@@ -24,7 +24,7 @@ document.addEventListener("alpine:init", () => {
         closeTour() {
             this.openMai = false;
             this.showOptionsPageContent = false;
-            this.popoverContentCreate = false;
+            this.showOptionsPageContentCreate = false;
         },
 
         toggleTourguide() {
@@ -37,8 +37,9 @@ document.addEventListener("alpine:init", () => {
                     this.startContentPageTour()
                     break;
                 case "/app/teacher/content/create":
-                    this.popoverContentCreate = true;
-                    this.startCreatePageTour();
+                    console.log('vamos criar')
+                    this.helperInit = true;
+                    this.startContentCreate();
                     break;
                 default:
                     console.log("Nenhum tour definido para esta página.");
@@ -50,7 +51,11 @@ document.addEventListener("alpine:init", () => {
             //this.contenSearchDiscipline();
         },
 
-        startCreatePageTour() {
+        startContentCreate(){
+            this.showOptionsPageContentCreate = true;
+        },
+        startTourCreateContent() {
+            this.showOptionsPageContentCreate = false;
             this.startDriverTour([
                 {
                     element: "#content-input-title",
@@ -125,7 +130,75 @@ document.addEventListener("alpine:init", () => {
                     },
                 },
             ]);
-
+        },
+        contenManagerDiscipline(){
+            this.showOptionsPageContent = false;
+            this.openMai = false;
+            this.startDriverTour([
+                {
+                    element: "#content-card-discipline",
+                    popover: {
+                        description: "Click aqui e sera redirecionado para a disciplina!",
+                        side: "bottom",
+                        align: "start",
+                        onNextClick: () => {
+                            const searchInput = document.querySelector("#content-input-search");
+                            if (searchInput.value !=='') {
+                                this.driverObj.moveNext(); // Avança para o próximo passo
+                            }
+                            const nextButton = document.querySelector(".driver-popover-navigation-btns button+button");
+                            nextButton.style.backgroundColor = "#ccc";
+                            nextButton.style.cursor = "not-allowed";
+                        }
+                    },
+                },
+            ]);
+        },
+        contenCreateDiscipline(){
+            this.showOptionsPageContent = false;
+            this.openMai = false;
+            this.startDriverTour([
+                {
+                    element: "#content-create-discipline",
+                    popover: {
+                        description: "Click aqui para criar uma nova disciplina!",
+                        side: "right",
+                        align: "start",
+                        onNextClick: () => {
+                            const searchInput = document.querySelector("#content-input-search");
+                            if (searchInput.value !=='') {
+                                this.driverObj.moveNext(); // Avança para o próximo passo
+                            }
+                            const nextButton = document.querySelector(".driver-popover-navigation-btns button+button");
+                            nextButton.style.backgroundColor = "#ccc";
+                            nextButton.style.cursor = "not-allowed";
+                        }
+                    },
+                },
+            ]);
+        },
+        contenDeleteEditDiscipline(){
+            this.showOptionsPageContent = false;
+            this.openMai = false;
+            this.startDriverTour([
+                {
+                    element: "#content-card-delete-edit",
+                    popover: {
+                        description: "Click aqui para editar / excluir",
+                        side: "right",
+                        align: "start",
+                        onNextClick: () => {
+                            const searchInput = document.querySelector("#content-input-search");
+                            if (searchInput.value !=='') {
+                                this.driverObj.moveNext(); // Avança para o próximo passo
+                            }
+                            const nextButton = document.querySelector(".driver-popover-navigation-btns button+button");
+                            nextButton.style.backgroundColor = "#ccc";
+                            nextButton.style.cursor = "not-allowed";
+                        }
+                    },
+                },
+            ]);
         },
         startDriverTour(steps) {
             this.driverObj = driver({
