@@ -6,24 +6,24 @@ use Livewire\Attributes\On;
 new class extends Component {
     public $module_id;
     public string $title;
-    public bool $open = false;
+    public bool $openNewBlock = false;
 
     public $selectedTab = 'upload-computed-tab';
 
     #[On('open-new-block-to-module')]
-    public function open()
+    public function open($open)
     {
-        $this->open = true;
+        $this->openNewBlock = $open;
     }
 
     public function close()
     {
-        $this->open = false;
+        $this->openNewBlock = false;
         $this->module_id = '';
         $this->title = '';
     }
 }; ?>
-<x-mary-modal wire:model="open" class="backdrop-blur " box-class="w-11/12 h-screen max-w-6xl verflow-y-visible">
+<x-mary-modal wire:model="openNewBlock" class="" box-class="w-11/12 h-screen max-w-6xl verflow-y-visible ">
     <div class="p-5 mb-5 ">
         <h3>Novo bloco para aula:<strong class="ml-3">{{ $title }}</strong></h3>
     </div>

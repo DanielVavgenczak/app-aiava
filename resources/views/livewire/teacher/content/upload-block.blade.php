@@ -2,7 +2,7 @@
     <div class="flex flex-col items-center justify-center">
         <div id="browser-file-{{ $module_id }}" @click="uploadStart()"
             data-url="{{ route('media.upload', parameters: ['module_id' => $module_id]) }}"
-            class="flex flex-col items-center justify-center gap-2 px-6 py-3 text-center text-gray-500 uppercase transition duration-200 rounded-lg cursor-pointer w-60 hover:text-sky-500">
+            class="flex flex-col items-center justify-center gap-2 px-6 py-3 text-center text-gray-500 uppercase transition duration-200 rounded-lg cursor-pointer tour-guide-new-block w-60 hover:text-sky-500">
             <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
             <span class="text-xs font-normal uppercase">clique aqui para adicionar o
                 video</span>

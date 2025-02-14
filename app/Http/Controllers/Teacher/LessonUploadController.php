@@ -47,11 +47,11 @@ class LessonUploadController extends Controller
     {
         // Validação básica do módulo
         // Verifica se o módulo pertence a uma disciplina do usuário
-    if (!Auth::user()->disciplines()->whereHas('modules', function ($query) use ($module_id) {
-        $query->where('id', $module_id);
-    })->exists()) {
-        return response()->json(['error' => 'Módulo não encontrado ou sem permissão.'], 404);
-    }
+        if (!Auth::user()->disciplines()->whereHas('modules', function ($query) use ($module_id) {
+            $query->where('id', $module_id);
+        })->exists()) {
+            return response()->json(['error' => 'Módulo não encontrado ou sem permissão.'], 404);
+        }
 
         // Determina o próximo número sequencial para o título do vídeo
         $nextNumber = $this->getNextVideoNumber($module_id);

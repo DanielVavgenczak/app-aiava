@@ -45,7 +45,7 @@ new class extends Component {
 
             <h2 class="text-lg font-semibold text-gray-700">Precisa criar uma disciplina?</h2>
             <div class="flex items-center justify-center p-4 bg-gray-100">
-                <x-mary-button class="btn-outline border-gray-700 w-full sm:w-auto" label="Vamos criar uma disciplina?"
+                <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Vamos criar uma disciplina?"
                     @click="$store.tourguide.startTourCreateContent()" />
             </div>
         </div>

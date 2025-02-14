@@ -2,7 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-
+/** z-index to se menu dropdown in tourguide active **/
+.z-super{
+    z-index: 20000000000;
+}
 /* Popover e balão de fala */
 .popover-bubble {
     position: relative;
