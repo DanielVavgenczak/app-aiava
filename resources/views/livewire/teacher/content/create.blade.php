@@ -35,10 +35,7 @@ new class extends Component {
         </div>
     </form>
 
-    <div x-data class="fixed inset-0 z-40 bg-black bg-opacity-50"
-        x-show="$store.tourguide.showOptionsPageContentCreate">
-        <x-mary-button label="Fechar" class="fixed py-2 bg-pink-600 top-4 right-4" x-show="$store.tourguide.openMai"
-            @click="$store.tourguide.closeTour()" />
+    <div x-data class="fixed inset-0 z-40 bg-black bg-opacity-50" x-show="$store.tourguide.openMai">
         <!-- Centralizando a div -->
         <div
             class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-lg sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">

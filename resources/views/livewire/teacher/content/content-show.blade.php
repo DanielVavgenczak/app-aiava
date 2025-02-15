@@ -59,9 +59,10 @@ new #[Layout('layouts.app')] class extends Component {
                     </a>
                 </div>
                 <div class="h-screen p-4 bg-white sm:p-8 sm:rounded-0">
-                    <div class="flex items-center justify-between mt-4 mb-10">
+                    <div class="flex items-center justify-between mt-4 mb-10" x-data>
                         <h2 class="text-lg font-semibold text-gray-600">
                             {{ $discipline->title }}
+                            <span x-text="$store.tourguide.openMai"></span>
                         </h2>
                         <x-mary-button class="text-sm bg-pink-600 text-gray-50 open-new-lesson"
                             id="content-lesson-create" label="Nova aula"
@@ -69,21 +70,26 @@ new #[Layout('layouts.app')] class extends Component {
                     </div>
                     <div class="w-1/3 bg-gray-200 rounded-sm">
                         @forelse($discipline->modules as $module)
+                            <!-- delete module -->
+                            <livewire:teacher.content.module.delete-module :id="$module->id" :title="$module->title"
+                                :key="$module->id" />
                             <div class="w-full bg-white border-[1px] border-gray-200 px-3 py-2 accordion"
                                 :key="{{ $module->id }}" x-data="{ isExpanded: false }" x-show="true"
                                 id="accordion-{{ $module->id }}">
                                 <div class="flex items-center">
                                     <x-mary-dropdown class="">
                                         <x-slot:trigger>
-                                            <x-mary-button icon="o-ellipsis-vertical" id="content-lesson-crud"
+                                            <x-mary-button icon="o-ellipsis-vertical"
+                                                id="tourguide-content-lesson-options"
                                                 class="bg-white border-none btn-set-dropdown" />
                                         </x-slot:trigger>
                                         <x-mary-menu-item title="Atividade / Avaliação" icon="o-arrow-path"
                                             id="content-lesson-createtask-btn" />
                                         <x-mary-menu-item title="Editar" id="content-lesson-edit-btn"
-                                            icon="o-arrow-path" />
-                                        <x-mary-menu-item id="content-lesson-delete-btn" title="Deletar"
-                                            @click="$wire.sureDeleteModal = true" icon="o-trash" />
+                                            icon="o-pencil-square" />
+                                        <x-mary-menu-item id="content-lesson-delete-btn" class="btn-to-delete"
+                                            title="Deletar" icon="o-trash"
+                                            @click="$dispatch('delete-module-modal', { id: '{{ $module->id }}'})" />
                                     </x-mary-dropdown>
                                     <div id="content-lesson-add-new-block"
                                         class="flex items-center justify-between w-full cursor-pointer open-collapse-btn">
@@ -101,6 +107,8 @@ new #[Layout('layouts.app')] class extends Component {
                                         @click="$dispatch('open-new-block-to-module',{open:true})" />
                                     <!-- add bloco-->
                                     <livewire:teacher.content.modal-new-block :module_id="$module->id" :title="$module->title" />
+
+
                                     @forelse ($module->lessons as $lesson)
                                         <div class="flex flex-col gap-2 px-2 py-3 hover:bg-gray-300">
                                             <div class="flex flex-col gap-3 ">
@@ -121,8 +129,10 @@ new #[Layout('layouts.app')] class extends Component {
                                     @endforelse
                                 </div>
                             </div>
+
                         @empty
-                            <p class="absolute text-lg font-light text-center text-gray-600">Esse conteudo não possue
+                            <p class="absolute text-lg font-light text-center text-gray-600">Esse conteudo não
+                                possue
                                 nenhum modulo
                             </p>
                         @endforelse
@@ -130,9 +140,7 @@ new #[Layout('layouts.app')] class extends Component {
                 </div>
             </div>
         </div>
-        <div x-data class="fixed inset-0 z-40 bg-black bg-opacity-50"
-            x-show="$store.tourguide.showOptionsPageContentDetails">
-
+        <div x-data class="fixed inset-0 z-40 bg-black bg-opacity-50" x-show="$store.tourguide.openMai">
             <!-- Centralizando a div -->
             <div
                 class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
@@ -146,12 +154,13 @@ new #[Layout('layouts.app')] class extends Component {
                         label="Vamos criar uma nova aula?" @click="$store.tourguide.startCreateLesson()" />
                     <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Adicionar um bloco?"
                         @click="$store.tourguide.startAddNewBlock()" />
+                    <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Vamos deletar uma aula"
+                        @click="$store.tourguide.startTourDeleteModule()" />
                     <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Vamos criar uma tarefa"
                         @click="$store.tourguide.startCreateTaskLesson()" />
                     <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Vamos editar uma aula"
                         @click="$store.tourguide.startEditLesson()" />
-                    <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Deletar uma aula"
-                        @click="$store.tourguide.startCrudLesson()" />
+
                 </div>
             </div>
             <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
