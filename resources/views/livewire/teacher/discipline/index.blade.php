@@ -92,8 +92,9 @@ new class extends Component {
                                 @click="$dispatch('delete-module-modal', { id: '{{ $discipline->id }}' })" />
                         </x-mary-dropdown>
                     </div>
-                    <div class="p-6 text-center manager-discipline">
+                    <div class="p-6 text-center">
                         <a class="hover:text-blue-600 content-title"
+                            id="discipline-manager-content-{{ $discipline->id }}" wire:navigate
                             href="{{ route('teacher.discipline.show', $discipline->id) }}">{{ $discipline->title }}</a>
                     </div>
                 </div>
@@ -117,7 +118,7 @@ new class extends Component {
                         class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
                         @click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
-                <h2 class="text-lg font-normal text-gray-700">Funcionalidades das disciplinas</h2>
+                <h2 class="text-lg font-normal text-gray-700">Funcionalidades das disciplinas!</h2>
 
             </div>
             <div class="flex items-center gap-3 p-4 bg-gray-100">
@@ -127,10 +128,9 @@ new class extends Component {
                 <x-mary-button
                     class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                     label="Criar disciplina" @click="$store.tourguide.start('StartTourCreateDiscipline')" />
-
                 <x-mary-button
                     class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Gerenciar conteudo" @click="$store.tourguide.contenManagerDiscipline()" />
+                    label="Gerenciar conteudo" @click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
                 <x-mary-button
                     class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                     label="Editar: Titulo,Descrição" @click="$store.tourguide.start('StartTourEditDiscipline')" />

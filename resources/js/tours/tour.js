@@ -16,7 +16,7 @@ document.addEventListener("alpine:init", () => {
                     "StartTourEditDiscipline",
                     "StartTourDeleteDiscipline",
                     "StartTourSearchDiscipline",
-                    "StartTourManagerDiscipline"
+                    "StartTourManagerDisciplineContent"
                 ],
             },
         ],
@@ -50,7 +50,7 @@ document.addEventListener("alpine:init", () => {
         async start(tourName) {
             const tourData = await this.initTour();
             if (!tourData && !tourData.module[tourName]) {
-                console.error(`Função de tour "${tourName}" não encontrada.`);
+                console.error(`Função de tour "${tourName}" não encontrada`);
             }
             tourData.module[tourName]();
         },

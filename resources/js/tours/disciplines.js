@@ -458,8 +458,7 @@ export async function StartTourSearchDiscipline(){
     const driverObj = createInitialTour();
     return await driverObj.drive();
 }
-
-export async function StartTourManagerDiscipline(){
+export async function StartTourManagerDisciplineContent(){
     let store = Alpine.store("tourguide");
     store.openMai = false;
     const createInitialTour = () => {
@@ -499,107 +498,45 @@ export async function StartTourManagerDiscipline(){
 
                                 const disciplineId = discipline.getAttribute('id');
                                 const dataId = discipline.getAttribute('data-tour');
-                                const tourOperations = `tour-operations-${dataId}`
-                                const readText = `discipline-delete-text-${dataId}`
-                                const disciplineDeleteActions = `discipline-delete-actions-${dataId}`
+
                                 // Destrói o tour atual
                                 await driverObj.destroy();
+
                                 // Cria um novo tour com os passos atualizados
                                 const secondStep = [
                                     {
                                         element: `#${disciplineId}`,
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Vamos iniciar o processo de exclusão.</p></div>`,
+                                            description: `<div class="p-4"><p class="text-base">Inicar opções de gerenciamento</p></div>`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
                                         },
                                         onHighlighted: async (el) => {
                                             await new Promise((resolve) => setTimeout(resolve, 3000));
-                                            el.style.zIndex = "0";
+                                            el.style.zIndex = "0"
                                             await driverObj.moveNext();
                                         }
                                     },
                                     {
-                                        element: `#${tourOperations}`, // Seleciona o elemento com base no ID
+                                        element: `#discipline-manager-content-${dataId}`,
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Vamos abrir o modal de exlusão0</p></div>`,
+                                            description: `<div class="p-4"><p class="text-base">Clicar no titulo da disciplina</p></div>`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
                                         },
                                         onHighlighted: async (el) => {
                                             await new Promise((resolve) => setTimeout(resolve, 3000));
-                                            const dropDownClick = document.querySelector(`#${tourOperations}`)
-                                            if(!dropDownClick) return;
-                                            await dropDownClick.click()
-                                            el.style.zIndex = "0";
-                                            await driverObj.moveNext();
+                                            el.click();
+                                            await store.initTour()
+                                            await updatedDriverObj.destroy()
                                         }
                                     },
-                                    {
-                                        element: `#discipline-delete-${dataId}`,
-                                        popover: {
-                                            description: `Vamos abrir a modal de deletar`,
-                                            side: "right",
-                                            align: "center",
-                                            showButtons:['']
-                                        },
-                                        onHighlighted: async (el) => {
-                                            await new Promise((resolve) => setTimeout(resolve, 3000));
-                                            el.click(); // Simula o clique no botão de edição
-                                            await driverObj.moveNext();
-                                        }
-                                    },
-                                    {
-                                        element: `#${readText}`, // Seleciona o elemento com base no ID
-                                        popover: {
-                                            description: "Leia o texto para continuar",
-                                            side: "top",
-                                            align: "start",
-                                            onPopoverRender: (popover, { config, state }) => {
-                                                const actions =  AddButtonActions(popover, "voltar ao inicio")
-                                                actions.addEventListener('click', async () => {
-                                                    Livewire.dispatch('to-close')
-                                                    await driverObj.destroy();
-                                                    store.openMai = true;
-                                                })
-                                            }
-                                        },
-                                        onHighlighted: async(el) => {
-                                            el.classList.add('driver-active-element')
-                                        }
-                                    },
-                                    
-                                    {
-                                        element: `#${disciplineDeleteActions}`, // Seleciona o elemento com base no ID
-                                        popover: {
-                                            description: "Clique em 'Cancelar' para desistir ou 'Deltar' para finalizar",
-                                            side: "top",
-                                            align: "start",
-                                            onPopoverRender: (popover, { config, state }) => {
-                                                const actions =  AddButtonActions(popover, "voltar  ao inicio")
-                                                actions.addEventListener('click', async () => {
-                                                    Livewire.dispatch('to-close')
-                                                    await driverObj.destroy();
-                                                    store.openMai = true;
-                                                })
-                                            }
-                                        },
-                                        onHighlighted: async(el) => {
-                                            const cancelButton = el.querySelector(`#discipline-delete-cancel-${dataId}`)
-                                            const save = el.querySelector(`#discipline-delete-send-${dataId}`)
-                                            const close =  async () => {
-                                                await driverObj.destroy();
-                                                store.openMai = true;
-                                            }
-                                            cancelButton.addEventListener('click', close)
-                                            save.addEventListener('click', close)
-                                        }
-                                    }
+
                                 ];
 
-                                // Cria um novo tour com os passos atualizados
+                                // // Cria um novo tour com os passos atualizados
                                 const updatedDriverObj = drivertour({
                                     ...configDriver,
                                     steps: secondStep,

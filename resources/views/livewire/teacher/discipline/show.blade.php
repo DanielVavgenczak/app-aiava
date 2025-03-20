@@ -1,25 +1,17 @@
 <?php
 
 use Livewire\Volt\Component;
-use Livewire\Attributes\{Layout, Title};
-use App\Models\{Discipline, Lesson, Module};
-use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
-use Livewire\Attributes\Validate;
+use Livewire\Attributes\{Layout};
+use App\Models\{Discipline, Lesson};
 use Mary\Traits\Toast;
 use Livewire\WithFileUploads;
-use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
-use Pion\Laravel\ChunkUpload\Handler\ContentRangeUploadHandler;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\On;
-use Illuminate\Database\Eloquent\Collection;
 
 new #[Layout('layouts.app')] class extends Component {
     use Toast, WithFileUploads;
 
     public ?Discipline $discipline = null;
     public string $id;
-    public bool $showCollapse = false;
     public $video;
     public $progress = 0;
     public $file;
@@ -32,6 +24,7 @@ new #[Layout('layouts.app')] class extends Component {
     public string $idclicked = '';
     public string $group = 'group1';
     public array $groups = ['group1', 'group2', 'group3'];
+
     public function mount(string $id)
     {
         $this->discipline = Discipline::with(['modules'])
@@ -43,16 +36,22 @@ new #[Layout('layouts.app')] class extends Component {
     // {
     //     $this->discipline->load(['modules']);
     // }
+
+    #[On('open-tour')]
+    public function openOptionsTour()
+    {
+        dd('Chamando');
+    }
 }; ?>
 
 <div>
     <!-- modal new module -->
-    <livewire:teacher.content.new-module :disciplineId="$discipline->id" />
+    <livewire:teacher.discipline.new-module :disciplineId="$id" />
     <div x-data="{ openCollapseId: null }">
         <div class="py-6">
             <div class="space-y-2 max-w-7xl sm:px-6 lg:px-8">
                 <div class="py-4">
-                    <a href="{{ route('teacher.content') }}" wire:navigate>
+                    <a href="{{ route('teacher.discipline') }}" wire:navigate>
                         <x-mary-icon name="o-arrow-left" class="w-4" />
                         <span class="text-xs font-semibold text-gray-600 uppercase">voltar</span>
                     </a>
@@ -129,6 +128,12 @@ new #[Layout('layouts.app')] class extends Component {
                                 possue
                                 nenhum modulo
                             </p>
+
+                            <template x-data x-teleport="body">
+                                <div x-show="$store.tourguide.openMai">
+                                    Modal contents...
+                                </div>
+                            </template>
                         @endforelse
                     </div>
                 </div>
@@ -138,22 +143,27 @@ new #[Layout('layouts.app')] class extends Component {
             <!-- Centralizando a div -->
             <div
                 class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
-                <x-mary-button icon="o-x-mark" class="btn-square" @click="$store.tourguide.closeTour()" />
+                <x-mary-button icon="o-x-mark" class="btn-square" @click="$store.tourguide.cancelOptionsTourPage()" />
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-normal text-gray-700">Aqui você pode adicionar novas aulas e novos blocos?
                     </h2>
                 </div>
                 <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
-                    <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto"
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Vamos criar uma nova aula?" @click="$store.tourguide.startCreateLesson()" />
-                    <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Adicionar um bloco?"
-                        @click="$store.tourguide.startAddNewBlock()" />
-                    <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Vamos deletar uma aula"
-                        @click="$store.tourguide.startTourDeleteModule()" />
-                    <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Vamos criar uma tarefa"
-                        @click="$store.tourguide.startCreateTaskLesson()" />
-                    <x-mary-button class="w-full border-gray-700 btn-outline sm:w-auto" label="Vamos editar uma aula"
-                        @click="$store.tourguide.startEditLesson()" />
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        label="Adicionar um bloco?" @click="$store.tourguide.startAddNewBlock()" />
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        label="Vamos deletar uma aula" @click="$store.tourguide.startTourDeleteModule()" />
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        label="Vamos criar uma tarefa" @click="$store.tourguide.startCreateTaskLesson()" />
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        label="Vamos editar uma aula" @click="$store.tourguide.startEditLesson()" />
 
                 </div>
             </div>

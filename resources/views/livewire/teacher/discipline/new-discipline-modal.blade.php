@@ -1,6 +1,7 @@
 <?php
 
 use Livewire\Volt\Component;
+use Livewire\Attribute\{On};
 use Livewire\Attributes\{Validate};
 use App\Livewire\Forms\{DisciplineForm};
 
