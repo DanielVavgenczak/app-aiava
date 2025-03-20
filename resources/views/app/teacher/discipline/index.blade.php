@@ -5,7 +5,7 @@
                 <div class="mt-4 mb-10">
                     <h2 class="text-lg font-semibold text-gray-700">Escolha uma disciplina</h2>
                 </div>
-                <livewire:teacher.content.index lazy />
+                <livewire:teacher.discipline.index lazy />
             </div>
         </div>
     </div>

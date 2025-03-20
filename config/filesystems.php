@@ -44,7 +44,12 @@ return [
             'visibility' => 'public',
             'throw' => false,
         ],
-
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'), // Diretório onde os arquivos privados serão armazenados
+            'visibility' => 'private', // Define a visibilidade como privada
+            'throw' => false,
+        ],
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

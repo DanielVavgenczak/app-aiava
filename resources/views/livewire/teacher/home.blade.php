@@ -1,20 +1,10 @@
-@php
-    $events = [
-        [
-            'label' => 'Business Travel',
-            'description' => 'Series A founding',
-            'css' => '!bg-red-200',
-            'range' => [now()->startOfMonth()->addDays(12), now()->startOfMonth()->addDays(19)],
-        ],
-    ];
-@endphp
 <div>
     Pagina inicial
     <div x-data class="fixed inset-0 z-40 bg-black bg-opacity-50" x-show="$store.tourguide.openMai">
         <!-- Centralizando a div -->
         <div
             class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
-            <x-mary-button icon="o-x-mark" class="btn-square" @click="$store.tourguide.closeTour()" />
+            <x-mary-button icon="o-x-mark" class="btn-square" @click="$store.tourguide.cancelOptionsTourPage()" />
             <div class="flex items-center justify-between">
                 <h2 class="text-lg font-normal text-gray-700">Opções da home
                 </h2>

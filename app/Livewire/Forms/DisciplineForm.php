@@ -12,6 +12,7 @@ class DisciplineForm extends Form
     #[Validate(rule: 'required|min:3')]
     public string $title = '';
 
+    // TODO: Mudar estrutura na tabela do banco
     #[Validate(rule: 'required')]
     public string $description = '';
 
@@ -23,6 +24,12 @@ class DisciplineForm extends Form
             "title" => $this->title,
             "description" => $this->description
         ]);
+   }
 
+    public function resetForm()
+    {
+        $this->title = '';
+        $this->description = '';
     }
+
 }

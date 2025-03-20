@@ -11,22 +11,22 @@
                 </li>
                 <li class="flex gap-4 py-4">
                     <x-mary-icon name="o-academic-cap" outiline />
-                    <a class="capitalize" wire.navigate href="{{ route('teacher.content') }}">
+                    <a class="capitalize" wire.navigate href="{{ route('teacher.discipline') }}">
                         conteudos
                     </a>
                 </li>
-                {{-- <li class="flex gap-4 py-4">
+                <li class="flex gap-4 py-4">
                     <x-mary-icon name="o-chat-bubble-left-ellipsis" outiline />
                     <a class="capitalize" href="#">mensagens</a>
                 </li>
                 <li class="flex gap-4 py-4">
                     <x-mary-icon name="o-users" outiline />
-                    <a class="capitalize" href="#">turmas</>
+                    <a class="capitalize" href="#">turmas</a>
                 </li>
                 <li class="flex gap-4 py-4">
                     <x-mary-icon name="o-chat-bubble-left-right" outiline />
-                    <a class="capitalize" href="#">turmas</>
-                </li> --}}
+                    <a class="capitalize" href="#">forum</a>
+                </li>
             </ul>
         </div>
     </aside>

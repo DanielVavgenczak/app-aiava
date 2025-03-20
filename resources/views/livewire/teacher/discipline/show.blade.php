@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Collection;
 new #[Layout('layouts.app')] class extends Component {
     use Toast, WithFileUploads;
 
-    public Discipline $discipline;
+    public ?Discipline $discipline = null;
     public string $id;
     public bool $showCollapse = false;
     public $video;
@@ -38,17 +38,16 @@ new #[Layout('layouts.app')] class extends Component {
             ->where('id', $id)
             ->first();
     }
-
-    #[On('module-created')]
-    public function updateModuleItem()
-    {
-        $this->discipline->load(['modules']);
-    }
+    // #[On('module-created')]
+    // public function updateModuleItem()
+    // {
+    //     $this->discipline->load(['modules']);
+    // }
 }; ?>
 
 <div>
     <!-- modal new module -->
-    <livewire:teacher.content.new-module disciplineId="{{ $discipline->id }}" />
+    <livewire:teacher.content.new-module :disciplineId="$discipline->id" />
     <div x-data="{ openCollapseId: null }">
         <div class="py-6">
             <div class="space-y-2 max-w-7xl sm:px-6 lg:px-8">
@@ -62,7 +61,6 @@ new #[Layout('layouts.app')] class extends Component {
                     <div class="flex items-center justify-between mt-4 mb-10" x-data>
                         <h2 class="text-lg font-semibold text-gray-600">
                             {{ $discipline->title }}
-                            <span x-text="$store.tourguide.openMai"></span>
                         </h2>
                         <x-mary-button class="text-sm bg-pink-600 text-gray-50 open-new-lesson"
                             id="content-lesson-create" label="Nova aula"
@@ -70,11 +68,9 @@ new #[Layout('layouts.app')] class extends Component {
                     </div>
                     <div class="w-1/3 bg-gray-200 rounded-sm">
                         @forelse($discipline->modules as $module)
-                            <!-- delete module -->
-                            <livewire:teacher.content.module.delete-module :id="$module->id" :title="$module->title"
-                                :key="$module->id" />
+
                             <div class="w-full bg-white border-[1px] border-gray-200 px-3 py-2 accordion"
-                                :key="{{ $module->id }}" x-data="{ isExpanded: false }" x-show="true"
+                                mary:key="{{ $module->id }}" x-data="{ isExpanded: false }" x-show="true"
                                 id="accordion-{{ $module->id }}">
                                 <div class="flex items-center">
                                     <x-mary-dropdown class="">
@@ -107,8 +103,6 @@ new #[Layout('layouts.app')] class extends Component {
                                         @click="$dispatch('open-new-block-to-module',{open:true})" />
                                     <!-- add bloco-->
                                     <livewire:teacher.content.modal-new-block :module_id="$module->id" :title="$module->title" />
-
-
                                     @forelse ($module->lessons as $lesson)
                                         <div class="flex flex-col gap-2 px-2 py-3 hover:bg-gray-300">
                                             <div class="flex flex-col gap-3 ">

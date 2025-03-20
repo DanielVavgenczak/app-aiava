@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
@@ -17,7 +16,7 @@ use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
 class LessonUploadController extends Controller
 {
     // Diretório de armazenamento de vídeos
-    private const VIDEO_STORAGE_PATH = 'videos/lesson';
+    private const VIDEO_STORAGE_PATH = 'videos/lessons';
 
     /**
      * Stream do vídeo.
@@ -70,8 +69,8 @@ class LessonUploadController extends Controller
             $file = $fileReceived->getFile(); // Obtém o arquivo
             $fileName = $this->generateUniqueFileName($file); // Gera um nome único para o arquivo
 
-            // Salva o arquivo no armazenamento
-            $path = Storage::disk(config('filesystems.default'))->putFileAs(
+            // Salva o arquivo no armazenamento (usando o disco 'private')
+            $path = Storage::disk('private')->putFileAs(
                 self::VIDEO_STORAGE_PATH,
                 $file,
                 $fileName
@@ -79,12 +78,13 @@ class LessonUploadController extends Controller
 
             // Remove o arquivo temporário
             unlink($file->getPathname());
-
+            dd('Arquivo salvo em: ' . $path);
+            dd('Caminho completo: ' . storage_path('app/private/' . $path));
             // Cria o registro do vídeo no banco de dados
             $lesson = Lesson::create([
                 "original_name" => $file->getClientOriginalName(),
                 "hash_name" => $fileName,
-                "path_file" => self::VIDEO_STORAGE_PATH . '/' . $fileName,
+                "path_file" => self::VIDEO_STORAGE_PATH . '/' . $fileName, // Caminho relativo ao disco 'private'
                 "title" => $title,
                 "description" => "Descrição teste para o vídeo $fileName",
                 "module_id" => $module_id,

@@ -6,14 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
-
+    <title>{{ config('app.name', 'App Ava AiLumnus') }}</title>
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/fai.jpeg') }}" />
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/tourboard.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/tours/tour.js'])
 </head>
 
 <body class="bg-base-100/50 dark:bg-slate-900">
@@ -26,8 +26,8 @@
                 {{ $slot }}
             </main>
         </div>
-        <button class="fixed z-40 bg-pink-600 right-5 bottom-5 btn-circle" x-data
-            @click="$store.tourguide.toggleTourguide()" id="ativation-mai" x-show="!$store.tourguide.openMai">
+        <button class="fixed z-40 bg-pink-600 right-5 bottom-5 btn-circle" x-data @click="$store.tourguide.initTour()"
+            id="ativation-mai" x-show="!$store.tourguide.openMai">
             <x-mary-icon name="o-question-mark-circle" class="w-8 text-white" />
         </button>
     </div>
