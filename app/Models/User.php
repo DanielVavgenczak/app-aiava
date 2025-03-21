@@ -4,10 +4,12 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Models\Teacher\TeacherProfile;
 use App\Models\Traits\UuidTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -53,5 +55,22 @@ class User extends Authenticatable
     public function disciplines()
     {
         return $this->hasMany(Discipline::class);
+    }
+    public function profile()
+    {
+        return $this->hasOne(TeacherProfile::class);
+    }
+
+    public function fullName():string 
+    {
+        $full = $this->first_name. ' '. $this->last_name;
+        return $full;
+    }
+    public function initialLetterToAvatar()
+    {
+        $first = $this->first_name ? Str::substr($this->first_name, 0,1) : '';
+        $last = $this->last_name ? Str::substr($this->last_name, 0,1) : '';
+        $avatar  = Str::upper($first.$last); 
+        return $avatar;
     }
 }

@@ -20,7 +20,7 @@
     <x-mary-toast />
     <div class="flex flex-col">
         <livewire:layout.header-top-app />
-        <div class="flex bg-gray-100 dark:bg-slate-700">
+        <div class="flex gap-4 bg-gray-100 dark:bg-slate-700">
             <x-aside-bar />
             <main class="w-full h-screen">
                 {{ $slot }}

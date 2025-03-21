@@ -11,7 +11,7 @@
             <x-slot:trigger>
                 <button class="capitalize">{{ Auth::user()->first_name }}</button>
             </x-slot:trigger>
-            <x-mary-menu-item class="capitalize" title="perfil" />
+            <x-mary-menu-item class="capitalize" title="perfil" link="{{ route('teacher.profile') }}" />
             <x-mary-menu-item class="capitalize" title="sair" wire:click="logout" />
         </x-mary-dropdown>
     </div>

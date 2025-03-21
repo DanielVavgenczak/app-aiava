@@ -1,6 +1,10 @@
     <aside class="w-1/6 min-h-screen px-3 py-5 bg-white dark:bg-slate-900">
         <div class="flex flex-col items-center gap-3">
-            <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" class="w-20 h-20 rounded-full" />
+            @if (!Auth::user()->profile?->avatar)
+                <livewire:teacher.components.avatar initiais="{{ Auth::user()->initialLetterToAvatar() }}">
+                @else
+                    <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}" class="w-20 h-20 rounded-full" />
+            @endif
             <h4 class="font-semibold text-gray-800 capitalize">{{ Auth::user()->first_name }}</h4>
         </div>
         <div class="px-2 py-3">

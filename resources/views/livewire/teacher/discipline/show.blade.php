@@ -31,17 +31,6 @@ new #[Layout('layouts.app')] class extends Component {
             ->where('id', $id)
             ->first();
     }
-    // #[On('module-created')]
-    // public function updateModuleItem()
-    // {
-    //     $this->discipline->load(['modules']);
-    // }
-
-    #[On('open-tour')]
-    public function openOptionsTour()
-    {
-        dd('Chamando');
-    }
 }; ?>
 
 <div>
