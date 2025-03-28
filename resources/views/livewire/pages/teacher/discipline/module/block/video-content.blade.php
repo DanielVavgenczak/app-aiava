@@ -5,14 +5,30 @@ use App\Models\{Lesson};
 use Livewire\Attributes\On;
 
 new class extends Component {
-    public ?Lesson $lesson = null;
+    public Lesson $lesson;
     public $selectedTab = 'infos-tab';
     public bool $sureDeleteBlock = false;
-
+    public string $video_url = '';
+    public function mount(Lesson $lesson)
+    {
+        $this->lesson = $lesson;
+        //dd('oi jo', $lesson);
+        $this->loadBlock();
+    }
+    protected function loadBlock()
+    {
+        $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
+        $this->dispatch('vide-load', url: $this->video_url);
+    }
+    //#[On('next-video-content')]
+    public function nextVideo()
+    {
+        $this->dispatch('next-video-content', id: $this->lesson->id);
+    }
     #[On('load-video-lesson')]
     public function loadVideoLesson($lesson_id)
     {
-        $this->lesson = Lesson::find($lesson_id);
+        $this->lesson = Lesson::findOrFail($lesson_id);
     }
 }; ?>
 
@@ -31,15 +47,20 @@ new class extends Component {
             <x-mary-button label="Atualizar" icon-right="o-bars-arrow-down" class="bg-yellow-200" />
             <x-mary-button label="Editar" icon-right="o-plus" class="bg-blue-200" />
         </div>
+        <!-- Player de vídeo -->
         <div>
-            <livewire:video-player-teacher lesson_id="{{ $lesson->id }}" />
-            <div class="flex items-center justify-between p-5">
-                <x-mary-button label="Anterior" icon="o-chevron-left" />
-                <x-mary-button label="Proximo" icon-right="o-chevron-right" />
-            </div>
+            <livewire:pages.teacher.discipline.module.block.video :lesson_id="$lesson->id" />
+        </div>
+        <div class="flex items-center justify-between p-5">
+            <x-mary-button label="Anterior" icon="o-chevron-left"
+                @click="$dispatch('previous-video-content', { id: '{{ $lesson->id }}' })" />
+            <x-mary-button label="Proximo" icon-right="o-chevron-right" @click="$wire.nextVideo()" />
         </div>
         <div class="p-5 bg-white">
             <x-mary-tabs wire:model="selectedTab">
+                <x-mary-tab name="material-tab" label="Materiais de apoio">
+                    <div>Materiais de apoio</div>
+                </x-mary-tab>
                 <x-mary-tab name="infos-tab" label="Informaçoes">
                     <div>
                         <h3>Informações do video</h3>
@@ -61,11 +82,26 @@ new class extends Component {
                 <x-mary-tab name="question-tab" label="Duvidas">
                     <div>Duvidas</div>
                 </x-mary-tab>
-                <x-mary-tab name="material-tab" label="Materiais de apoio">
-                    <div>Materiais de apoio</div>
-                </x-mary-tab>
             </x-mary-tabs>
-
         </div>
     @endif
 </div>
+
+@script
+    <script>
+        // Inicializa o player quando o componente é montado
+        document.addEventListener('livewire:initialized', () => {
+            console.log('livewire inciado de novo')
+            const player = document.getElementById('videoPlayer-{{ $lesson->id }}');
+            player.src = '{{ $video_url }}';
+        });
+
+        // Atualiza o player quando o vídeo muda
+        Livewire.on('video-loaded', (url) => {
+            const player = document.getElementById('videoPlayer-{{ $lesson->id }}');
+            player.src = url;
+            player.load();
+            player.play().catch(e => console.log('Autoplay prevented:', e));
+        });
+    </script>
+@endscript

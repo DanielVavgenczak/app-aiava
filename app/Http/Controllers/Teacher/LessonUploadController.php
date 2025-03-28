@@ -27,12 +27,26 @@ class LessonUploadController extends Controller
     public function stream($lesson_id)
     {
         $lesson = Lesson::findOrFail($lesson_id);
+        // if (!Auth::user()->can('view', $lesson)) {
+        //     abort(403);
+        // }
+        $path = storage_path('app/private/' . $lesson->path_file);
+        if (!file_exists($path)) {
+            abort(404);
+        }
 
-        $headers = [
+        return response()->stream(function() use ($path) {
+            $stream = fopen($path, 'rb');
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, 200, [
+            'Content-Type' => mime_content_type($path) ?: 'video/mp4',
+            'Content-Length' => filesize($path),
             'Cache-Control' => 'no-cache, must-revalidate',
-        ];
-
-        return response()->file(storage_path('app/private/' . $lesson->path_file), $headers);
+            'Accept-Ranges' => 'bytes'
+        ]);
     }
 
     /**
@@ -78,8 +92,7 @@ class LessonUploadController extends Controller
 
             // Remove o arquivo temporário
             unlink($file->getPathname());
-            dd('Arquivo salvo em: ' . $path);
-            dd('Caminho completo: ' . storage_path('app/private/' . $path));
+
             // Cria o registro do vídeo no banco de dados
             $lesson = Lesson::create([
                 "original_name" => $file->getClientOriginalName(),

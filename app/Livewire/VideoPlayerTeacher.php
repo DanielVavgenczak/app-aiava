@@ -30,6 +30,7 @@ class VideoPlayerTeacher extends Component
     }
     public function render()
     {
+        dd('transmitindo');
         return view('livewire.video-player-teacher');
     }
 }

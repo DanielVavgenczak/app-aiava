@@ -6,6 +6,6 @@
                 <span class="text-xs font-semibold text-gray-600 uppercase">voltar</span>
             </a>
         </div>
-        <livewire:teacher.profile.index />
+        <livewire:pages.teacher.profile.index />
     </div>
 </x-app-layout>

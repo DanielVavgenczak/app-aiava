@@ -6,13 +6,13 @@
                 <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}" class="w-20 h-20 rounded-full" />
             @else
                 <div class="flex flex-col items-center justify-center gap-3">
-                    <livewire:teacher.components.avatar initiais="{{ Auth::user()->initialLetterToAvatar() }}">
+                    <livewire:pages.teacher.components.avatar initiais="{{ Auth::user()->initialLetterToAvatar() }}">
                         <h3 class="text-base text-gray-600">{{ Auth::user()->fullName() }}</h3>
                 </div>
             @endif
             <x-mary-button label="Editar Perfil" icon-right="o-pencil-square"
                 @click="$dispatch('open-modal-update-profile', { open:true })" />
-            <livewire:teacher.profile.modals.update />
+            <livewire:pages.teacher.profile.modals.update />
         </div>
     </div>
     <div class="flex flex-col gap-4">

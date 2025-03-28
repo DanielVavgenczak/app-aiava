@@ -12,7 +12,8 @@ new class extends Component {
     public string $search = '';
     public Collection $disciplines;
     public int $totalDisciplines = 0;
-
+    //TODO: criar um id fixo para isso
+    public string $toKey;
     public function with()
     {
         return $this->disciplines = $this->loadDisciplines();
@@ -20,6 +21,7 @@ new class extends Component {
     public function mount()
     {
         sleep(1);
+        $this->toKey = Auth::user()->id;
     }
 
     private function loadDisciplines()
@@ -34,7 +36,7 @@ new class extends Component {
     #[On('content-created')]
     public function updateDisciplineList($title, $action)
     {
-        $this->success("<strong>{$title}</strong> foi adicionada com sucesso!");
+        $this->success('Disciplina adicionada com sucesso!');
     }
 
     #[On('content-update')]
@@ -57,7 +59,7 @@ new class extends Component {
     }
 }; ?>
 <div class="flex flex-col gap-8" id="content-intial">
-    <livewire:teacher.discipline.modals.create />
+    <livewire:pages.teacher.discipline.modals.create />
     <div class="flex items-center justify-between">
         @if ($disciplines->count() > 0)
             <x-text-input placeholder="Pesquisar" wire:model.live="search" id="discipline-input-search" />
@@ -72,8 +74,7 @@ new class extends Component {
         <div class="relative grid w-full grid-cols-5 gap-3 pb-5 mt-8" id="disciplines-all">
             @foreach ($disciplines as $discipline)
                 <div class="border-[1px] shadow-md  rounded-sm flex flex-col discipline-card"
-                    wire:key="{{ $discipline->id }}" id="discipline-{{ $discipline->id }}"
-                    data-tour="{{ $discipline->id }}">
+                    id="discipline-{{ $discipline->id }}" data-tour="{{ $discipline->id }}">
                     <div class="flex items-center justify-between">
                         <span>
                         </span>
@@ -95,12 +96,13 @@ new class extends Component {
                     <div class="p-6 text-center">
                         <a class="hover:text-blue-600 content-title"
                             id="discipline-manager-content-{{ $discipline->id }}" wire:navigate
-                            href="{{ route('teacher.discipline.show', $discipline->id) }}">{{ $discipline->title }}</a>
+                            href="{{ route('teacher.discipline.show', $discipline) }}">{{ $discipline->title }}</a>
+
                     </div>
                 </div>
-                <livewire:teacher.discipline.modals.details :discipline="$discipline" />
-                <livewire:teacher.discipline.modals.edit :discipline="$discipline" />
-                <livewire:teacher.discipline.modals.delete :id="$discipline->id" :title="$discipline->title" />
+                <livewire:pages.teacher.discipline.modals.details :discipline="$discipline" />
+                <livewire:pages.teacher.discipline.modals.edit :discipline="$discipline" />
+                <livewire:pages.teacher.discipline.modals.delete :id="$discipline->id" :title="$discipline->title" />
             @endforeach
         </div>
     @else
@@ -119,7 +121,6 @@ new class extends Component {
                         @click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
                 <h2 class="text-lg font-normal text-gray-700">Funcionalidades das disciplinas!</h2>
-
             </div>
             <div class="flex items-center gap-3 p-4 bg-gray-100">
                 <x-mary-button

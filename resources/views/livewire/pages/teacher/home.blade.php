@@ -1,5 +1,5 @@
 <div>
-    Pagina inicial
+    Home
     <div x-data class="fixed inset-0 z-40 bg-black bg-opacity-50" x-show="$store.tourguide.openMai">
         <!-- Centralizando a div -->
         <div

@@ -28,8 +28,7 @@ new class extends Component {
         ]);
         $this->dispatch('module-created');
         $this->pull('open', 'title');
-
-        //$this->success("{$this->title} d com sucesso", timeout: 4000);
+        $this->dispatch('new-module-created');
     }
 }; ?>
 <x-mary-modal wire:model="open" class="">

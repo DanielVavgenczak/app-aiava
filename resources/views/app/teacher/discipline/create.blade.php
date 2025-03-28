@@ -14,7 +14,7 @@
                     </h2>
                 </div>
                 <div class="">
-                    <livewire:teacher.content.create />
+                    <livewire:pages.teacher.content.create />
                 </div>
             </div>
         </div>

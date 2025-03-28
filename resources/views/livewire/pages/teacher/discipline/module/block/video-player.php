@@ -1,4 +1,5 @@
 <div wire:init="initVideo">
+    Chama a cachorra
     <video wire:ignore id="videoPlayer" controls width="800px" height="900px" />
 </div>
 @script

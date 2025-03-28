@@ -1,4 +1,4 @@
-    <aside class="w-1/6 min-h-screen px-3 py-5 bg-white dark:bg-slate-900">
+    <aside class="fixed left-0 z-30 w-1/6 min-h-screen px-3 py-5 bg-white top-20 dark:bg-slate-900">
         <div class="flex flex-col items-center gap-3">
             @if (!Auth::user()->profile?->avatar)
                 <livewire:teacher.components.avatar initiais="{{ Auth::user()->initialLetterToAvatar() }}">
@@ -20,8 +20,8 @@
                     </a>
                 </li>
                 <li class="flex gap-4 py-4">
-                    <x-mary-icon name="o-chat-bubble-left-ellipsis" outiline />
-                    <a class="capitalize" href="#">mensagens</a>
+                    <x-mary-icon name="o-envelope-open" outiline />
+                    <a class="capitalize" href="#">E-mails</a>
                 </li>
                 <li class="flex gap-4 py-4">
                     <x-mary-icon name="o-users" outiline />
@@ -32,5 +32,8 @@
                     <a class="capitalize" href="#">forum</a>
                 </li>
             </ul>
+        </div>
+        <div class="px-2 py-3 relative top-5 border-t-[2px] w-full h-auto bottom-0 flex justify-center items-end">
+            <p class="text-sm text-center text-gray-600">By Sos Solutions</p>
         </div>
     </aside>
