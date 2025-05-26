@@ -1,33 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+/*@source "../views";*/
 
-/** z-index to se menu dropdown in tourguide active **/
-.z-super{
+/* daisyUI */
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark;
+}
+
+@source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Laravel 12 defaults */
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../storage/framework/views/*.php";
+@source "../**/*.blade.php";
+@source "../**/*.js";
+
+body{
+    font-family: "Catamaran",sans-serif;
+}
+.z-super {
     z-index: 20000000000;
 }
-/* Popover e balão de fala */
-.popover-bubble {
-    position: relative;
-    z-index: 10;
-    padding: 0.5rem;
-}
-
-.popover-text {
-    font-size: 0.875rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.25rem;
-    animation: typewriter 3s steps(30) 1s forwards;
-}
-
-@keyframes typewriter {
-    from {
-        width: 0;
-    }
-    to {
-        width: 100%;
-    }
-}
-

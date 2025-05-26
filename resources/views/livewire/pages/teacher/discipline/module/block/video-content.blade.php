@@ -6,7 +6,7 @@ use Livewire\Attributes\On;
 
 new class extends Component {
     public Lesson $lesson;
-    public $selectedTab = 'infos-tab';
+    public $selectedTab = 'material-tab';
     public bool $sureDeleteBlock = false;
     public string $video_url = '';
     public function mount(Lesson $lesson)
@@ -65,16 +65,19 @@ new class extends Component {
                     <div>
                         <h3>Informações do video</h3>
                         <ul>
-                            <li class="px-2 py-3"><span class="text-sm font-semibold text-gray-700">Title:</span>
-                                {{ $lesson->title }}
+                            <li class="px-2 py-3">
+                                <h3>{{ $lesson->title }}</h3>
                             </li>
-                            <li class="px-2 py-2"><span class="text-sm font-semibold text-gray-700">Hash Name:</span>
+                            {{-- <li class="px-2 py-2"><span class="text-sm font-semibold text-gray-700">Hash Name:</span>
                                 {{ $lesson->hash_name }}</li>
                             <li class="px-2 py-3"><span class="text-sm font-semibold text-gray-700">Original
                                     Name:</span>
-                                {{ $lesson->original_name }}</li>
-                            <li class="px-2 py-3"><span
-                                    class="text-sm font-semibold text-gray-700">Description</span>{{ $lesson->description }}
+                                {{ $lesson->original_name }}</li> --}}
+                            <li class="px-2 py-3">
+                                <h2>Descrição</h2>
+                                <p>
+                                    {{ $lesson->description }}
+                                </p>
                             </li>
                         </ul>
                     </div>

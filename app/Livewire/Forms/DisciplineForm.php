@@ -12,24 +12,29 @@ class DisciplineForm extends Form
     #[Validate(rule: 'required|min:3')]
     public string $title = '';
 
-    // TODO: Mudar estrutura na tabela do banco
-    #[Validate(rule: 'required')]
-    public string $description = '';
+    public ?string $disciplineId = null;
 
     public function disciplineStore()
     {
        $this->validate();
-        Discipline::create([
+        $discipline = Discipline::create([
             "user_id" => Auth::user()->id,
             "title" => $this->title,
-            "description" => $this->description
         ]);
+        $this->setDisciplineId($discipline->id);
    }
 
+   private function setDisciplineId(string $id)
+   {
+       $this->disciplineId = $id;
+   }
+   public function getDisciplineId()
+   {
+    return $this->disciplineId ?? null;
+   }
     public function resetForm()
     {
         $this->title = '';
-        $this->description = '';
     }
 
 }

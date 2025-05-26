@@ -4,70 +4,90 @@ use Livewire\Volt\Component;
 
 new class extends Component {
     public string $module_id;
+    //public string $description = '';
 
     public function mount(string $module_id)
     {
         $this->module_id = $module_id;
     }
 }; ?>
-<div x-data="chunckupload('{{ $module_id }}')">
-    <div class="flex flex-col items-center justify-center">
-        <div id="browser-file-{{ $module_id ?? '' }}" @click="uploadStart()"
-            data-url="{{ route('media.upload', parameters: ['module_id' => $module_id]) }}"
-            class="flex flex-col items-center justify-center gap-2 px-6 py-3 text-center text-gray-500 uppercase transition duration-200 rounded-lg cursor-pointer tour-guide-new-block w-60 hover:text-sky-500">
-            <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
-            <span class="text-xs font-normal uppercase">clique aqui para adicionar o
-                video</span>
+<div x-data="chunkUpload('{{ $module_id }}')" class="max-w-3xl p-3 mx-auto">
+    <div class="space-y-6">
+        {{-- Campo de Descrição
+        <div id="open-module-input-content-description-{{ $module_id }}" class="p-5">
+            <label for="description-{{ $module_id }}" class="block mb-2 text-sm font-semibold text-gray-800">
+                Descrição do Vídeo
+            </label>
+            <textarea id="description-{{ $module_id }}"
+                class="w-full p-4 text-gray-700 border border-gray-200 rounded-lg shadow-sm resize-y focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                rows="4" placeholder="Adicione uma descrição para o seu vídeo..."></textarea>
+        </div> --}}
+
+        <!-- Área de Upload -->
+        <div x-show="!isFileSelected && !isUploading && !isUploaded" id="browser-file-{{ $module_id }}"
+            @click="selectFile()" data-url="{{ route('media.upload', ['module_id' => $module_id]) }}"
+            class="flex flex-col items-center justify-center gap-4 px-5 py-5 transition-all duration-300 bg-white cursor-pointer rounded-xl hover:bg-indigo-50 hover:border-pink-400">
+            <x-mary-icon name="o-video-camera" class="w-10 h-10 text-gray-600" />
+            <span class="text-sm font-medium tracking-wide text-gray-500">Clique para adicionar o vídeo</span>
+            <span class="text-xs text-gray-500">Formatos suportados: MP4, AVI, MOV (máx. 2GB, até 12 minutos)</span>
         </div>
 
-        <!-- Mensagem de erro para vídeos longos -->
-        <div id="message-warning-duration-{{ $module_id }}" style="display: none"
-            class="flex items-center gap-4 p-3 mt-4 bg-red-100 rounded-lg">
-            <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5 text-red-500" />
-            <p class="text-sm font-normal text-red-500 uppercase">O vídeo deve ter no máximo 12 minutos de duração.</p>
+        <!-- Preview Temporário com Botão Enviar -->
+        <div x-show="isFileSelected && !isUploading && !isUploaded" id="temp-preview-{{ $module_id }}"
+            class="flex flex-col items-center gap-4 px-10 py-8 bg-white rounded-xl">
+            <video id="temp-video-preview-{{ $module_id }}" controls
+                class="w-3/4 rounded-lg shadow-md w-max-2xl"></video>
+            <div class="flex gap-4" id="temp-preview-actions-{{ $module_id }}">
+                <button @click="uploadStart()" id="lesson-send-video-block-content-{{ $module_id }}"
+                    class="px-6 py-2 text-white transition duration-200 bg-indigo-500 rounded-lg hover:bg-indigo-600">
+                    Enviar
+                </button>
+                <button @click="cancelSelection()"
+                    class="px-6 py-2 text-gray-700 transition duration-200 bg-gray-300 rounded-lg hover:bg-gray-400">
+                    Cancelar
+                </button>
+            </div>
         </div>
 
-        <!-- Vídeo temporário para validação (oculto) -->
-        <video id="temp-video-{{ $module_id }}" style="display: none;"></video>
+        <!-- Barra de Progresso -->
+        <div x-show="isUploading" id="progress-bar-container-{{ $module_id }}"
+            class="w-full px-10 py-8 bg-white border-2 border-gray-300 rounded-xl">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Enviando...</span>
+                <span id="progress-percentage-{{ $module_id }}" class="text-sm font-medium text-indigo-600">0%</span>
+            </div>
+            <div class="w-full h-3 overflow-hidden bg-gray-100 rounded-full">
+                <div id="progress-bar-{{ $module_id }}"
+                    class="h-full transition-all duration-300 ease-out bg-indigo-500 rounded-full" style="width: 0%">
+                </div>
+            </div>
+        </div>
 
-        <!-- Mensagem de sucesso -->
+        <!-- Mensagem de Erro para Vídeos Longos check-circle -->
+        <div id="message-warning-duration-{{ $module_id }}" x-show="showDurationError"
+            class="flex items-center gap-3 p-4 border border-red-200 rounded-lg bg-red-50">
+            <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5 text-red-600" />
+            <p class="text-sm font-medium text-red-600">O vídeo excede o limite de 12 minutos.</p>
+        </div>
+
+        <!-- Mensagem de Sucesso -->
         <div id="success-message-{{ $module_id }}" style="display: none"
-            class="flex items-center gap-4 p-3 mt-4 bg-green-100 rounded-lg">
-            <x-mary-icon name="o-check-circle" class="w-5 h-5 text-green-500" />
-            <p class="text-sm font-normal text-green-500 uppercase">Upload concluído com sucesso!</p>
+            class="flex items-center gap-3 p-4 border border-green-200 rounded-lg bg-green-50">
+            <x-mary-alert icon="o-check-circle" class="alert-success">
+                Upload concluído com sucesso!
+            </x-mary-alert>
         </div>
 
-        <!-- Vídeo enviado -->
-        <div id="video-preview-load-{{ $module_id }}" class="items-center hidden gap-4 mt-4">
-            <video id="video-upload-preview-{{ $module_id }}" controls width="500"></video>
-        </div>
-
-
+        <!-- Input de Arquivo (Oculto) -->
         <div>
             <input id="fileInputVideo-{{ $module_id }}" type="file" accept="video/*" style="display: none;" />
         </div>
 
-
-
-
-        <div id="video-preview-load" class="items-center hidden gap-4 ">
-            <button id="removeVideoButton" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">Remover
-                Vídeo</button>
-            <video id="video-upload-preview" controls width="500"></video>
-        </div>
-        <div style="display: none" class="w-full h-[6px] mt-3 bg-gray-200 rounded-full progress dark:bg-gray-700">
-            <div class="bg-pink-600  text-xs font-medium text-blue-100  p-0.5 leading-none rounded-full progress-bar progress-bar-striped progress-bar-animated text-center"
-                role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"
-                style="width: 75%; height: 100%">
-            </div>
-        </div>
-        <div id="progress-bar-container-{{ $module_id }}" style="display: none"
-            class="w-full h-[6px] mt-3 bg-gray-200 rounded-full progress dark:bg-gray-700">
-            <div id="progress-bar-{{ $module_id }}"
-                class="bg-pink-600 text-xs font-medium text-blue-100 p-0.5 leading-none rounded-full progress-bar progress-bar-striped progress-bar-animated text-center"
-                role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
-                style="width: 0%; height: 100%">
-            </div>
-        </div>
+        <!-- Vídeo Temporário para Validação (Oculto) -->
+        <video id="temp-video-{{ $module_id }}" style="display: none;"></video>
     </div>
+    {{-- <button id="removeVideoButton-{{ $module_id }}" @click="removeVideo()"
+        class="px-6 py-2 text-white transition duration-200 bg-red-500 rounded-lg hover:bg-red-600">
+        cancelar
+    </button> --}}
 </div>

@@ -67,13 +67,13 @@ new class extends Component {
             <span></span>
         @endif
         <x-mary-button label="Disciplina" class="bg-pink-600 text-gray-50 discipline-new" id="discipline-create"
-            icon-right="o-plus" @click="$dispatch('create-content-modal',{open:true})" />
+            icon-right="o-plus" x-on:click="$dispatch('create-content-modal',{open:true})" />
 
     </div>
     @if ($disciplines->count() > 0)
         <div class="relative grid w-full grid-cols-5 gap-3 pb-5 mt-8" id="disciplines-all">
             @foreach ($disciplines as $discipline)
-                <div class="border-[1px] shadow-md  rounded-sm flex flex-col discipline-card"
+                <div class="border-[1px] border-gray-200 shadow-md  rounded-sm flex flex-col discipline-card"
                     id="discipline-{{ $discipline->id }}" data-tour="{{ $discipline->id }}">
                     <div class="flex items-center justify-between">
                         <span>
@@ -94,7 +94,7 @@ new class extends Component {
                         </x-mary-dropdown>
                     </div>
                     <div class="p-6 text-center">
-                        <a class="hover:text-blue-600 content-title"
+                        <a class="text-gray-600 hover:text-blue-600 content-title tracking-wide text-[15px] font-medium"
                             id="discipline-manager-content-{{ $discipline->id }}" wire:navigate
                             href="{{ route('teacher.discipline.show', $discipline) }}">{{ $discipline->title }}</a>
 
@@ -110,7 +110,8 @@ new class extends Component {
             <p class="text-lg font-medium text-gray-500">Você não possue nenhuma disciplina cadastrada</p>
         </div>
     @endif
-    <div class="fixed inset-0 z-40 bg-black bg-opacity-50" x-data x-show="$store.tourguide.openMai">
+    <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+
         <!-- Centralizando a div -->
         <div
             class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
@@ -120,24 +121,27 @@ new class extends Component {
                         class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
                         @click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
-                <h2 class="text-lg font-normal text-gray-700">Funcionalidades das disciplinas!</h2>
+                <h2 class="text-lg font-normal text-gray-700">Você tem as seguintes opções:</h2>
             </div>
             <div class="flex items-center gap-3 p-4 bg-gray-100">
                 <x-mary-button
                     class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Pesquisar disciplina" @click="$store.tourguide.start('StartTourSearchDiscipline')" />
-                <x-mary-button
-                    class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                     label="Criar disciplina" @click="$store.tourguide.start('StartTourCreateDiscipline')" />
-                <x-mary-button
-                    class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Gerenciar conteudo" @click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
-                <x-mary-button
-                    class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Editar: Titulo,Descrição" @click="$store.tourguide.start('StartTourEditDiscipline')" />
-                <x-mary-button
-                    class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Deletar disciplina" @click="$store.tourguide.start('StartTourDeleteDiscipline')" />
+                @if ($disciplines->count() > 0)
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        label="Pesquisar disciplina" @click="$store.tourguide.start('StartTourSearchDiscipline')" />
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        label="Gerenciar conteudo"
+                        @click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        label="Editar: Titulo,Descrição" @click="$store.tourguide.start('StartTourEditDiscipline')" />
+                    <x-mary-button
+                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        label="Deletar disciplina" @click="$store.tourguide.start('StartTourDeleteDiscipline')" />
+                @endif
             </div>
         </div>
         <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">

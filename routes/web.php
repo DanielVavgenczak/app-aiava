@@ -23,6 +23,11 @@ Volt::route("app/teacher/discipline/{discipline}", componentName: "pages.teacher
 ->middleware((['auth', 'verified']))
 ->name(name: 'teacher.discipline.show');
 
+Route::view('app/teacher/messages', 'app.teacher.messages.index')
+->middleware(['auth', 'verified'])
+->name('teacher.messages');
+
+
 Route::post('app/teacher/discipline/{module_id}/upload', [LessonUploadController::class, 'uploadVideo'])->name('media.upload');
 Route::get("app/teacher/lesson/{lesson_id}", [LessonUploadController::class, 'stream'])
 ->name( 'media.stream');

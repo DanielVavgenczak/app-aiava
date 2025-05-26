@@ -26,22 +26,22 @@ new #[Layout('layouts.guest')] class extends Component {
 <div>
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
-
     <form wire:submit="login">
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="form.email" id="email" class="block w-full mt-1" type="email" name="email"
-                required autofocus autocomplete="username" />
+            <x-text-input wire:model="form.email" id="email"
+                class="px-3 py-2 border-[1px]   focus:border-pink-500 focus:outline focus:outline-pink-50 block w-full mt-1"
+                type="email" name="email" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
         </div>
 
         <!-- Password -->
         <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input wire:model="form.password" id="password" class="block w-full mt-1" type="password"
-                name="password" required autocomplete="current-password" />
+            <x-input-label for="password" :value="__('Senha')" />
+            <x-text-input wire:model="form.password" id="password"
+                class="border-[1px] focus:border-pink-500 focus:outline focus:outline-pink-50 px-3 py-2 block w-full mt-1"
+                type="password" name="password" required autocomplete="current-password" />
 
             <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
         </div>
@@ -49,14 +49,14 @@ new #[Layout('layouts.guest')] class extends Component {
         <!-- Remember Me -->
         <div class="block mt-4">
             <label for="remember" class="flex items-center justify-between">
-                <div>
+                {{-- <div>
                     <input wire:model="form.remember" id="remember" type="checkbox"
                         class="text-indigo-600 border-gray-300 rounded shadow-sm focus:ring-indigo-500" name="remember">
                     <span class="text-sm text-gray-600 ms-2">{{ __('Remember me') }}</span>
-                </div>
+                </div> --}}
                 <div>
-                    <a href="{{ route('register') }}" class="text-sm font-normal text-gray-600">Don't have an
-                        account</a>
+                    <a href="{{ route('register') }}" class="text-sm font-normal text-gray-600">Não possue uma
+                        conta?</a>
 
                 </div>
             </label>
@@ -66,7 +66,7 @@ new #[Layout('layouts.guest')] class extends Component {
             @if (Route::has('password.request'))
                 <a class="text-sm text-gray-600 underline rounded-md hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     href="{{ route('password.request') }}" wire:navigate>
-                    {{ __('Forgot your password?') }}
+                    {{ __('Não lembro a minha senha') }}
                 </a>
             @endif
 

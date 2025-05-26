@@ -48,6 +48,7 @@ new class extends Component {
             $discipline->delete();
             $this->dispatch('content-deleted', title: $this->title, action: 'delete');
             $this->resetState();
+            sleep(3);
         } catch (Exception $ex) {
             dd('Dei au', $ex->getMessage());
         }
@@ -62,16 +63,16 @@ new class extends Component {
 
 <x-mary-modal wire:model="openModalModule">
     <div class="mb-9" id="discipline-delete-text-{{ $id ?? '' }}">
-        <h3 class="mb-5 text-lg font-medium text-gray-700">Tem certeza que deseja deletar o conteudo: <span
-                class="font-extralight">{{ $title }}</span></h3>
-        <p class="text-base font-normal text-gray-500">Ao deletar essa aula todos os blocos serão deletados junto da
-            mesma!
-        </p>
+        <h3 class="mb-5 text-lg font-medium text-gray-700">Deletar essa há disciplina: {{ $title }} </h3>
     </div>
     <div id="discipline-delete-actions-{{ $id ?? '' }}">
         <x-mary-button label="Cancel" id="discipline-delete-cancel-{{ $id ?? '' }}"
             @click="$wire.openModalModule = false" class="text-gray-500 btn-ghost" />
         <x-mary-button label="Sim" class="btn-error text-gray-50" @click="$wire.delete"
             id="discipline-delete-send-{{ $id ?? '' }}" />
+        <div wire:loading wire:target="delete" class="flex items-center gap-2">
+            <span class="text-sm text-pink-600 tracking-wide">Deletando</span>
+            <x-mary-loading class=" text-pink-600 loading-dots" />
+        </div>
     </div>
 </x-mary-modal>

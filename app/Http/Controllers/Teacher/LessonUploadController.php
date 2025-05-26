@@ -58,7 +58,23 @@ class LessonUploadController extends Controller
      */
     public function uploadVideo(Request $request, $module_id)
     {
-        // Validação básica do módulo
+        if (!$request->has('resumableIdentifier')) {
+            // Lógica para upload em chunks
+           // return response()->json(['success' => true]);
+            return response()->json(['error' => 'Invalid request'], 400);
+        }
+
+         // Validações adicionais
+        $request->validate([
+            'description' => 'nullable|string|max:1000',
+            'resumableChunkNumber' => 'required|integer',
+            'resumableTotalChunks' => 'required|integer',
+            'resumableChunkSize' => 'required|integer',
+            'resumableTotalSize' => 'required|integer',
+            'resumableIdentifier' => 'required|string',
+            'resumableFilename' => 'required|string',
+            'resumableRelativePath' => 'required|string',
+        ]);
         // Verifica se o módulo pertence a uma disciplina do usuário
         if (!Auth::user()->disciplines()->whereHas('modules', function ($query) use ($module_id) {
             $query->where('id', $module_id);
@@ -99,7 +115,7 @@ class LessonUploadController extends Controller
                 "hash_name" => $fileName,
                 "path_file" => self::VIDEO_STORAGE_PATH . '/' . $fileName, // Caminho relativo ao disco 'private'
                 "title" => $title,
-                "description" => "Descrição teste para o vídeo $fileName",
+                "description" => $request->input('description', ''), //"Descrição teste para o vídeo $fileName",
                 "module_id" => $module_id,
                 "user_id" => Auth::id(),
             ]);
@@ -114,7 +130,11 @@ class LessonUploadController extends Controller
             return response()->json([
                 'path' => $streamUrl,
                 'filename' => $fileName,
+                'success' => true,
+                'lesson_id' => $lesson->id,
+                'module_id' => $module_id
             ]);
+
         }
 
         // Retorna o progresso do upload

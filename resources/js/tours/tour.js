@@ -4,13 +4,17 @@ document.addEventListener("alpine:init", () => {
         loading: false,
         pages: [
             {
+                exact:true,
+                isDynamic: false,
                 path: "/app/teacher",
                 tourModule: () => import("./home"),
                 tours: ["HomeTour"],
             },
             {
+                exact:true,
+                isDynamic: false,
                 path: "/app/teacher/discipline",
-                tourModule: () => import("./disciplines"),
+                tourModule: () => import("./discipline"),
                 tours: [
                     "StartTourCreateDiscipline",
                     "StartTourEditDiscipline",
@@ -19,6 +23,17 @@ document.addEventListener("alpine:init", () => {
                     "StartTourManagerDisciplineContent"
                 ],
             },
+            {
+                exact: false,
+                path: "/app/teacher/discipline",
+                tourModule: () => import("./discipline_content"),
+                tours: [
+                    "StartTourDisciplineCreateContent",
+                    "StartTourDisciplineCreateContentUploadBlock",
+                    "StartTourCreateActivitTask"
+                ],
+                isDynamic: true
+            }
         ],
         cancelOptionsTourPage() {
             this.openMai = false;
@@ -26,33 +41,60 @@ document.addEventListener("alpine:init", () => {
         async initTour() {
             this.loading = true;
             const currentPath = window.location.pathname.trim();
-            const uuidRegex =
-                /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            console.log("Current Path:", currentPath);
+
             for (const page of this.pages) {
-                const isExactMatch = currentPath === page.path;
-                const isDynamicMatch =
-                    currentPath.startsWith(page.path + "/") &&
-                    uuidRegex.test(currentPath.substring(page.path.length + 1));
-                if (isExactMatch || isDynamicMatch) {
+                console.log("Verificando página:", page.path, "Exact:", page.exact, "Dynamic:", page.isDynamic);
+                if (page.exact && currentPath === page.path) {
+                    console.log("Correspondência exata encontrada:", page.path);
                     this.openMai = true;
                     try {
                         const tourModule = await page.tourModule();
+                        console.log("Módulo carregado:", tourModule);
                         return { module: tourModule, tours: page.tours };
                     } catch (error) {
-                        console.error("no catch", error);
+                        console.error("Erro ao carregar tour:", error);
                         return null;
                     } finally {
-                        this.loading = false; // Desativa o indicador de carregamento
+                        this.loading = false;
+                    }
+                } else if (page.isDynamic && currentPath.startsWith(page.path + "/")) {
+                    const possibleUuid = currentPath.substring(page.path.length + 1);
+                    console.log("Possible UUID:", possibleUuid, "Valid:", uuidRegex.test(possibleUuid));
+                    if (uuidRegex.test(possibleUuid)) {
+                        console.log("Correspondência dinâmica encontrada com UUID:", possibleUuid);
+                        this.openMai = true;
+                        try {
+                            const tourModule = await page.tourModule();
+                            console.log("Módulo dinâmico carregado:", tourModule);
+                            return { module: tourModule, tours: page.tours, uuid: possibleUuid };
+                        } catch (error) {
+                            console.error("Erro ao carregar tour dinâmico:", error);
+                            return null;
+                        } finally {
+                            this.loading = false;
+                        }
                     }
                 }
             }
+
+            // Movido para fora do loop
+            console.log("Nenhuma correspondência encontrada para o caminho:", currentPath);
+            this.loading = false;
+            return null;
         },
         async start(tourName) {
             const tourData = await this.initTour();
-            if (!tourData && !tourData.module[tourName]) {
-                console.error(`Função de tour "${tourName}" não encontrada`);
+            if (!tourData || !tourData.module[tourName]) {
+                console.error(`Tour "${tourName}" não encontrado`);
+                return;
             }
-            tourData.module[tourName]();
+            try {
+                tourData.module[tourName](tourData.uuid);
+            } catch (error) {
+                console.error(`Erro ao iniciar o tour "${tourName}":`, error);
+            }
         },
     });
 });

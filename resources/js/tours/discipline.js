@@ -1,3 +1,4 @@
+import { StartTourDisciplineCreateContent } from "./discipline_content";
 import { AddButtonActions, configDriver,startDriverTour } from "./utils";
 export async function StartTourCreateDiscipline() {
     let store = Alpine.store("tourguide");
@@ -9,7 +10,7 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#${newDisciplineButton.id}`,
                 popover: {
-                    description: `<h2>Criar uma disciplina</h2>`,
+                    description: `<h2>Vou clicar no botão "Disciplina +"</h2>`,
                     showButtons: [""],
                 },
                 onHighlighted: async (el) => {
@@ -42,7 +43,7 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#discipline-input-description`,
                 popover: {
-                    description: "Adicione o titulo da disciplina",
+                    description: "Adicione o descrição da disciplina",
                     onPopoverRender: (popover, { config, state }) => {
                         const actions = AddButtonActions(
                             popover,
@@ -59,7 +60,7 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#discipline-save`,
                 popover: {
-                    description: `Clique em 'Registrar' para salver ou 'Cancelar' para cancelar o registro.`,
+                    description: `Clique em 'Registrar' para salvar ou 'Cancelar' para cancelar o registro.`,
                     onPopoverRender: (popover, { config, state }) => {
                         const actions = AddButtonActions(
                             popover,
@@ -73,6 +74,7 @@ export async function StartTourCreateDiscipline() {
                     },
                 },
                 onHighlighted: async (el) => {
+                    let disciplineIdToManager = null;
                     const toCloseActions = () => {
                         Livewire.dispatch("to-close-create");
                         store.openMai = false;
@@ -84,7 +86,60 @@ export async function StartTourCreateDiscipline() {
                         console.error("element not found", btnCancel);
                     }
                     btnCancel.addEventListener("click", toCloseActions);
-                    btnCreate.addEventListener("click", toCloseActions);
+                    /**
+                     * Esse codigo aqui é apenas para o video do de apresentção
+                     * depois devemos rever as funcionalidades
+                     */
+                    btnCreate.addEventListener("click", async () =>{
+                        await Livewire.dispatch("to-close-create");
+                        store.openMai = false;
+                        Livewire.on('send-id-discipline', async (event) => {
+                            console.log('evento ocorrido', event.discipline_id)
+                            disciplineIdToManager = event.discipline_id
+                            await driverObj.destroy();
+                            await new Promise((resolve) => setTimeout(resolve, 2000))
+                            const continueStepe = [
+                                {
+                                    element: `#discipline-${disciplineIdToManager}`,
+                                    popover: {
+                                        description: `<div class="p-4"><p class="text-base">Agora vamos adiconar conteudo a esse disciplina</p></div>`,
+                                        side: "bottom",
+                                        align: "start",
+                                        showButtons:['']
+                                    },
+                                    onHighlighted: async (el) => {
+                                        await new Promise((resolve) => setTimeout(resolve, 3000));
+                                        //.style.zIndex = "0";
+                                        await driverObj.moveNext();
+                                    }
+                                },
+                                {
+                                    element: `#discipline-manager-content-${disciplineIdToManager}`,
+                                    popover: {
+                                        description: `<div class="p-4"><p class="text-base">Vou clicar aqui para gerenciar a disciplina</p></div>`,
+                                        side: "bottom",
+                                        align: "start",
+                                        showButtons:['']
+                                    },
+                                    onHighlighted: async (el) => {
+                                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                                        el.click();
+                                        //await store.initTour()
+                                        await driverObj.destroy()
+                                        //await new Promise((resp))
+                                        await Livewire.dispatch('to-teste-continue-created')
+                                    }
+                                },
+                            ];
+                            // Cria um novo tour com os passos atualizados
+                            const updatedDriverObj = drivertour({
+                                ...configDriver,
+                                steps:  continueStepe,
+                            });
+                            //Inicia o novo tour
+                            await updatedDriverObj.drive();
+                        })
+                    });
                 },
             },
         ],
@@ -382,7 +437,7 @@ export async function StartTourDeleteDiscipline() {
                                             el.classList.add('driver-active-element')
                                         }
                                     },
-                                    
+
                                     {
                                         element: `#${disciplineDeleteActions}`, // Seleciona o elemento com base no ID
                                         popover: {
@@ -450,7 +505,7 @@ export async function StartTourSearchDiscipline(){
                                 store.openMai = true;
                             });
                         }
-                    },                   
+                    },
                 }
             ],
         });

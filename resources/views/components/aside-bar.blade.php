@@ -1,39 +1,77 @@
-    <aside class="fixed left-0 z-30 w-1/6 min-h-screen px-3 py-5 bg-white top-20 dark:bg-slate-900">
-        <div class="flex flex-col items-center gap-3">
+@php
+    $itemsMenu = [
+        [
+            'icon' => 'o-home',
+            'route' => route('teacher.home'),
+            'label' => 'home',
+            'badge' => null,
+        ],
+        [
+            'icon' => 'o-academic-cap',
+            'route' => route('teacher.discipline'),
+            'label' => 'conteudos',
+            'badge' => null,
+        ],
+        [
+            'icon' => 'o-chat-bubble-bottom-center',
+            'route' => route('teacher.messages'),
+            'label' => 'Chat',
+            'badge' => ['value' => 2, 'class' => 'badge-error badge-dash text-white'],
+        ],
+        [
+            'icon' => 'o-users',
+            'route' => '#', //route('teacher.messages'),
+            'label' => 'Turmas',
+            //'badge' => ['value' => 2, 'class' => 'badge-error badge-dash text-white'],
+        ],
+        [
+            'icon' => 'o-chat-bubble-left-right',
+            'route' => '#', //route('teacher.messages'),
+            'label' => 'Forum',
+        ],
+    ];
+@endphp
+
+<aside x-data="sidebar"
+    class="fixed left-0 bottom-0 z-30 flex flex-col justify-between top-[80px] h-[calc(100%-80px)] bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out"
+    :class="$store.expandedSidebar.expanded ? 'w-1/6' : 'w-20'">
+    <!-- Conteúdo superior -->
+    <div class="py-5">
+        <div class="flex flex-col items-center justify-center gap-2">
             @if (!Auth::user()->profile?->avatar)
-                <livewire:teacher.components.avatar initiais="{{ Auth::user()->initialLetterToAvatar() }}">
+                <livewire:pages.teacher.components.avatar initiais="{{ Auth::user()->initialLetterToAvatar() }}"
+                    class="w-20 h-20">
                 @else
-                    <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}" class="w-20 h-20 rounded-full" />
+                    <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}"
+                        :class="$store.expandedSidebar.expanded ? 'w-20 h-20' : 'w-12 h-12'"
+                        class="transition-all duration-300 ease-in-out border-2 border-gray-200 rounded-full dark:border-slate-700" />
             @endif
-            <h4 class="font-semibold text-gray-800 capitalize">{{ Auth::user()->first_name }}</h4>
+            <h4 class="font-medium text-gray-600 capitalize dark:text-gray-200">{{ Auth::user()->first_name }}</h4>
         </div>
-        <div class="px-2 py-3">
-            <ul>
-                <li class="flex gap-4 py-4">
-                    <x-mary-icon name="o-home" />
-                    <a class="capitalize" wire.navigate href="{{ route('teacher.home') }}">home</a>
-                </li>
-                <li class="flex gap-4 py-4">
-                    <x-mary-icon name="o-academic-cap" outiline />
-                    <a class="capitalize" wire.navigate href="{{ route('teacher.discipline') }}">
-                        conteudos
-                    </a>
-                </li>
-                <li class="flex gap-4 py-4">
-                    <x-mary-icon name="o-envelope-open" outiline />
-                    <a class="capitalize" href="#">E-mails</a>
-                </li>
-                <li class="flex gap-4 py-4">
-                    <x-mary-icon name="o-users" outiline />
-                    <a class="capitalize" href="#">turmas</a>
-                </li>
-                <li class="flex gap-4 py-4">
-                    <x-mary-icon name="o-chat-bubble-left-right" outiline />
-                    <a class="capitalize" href="#">forum</a>
-                </li>
-            </ul>
-        </div>
-        <div class="px-2 py-3 relative top-5 border-t-[2px] w-full h-auto bottom-0 flex justify-center items-end">
-            <p class="text-sm text-center text-gray-600">By Sos Solutions</p>
-        </div>
-    </aside>
+    </div>
+
+    <!-- Área do menu com scroll overflow-y-auto -->
+    <div class="flex-1 py-3">
+        <nav>
+            @foreach ($itemsMenu as $menu)
+                <a class="flex gap-4 py-4 text-gray-600 capitalize transition-all duration-300 ease-in-out dark:text-gray-200"
+                    :class="{
+                        'justify-center': !$store.expandedSidebar.expanded,
+                        'text-white bg-blue-400 dark:bg-slate-800': isActive(
+                            '{{ parse_url($menu['route'], PHP_URL_PATH) }}')
+                    }"
+                    href="{{ $menu['route'] }}" wire:navigate>
+                    <x-mary-icon name="{{ $menu['icon'] }}" />
+                    <span x-show="$store.expandedSidebar.expanded" class="transition-all duration-300 ease-in-out">
+                        {{ $menu['label'] }}
+                    </span>
+                </a>
+            @endforeach
+        </nav>
+    </div>
+
+    <!-- Rodapé fixo no final -->
+    <div class="w-full py-3 dark:bg-slate-900">
+        <p class="text-sm text-center text-gray-600 dark:text-gray-400">Sos Solutions</p>
+    </div>
+</aside>

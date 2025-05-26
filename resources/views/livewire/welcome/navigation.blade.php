@@ -6,7 +6,7 @@
         </a>
     @else
         <a href="{{ route('login') }}" class="px-3 py-2 text-gray-700 rounded-md">
-            Log in
+            Log inn
         </a>
 
         @if (Route::has('register'))

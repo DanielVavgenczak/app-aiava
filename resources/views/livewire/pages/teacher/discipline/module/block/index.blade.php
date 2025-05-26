@@ -29,8 +29,11 @@ new class extends Component {
     }
 }; ?>
 <x-mary-modal wire:model="open" class="" box-class="w-11/12 h-screen max-w-6xl verflow-y-visible">
+    <div>
+        <h2>Adicione os conteudos da aula</h2>
+    </div>
     <div class="px-2 py-4">
-        <x-mary-tabs wire:model="selectedTab" label-class="font-normal text-gray-600 uppercase ">
+        <x-mary-tabs wire:model="selectedTab" label-class="font-normal text-gray-600 ">
             <x-mary-tab name="upload-computed-tab" label="Upload pelo computador">
                 <livewire:pages.teacher.discipline.module.block.upload :module_id="$module_id" />
             </x-mary-tab>
@@ -45,7 +48,7 @@ new class extends Component {
             </x-mary-tab>
         </x-mary-tabs>
     </div>
-    <div class="absolute bg-red-200 bottom-3">
+    {{-- <div class="absolute bg-red-200 bottom-3">
         <button @click="$wire.close()" class="px-2 py-3 text-white capitalize bg-red-500 rounded-md">cancelar</button>
-    </div>
+    </div> --}}
 </x-mary-modal>
