@@ -212,7 +212,7 @@ new #[Layout('layouts.app')] class extends Component {
                                     <x-mary-button label="Bloco" icon-right="o-plus"
                                         id="block-open-new-block-{{ $module->id }}"
                                         class="text-sm text-white capitalize bg-pink-600 tour-open-new-block-to-click"
-                                        x-on:click="$dispatch('open-create-task', { open: true })" responsive />
+                                        x-on:click="$dispatch('open-new-block-to-module', { open: true })" responsive />
                                     <livewire:pages.teacher.discipline.module.block.index :module_id="$module->id"
                                         :title="$module->title" wire:key="block-index-{{ $module->id }}" />
                                     @forelse ($module->lessons as $lesson)

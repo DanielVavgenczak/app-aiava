@@ -574,7 +574,6 @@ export function StartTourCreateActivitTask() {
                                                     "click",
                                                     async () => {
                                                         await updateDriveToRadioQuestion.moveNext([1]);
-
                                                     },
                                                 );
                                             },
