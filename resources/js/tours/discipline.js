@@ -3,20 +3,25 @@ import { AddButtonActions, configDriver,startDriverTour } from "./utils";
 export async function StartTourCreateDiscipline() {
     let store = Alpine.store("tourguide");
     store.openMai = false;
-    const newDisciplineButton = document.querySelector("#discipline-create");
+    const newDisciplineButton = document.querySelector("button#discipline-create");
+    if(!newDisciplineButton.id){
+        console.error("não encontramos ela aqui");
+        return;
+    }
     const driverObj = drivertour({
         ...configDriver,
         steps: [
             {
                 element: `#${newDisciplineButton.id}`,
                 popover: {
-                    description: `<h2>Vou clicar no botão "Disciplina +"</h2>`,
+                    description: `Vou clicar no botão "Disciplina +"`,
                     showButtons: [""],
                 },
                 onHighlighted: async (el) => {
                     await new Promise((resolve) => setTimeout(resolve, 3000));
                     if (!newDisciplineButton) {
                         console.error("não encontramos ela aqui");
+                        return;
                     }
                     newDisciplineButton.click();
                     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -41,26 +46,9 @@ export async function StartTourCreateDiscipline() {
                 },
             },
             {
-                element: `#discipline-input-description`,
-                popover: {
-                    description: "Adicione o descrição da disciplina",
-                    onPopoverRender: (popover, { config, state }) => {
-                        const actions = AddButtonActions(
-                            popover,
-                            "voltar ao inicio",
-                        );
-                        actions.addEventListener("click", () => {
-                            Livewire.dispatch("to-close-create");
-                            driverObj.destroy();
-                            store.openMai = true;
-                        });
-                    },
-                },
-            },
-            {
                 element: `#discipline-save`,
                 popover: {
-                    description: `Clique em 'Registrar' para salvar ou 'Cancelar' para cancelar o registro.`,
+                    description: `Clique em 'Cadastrar' para salvar ou 'Cancelar' para cancelar o registro.`,
                     onPopoverRender: (popover, { config, state }) => {
                         const actions = AddButtonActions(
                             popover,
@@ -84,6 +72,7 @@ export async function StartTourCreateDiscipline() {
                     const btnCreate = el.querySelector("#create-confirm");
                     if (!btnCancel || !btnCreate) {
                         console.error("element not found", btnCancel);
+                        return;
                     }
                     btnCancel.addEventListener("click", toCloseActions);
                     /**
@@ -94,7 +83,6 @@ export async function StartTourCreateDiscipline() {
                         await Livewire.dispatch("to-close-create");
                         store.openMai = false;
                         Livewire.on('send-id-discipline', async (event) => {
-                            console.log('evento ocorrido', event.discipline_id)
                             disciplineIdToManager = event.discipline_id
                             await driverObj.destroy();
                             await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -102,7 +90,7 @@ export async function StartTourCreateDiscipline() {
                                 {
                                     element: `#discipline-${disciplineIdToManager}`,
                                     popover: {
-                                        description: `<div class="p-4"><p class="text-base">Agora vamos adiconar conteudo a esse disciplina</p></div>`,
+                                        description: `Agora vamos adiconar conteudo a esse disciplina`,
                                         side: "bottom",
                                         align: "start",
                                         showButtons:['']
@@ -116,7 +104,7 @@ export async function StartTourCreateDiscipline() {
                                 {
                                     element: `#discipline-manager-content-${disciplineIdToManager}`,
                                     popover: {
-                                        description: `<div class="p-4"><p class="text-base">Vou clicar aqui para gerenciar a disciplina</p></div>`,
+                                        description: `Vou clicar aqui para gerenciar a disciplina`,
                                         side: "bottom",
                                         align: "start",
                                         showButtons:['']
@@ -124,9 +112,7 @@ export async function StartTourCreateDiscipline() {
                                     onHighlighted: async (el) => {
                                         await new Promise((resolve) => setTimeout(resolve, 1000));
                                         el.click();
-                                        //await store.initTour()
                                         await driverObj.destroy()
-                                        //await new Promise((resp))
                                         await Livewire.dispatch('to-teste-continue-created')
                                     }
                                 },
@@ -157,9 +143,9 @@ export async function StartTourEditDiscipline() {
                 {
                     element: `#disciplines-all`,
                     popover: {
-                        description: `<div class="p-4 "><p class="text-base">Selecione a disciplina que deseja editar</p></div>`,
+                        description: `Selecione a disciplina que deseja editar`,
                         onPopoverRender: (popover, { config, state }) => {
-                            const actions = AddButtonActions(popover, "voltar ao inicio");
+                            const actions = AddButtonActions(popover, "Voltar ao inicio");
                             actions.addEventListener('click', async () => {
                                 driverObj.destroy();
                                 const removeIndex = document.querySelectorAll("div.content-discipline");
@@ -189,7 +175,6 @@ export async function StartTourEditDiscipline() {
                                 const dataId = discipline.getAttribute('data-tour');
                                 const tourOperations = `tour-operations-${dataId}`
                                 const disciplinaInputEditTitle = `discipline-edit-form-title-${dataId}`
-                                const disciplineInputEditDescription = `discipline-edit-form-description-${dataId}`
                                 const disciplineFormActions = `discipline-edit-form-actions-${dataId}`
                                 // Destrói o tour atual
                                 await driverObj.destroy();
@@ -198,7 +183,7 @@ export async function StartTourEditDiscipline() {
                                     {
                                         element: `#${disciplineId}`,
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Vamos iniciar o processo de edição.</p></div>`,
+                                            description: `Vamos iniciar o processo de edição.`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
@@ -212,7 +197,7 @@ export async function StartTourEditDiscipline() {
                                     {
                                         element: `#${tourOperations}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Vamos abrir o formulário de edição</p></div>`,
+                                            description: `Vamos abrir o formulário de edição`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
@@ -227,9 +212,9 @@ export async function StartTourEditDiscipline() {
                                         }
                                     },
                                     {
-                                        element: `#discipline-edit-${dataId}`,
+                                        element: `.tour-discipline-edit-${dataId}`,
                                         popover: {
-                                            description: `Clique aqui para editar a disciplina.`,
+                                            description: `Vou abrir o formulário para editar a disciplina.`,
                                             side: "right",
                                             align: "center",
                                             showButtons:['']
@@ -260,26 +245,7 @@ export async function StartTourEditDiscipline() {
                                         }
                                     },
                                     {
-                                        element: `#${disciplineInputEditDescription}`, // Seleciona o elemento com base no ID
-                                        popover: {
-                                            description: "Mude o titulo para o qual deseja, ou então vá até o campo descrição clicando em Proximo",
-                                            side: "top",
-                                            align: "start",
-                                            onPopoverRender: (popover, { config, state }) => {
-                                                const actions =  AddButtonActions(popover, "voltar ao inicio")
-                                                actions.addEventListener('click', async () => {
-                                                    Livewire.dispatch('to-close')
-                                                    await driverObj.destroy();
-                                                    store.openMai = true;
-                                                })
-                                            }
-                                        },
-                                        onHighlighted: async(el) => {
-                                            el.classList.add('driver-active-element')
-                                        }
-                                    },
-                                    {
-                                        element: `#${disciplineFormActions}`, // Seleciona o elemento com base no ID
+                                        element: `#${disciplineFormActions}`,
                                         popover: {
                                             description: "Clique em 'Cancelar' para desistir ou 'Editar' para salvar",
                                             side: "top",
@@ -304,7 +270,6 @@ export async function StartTourEditDiscipline() {
                                             save.addEventListener('click', close)
                                         }
                                     }
-                                    // Adicione mais passos conforme necessário
                                 ];
 
                                 // Cria um novo tour com os passos atualizados
@@ -336,9 +301,9 @@ export async function StartTourDeleteDiscipline() {
                 {
                     element: `#disciplines-all`,
                     popover: {
-                        description: `<div class="p-4 "><p class="text-base">Selecione a disciplina que deseja Deletar</p></div>`,
+                        description: `Selecione a disciplina que deseja Deletar`,
                         onPopoverRender: (popover, { config, state }) => {
-                            const actions = AddButtonActions(popover, "voltar ao inicio");
+                            const actions = AddButtonActions(popover, "Voltar ao inicio");
                             actions.addEventListener('click', async () => {
                                 driverObj.destroy();
                                 const removeIndex = document.querySelectorAll("div.content-discipline");
@@ -366,7 +331,7 @@ export async function StartTourDeleteDiscipline() {
 
                                 const disciplineId = discipline.getAttribute('id');
                                 const dataId = discipline.getAttribute('data-tour');
-                                const tourOperations = `tour-operations-${dataId}`
+                                const tourOperations = `#tour-operations-${dataId}`
                                 const readText = `discipline-delete-text-${dataId}`
                                 const disciplineDeleteActions = `discipline-delete-actions-${dataId}`
                                 // Destrói o tour atual
@@ -376,7 +341,7 @@ export async function StartTourDeleteDiscipline() {
                                     {
                                         element: `#${disciplineId}`,
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Vamos iniciar o processo de exclusão.</p></div>`,
+                                            description: `Vou iniciar o processo de exclusão.`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
@@ -388,16 +353,16 @@ export async function StartTourDeleteDiscipline() {
                                         }
                                     },
                                     {
-                                        element: `#${tourOperations}`, // Seleciona o elemento com base no ID
+                                        element: `${tourOperations}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Vamos abrir o modal de exlusão0</p></div>`,
+                                            description: `Vou abrir o modal de exclusão`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
                                         },
                                         onHighlighted: async (el) => {
                                             await new Promise((resolve) => setTimeout(resolve, 3000));
-                                            const dropDownClick = document.querySelector(`#${tourOperations}`)
+                                            const dropDownClick = document.querySelector(`${tourOperations}`)
                                             if(!dropDownClick) return;
                                             await dropDownClick.click()
                                             el.style.zIndex = "0";
@@ -405,7 +370,7 @@ export async function StartTourDeleteDiscipline() {
                                         }
                                     },
                                     {
-                                        element: `#discipline-delete-${dataId}`,
+                                        element: `.tour-discipline-delete-${dataId}`,
                                         popover: {
                                             description: `Vamos abrir a modal de deletar`,
                                             side: "right",
@@ -421,7 +386,7 @@ export async function StartTourDeleteDiscipline() {
                                     {
                                         element: `#${readText}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: "Leia o texto para continuar",
+                                            description: "Tem certeza que deseja deletar essa disciplina?",
                                             side: "top",
                                             align: "start",
                                             onPopoverRender: (popover, { config, state }) => {
@@ -495,7 +460,7 @@ export async function StartTourSearchDiscipline(){
                 {
                     element: `#discipline-input-search`,
                     popover: {
-                        description: `<div class="p-4 "><p class="text-base">Digite a disciplina que deseja filtrar</p></div>`,
+                        description: `Digite a disciplina que deseja filtrar`,
                         onPopoverRender: (popover, { config, state }) => {
                             const actions = AddButtonActions(popover, "voltar ao inicio");
                             actions.addEventListener('click', async () => {
@@ -523,7 +488,7 @@ export async function StartTourManagerDisciplineContent(){
                 {
                     element: `#disciplines-all`,
                     popover: {
-                        description: `<div class="p-4 "><p class="text-base">Selecione a disciplina que deseja gerenciar</p></div>`,
+                        description: `Selecione a disciplina que deseja gerenciar`,
                         onPopoverRender: (popover, { config, state }) => {
                             const actions = AddButtonActions(popover, "voltar ao inicio");
                             actions.addEventListener('click', async () => {
@@ -553,16 +518,14 @@ export async function StartTourManagerDisciplineContent(){
 
                                 const disciplineId = discipline.getAttribute('id');
                                 const dataId = discipline.getAttribute('data-tour');
-
                                 // Destrói o tour atual
                                 await driverObj.destroy();
-
                                 // Cria um novo tour com os passos atualizados
                                 const secondStep = [
                                     {
                                         element: `#${disciplineId}`,
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Inicar opções de gerenciamento</p></div>`,
+                                            description: `Inicar opções de gerenciamento`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
@@ -576,7 +539,7 @@ export async function StartTourManagerDisciplineContent(){
                                     {
                                         element: `#discipline-manager-content-${dataId}`,
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Clicar no titulo da disciplina</p></div>`,
+                                            description: `Clicar no titulo da disciplina`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
@@ -588,15 +551,12 @@ export async function StartTourManagerDisciplineContent(){
                                             await updatedDriverObj.destroy()
                                         }
                                     },
-
                                 ];
-
                                 // // Cria um novo tour com os passos atualizados
                                 const updatedDriverObj = drivertour({
                                     ...configDriver,
                                     steps: secondStep,
                                 });
-
                                 // Inicia o novo tour
                                 await updatedDriverObj.drive();
                             });

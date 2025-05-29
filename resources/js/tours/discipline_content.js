@@ -30,10 +30,8 @@ Livewire.on("to-teste-continue-created", async () => {
 const testeDoId = null;
 
 export async function StartTourDisciplineCreateContent() {
-    console.log("executando por criar disciplina");
     let store = Alpine.store("tourguide");
     store.openMai = false;
-
     return new Promise(async (resolve) => {
         const btnCreateLesson = document.querySelector(
             "#content-lesson-create",

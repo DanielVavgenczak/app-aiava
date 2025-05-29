@@ -293,8 +293,11 @@ new class extends Component {
                 <div class="mt-4">
                     @if ($questionTypeSelected === 'radio')
                         <div class="flex flex-col gap-3">
-                            <div class="text-[15px] text-gray-800 font-normal tracking-wide">Digite uma
-                                opção</div>
+                            <div
+                                class="text-[15px] text-gray-800 font-normal tracking-wide flex justify-between items-center">
+                                <span>Digite uma opção</span>
+                                <span class="text-sm text-gray-600">minimo 3 questões</span>
+                            </div>
                             <div class="flex flex-col gap-2">
                                 <div class="flex gap-2">
                                     <x-text-input wire:model.live.debounce.0ms="newOptionText"

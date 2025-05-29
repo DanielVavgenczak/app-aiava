@@ -66,7 +66,7 @@ new #[Layout('layouts.guest')] class extends Component {
             @if (Route::has('password.request'))
                 <a class="text-sm text-gray-600 underline rounded-md hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     href="{{ route('password.request') }}" wire:navigate>
-                    {{ __('Não lembro a minha senha') }}
+                    {{ __('Esqueceu a senha?') }}
                 </a>
             @endif
 

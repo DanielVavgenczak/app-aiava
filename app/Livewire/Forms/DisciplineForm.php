@@ -9,7 +9,9 @@ use Livewire\Form;
 
 class DisciplineForm extends Form
 {
-    #[Validate(rule: 'required|min:3')]
+
+    #[Validate('required', message: 'O titulo do disciplina é obrigatório!')]
+    #[Validate('min:3', message: 'A disciplina deve ter no minimo 3 caracteres')]
     public string $title = '';
 
     public ?string $disciplineId = null;

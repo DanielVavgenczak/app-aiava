@@ -60,7 +60,7 @@ new class extends Component {
             <div class="my-4">
                 <div>
                     <x-mary-file wire:model="avatar" accept="image/png, image/jpeg, image/jpg">
-                        <img src="{{ asset('storage/' . $user->profile->avatar) ?? asset('images/user-noavatar.png') }}"
+                        <img src="{{ asset('storage/' . $user->profile?->avatar) ?? asset('images/user-noavatar.png') }}"
                             class="h-32" />
                     </x-mary-file>
                 </div>

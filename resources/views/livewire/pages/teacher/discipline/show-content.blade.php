@@ -105,12 +105,6 @@ new #[Layout('layouts.app')] class extends Component {
             }
         }
     }
-    /**
-     * Quinto andar
-     * 41 998282562
-     * 41
-     *
-     *  **/
     public function openModalNewLesson()
     {
         $this->dispatch('open-new-block-to-module', true);
@@ -136,7 +130,6 @@ new #[Layout('layouts.app')] class extends Component {
     #[On('task-deleted')]
     public function refreshShowContent()
     {
-        $this->js("console.log('E para carregar os componentes')");
         $this->success('Atividade excluida com sucesso!', icon: 'o-check', css: 'bg-pink-500 text-base-100');
         return $this->redirect(route('teacher.discipline.show', $this->discipline), navigate: true);
     }
@@ -166,13 +159,16 @@ new #[Layout('layouts.app')] class extends Component {
                 </div>
                 <div>
                     @if ($discipline->modules->count() > 0)
-                        <x-mary-button class="bg-pink-600 text-gray-50 open-new-lesson rounded-lg"
-                            id="content-lesson-create" label="Atividade / Avaliação" icon-right="o-document-duplicate"
-                            wire:click="openModalTask" />
+                        <button class="btn bg-pink-600 text-gray-50 open-new-lesson rounded-lg"
+                            id="content-lesson-create" wire:click="openModalTask">
+                            <x-mary-icon name="o-document-duplicate" /> Atividade / Avaliação
+                        </button>
                     @endif
-                    <x-mary-button class="text-sm bg-pink-600 text-gray-50 open-new-lesson rounded-lg"
-                        id="content-lesson-create" label="Nova aula"
-                        x-on:click="$dispatch('open-modal-module',{open: true})" icon-right="o-plus" />
+                    <button class="btn bg-pink-600 text-gray-50 open-new-lesson rounded-lg" id="content-lesson-create"
+                        x-on:click="$dispatch('open-modal-module',{open: true})">
+                        <span>Nova aula</span>
+                        <x-mary-icon name="o-plus" />
+                    </button>
 
                 </div>
             </div>
@@ -200,19 +196,21 @@ new #[Layout('layouts.app')] class extends Component {
                                     <div id="content-lesson-add-new-block-{{ $module->id }}"
                                         class="flex items-center justify-between w-full cursor-pointer open-collapse-btn">
                                         <span
-                                            class="text-[15px] font-normal text-gray-700 capitalize relative left-[20%]">{{ $module->title }}</span>
-                                        <x-mary-button icon-right="o-chevron-down"
-                                            class="bg-white open-new-block-lesson"
-                                            id="open-accordion-block-{{ $module->id }}"
-                                            x-on:click="openCollapseId === '{{ $module->id }}' ? openCollapseId = null : openCollapseId = '{{ $module->id }}'; isExpanded = !isExpanded" />
+                                            class="text-[15px] font-normal text-gray-700 capitalize relative left-[2%]">{{ $module->title }}</span>
+                                        <button class="bg-white open-new-block-lesson"
+                                            class="tour-open-accordion-block-{{ $module->id }}"
+                                            x-on:click="openCollapseId === '{{ $module->id }}' ? openCollapseId = null : openCollapseId = '{{ $module->id }}'; isExpanded = !isExpanded">
+                                            <x-mary-icon name="o-chevron-down" />
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-3 p-4 bg-gray-100"
                                     x-show="openCollapseId === '{{ $module->id }}'" x-collapse>
-                                    <x-mary-button label="Bloco" icon-right="o-plus"
-                                        id="block-open-new-block-{{ $module->id }}"
-                                        class="text-sm text-white capitalize bg-pink-600 tour-open-new-block-to-click"
-                                        x-on:click="$dispatch('open-new-block-to-module', { open: true })" responsive />
+                                    <button id="block-open-new-block-{{ $module->id }}"
+                                        class="btn text-white capitalize bg-pink-600 tour-open-new-block-to-click"
+                                        x-on:click="$dispatch('open-new-block-to-module', { open: true })">
+                                        <x-mary-icon name="o-plus" /> bloco
+                                    </button>
                                     <livewire:pages.teacher.discipline.module.block.index :module_id="$module->id"
                                         :title="$module->title" wire:key="block-index-{{ $module->id }}" />
                                     @forelse ($module->lessons as $lesson)
@@ -296,7 +294,6 @@ new #[Layout('layouts.app')] class extends Component {
                 <!-- options show !-->
                 @if (!$openFormNewLesson)
                     <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
-
                         <x-mary-button
                             class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                             label="Criar nova aula?"

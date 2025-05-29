@@ -50,7 +50,7 @@ new class extends Component {
             $this->resetState();
             sleep(3);
         } catch (Exception $ex) {
-            dd('Dei au', $ex->getMessage());
+            dd('Error:', $ex->getMessage());
         }
     }
     private function resetState()
@@ -62,17 +62,34 @@ new class extends Component {
 }; ?>
 
 <x-mary-modal wire:model="openModalModule">
-    <div class="mb-9" id="discipline-delete-text-{{ $id ?? '' }}">
-        <h3 class="mb-5 text-lg font-medium text-gray-700">Deletar essa há disciplina: {{ $title }} </h3>
+    <div class="mb-9 flex flex-col items-center gap-3 p-5" id="discipline-delete-text-{{ $id ?? '' }}"
+        wire:loading.remove>
+        <div class="p-5 rounded-full bg-red-100">
+            <x-mary-icon name="o-trash" class="text-red-700 w-6 h-6" />
+        </div>
+        <p class="mb-3 tracking-wide text-[18px] font-medium text-red-700">
+            {{ $title }}
+        </p>
     </div>
-    <div id="discipline-delete-actions-{{ $id ?? '' }}">
-        <x-mary-button label="Cancel" id="discipline-delete-cancel-{{ $id ?? '' }}"
-            @click="$wire.openModalModule = false" class="text-gray-500 btn-ghost" />
-        <x-mary-button label="Sim" class="btn-error text-gray-50" @click="$wire.delete"
-            id="discipline-delete-send-{{ $id ?? '' }}" />
-        <div wire:loading wire:target="delete" class="flex items-center gap-2">
+    <div class=" flex flex-col items-center text-center gap-3 p-5 w-full" wire:loading wire:target="delete">
+        <div class="mb-4">
+            <x-mary-loading class="progress-error w-7 h-7" />
+        </div>
+        <p class="text-[16px] text-pink-600 tracking-wide">Deletando</p>
+    </div>
+
+    <div id="discipline-delete-actions-{{ $id ?? '' }}" class="self-end" wire:loading.remove>
+        <button id="discipline-delete-cancel-{{ $id ?? '' }}" x-on:click="$wire.openModalModule = false"
+            class="text-gray-500 btn capitalize">
+            cancelar
+        </button>
+        <button class="btn text-red-600 capitalize" x-on:click="$wire.delete" wire:loading.remove
+            id="discipline-delete-send-{{ $id ?? '' }}">
+            Deletar
+        </button>
+        {{-- <div wire:loading wire:target="delete" class="flex items-center gap-2">
             <span class="text-sm text-pink-600 tracking-wide">Deletando</span>
             <x-mary-loading class=" text-pink-600 loading-dots" />
-        </div>
+        </div> --}}
     </div>
 </x-mary-modal>

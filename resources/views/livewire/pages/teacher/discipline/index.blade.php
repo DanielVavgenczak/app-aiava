@@ -52,9 +52,9 @@ new class extends Component {
 
     public function placeholder()
     {
-        return Blade::render('<div class="flex items-center justify-center gap-3 p-5 text-sm font-normal text-center text-gray-600 rounded">
-                <x-mary-icon name="c-arrow-path" class="w-5 h-5 animate-spin" />
-                <span>Carregando disciplinas...</span>
+        return Blade::render('<div class="flex flex-col items-center justify-center gap-3 p-5 text-sm font-normal text-center text-gray-600 rounded">
+                <x-mary-loading />
+                <span class="tracking-wider text-sm text-gray-600">Carregando disciplinas...</span>
             </div>');
     }
 }; ?>
@@ -62,12 +62,15 @@ new class extends Component {
     <livewire:pages.teacher.discipline.modals.create />
     <div class="flex items-center justify-between">
         @if ($disciplines->count() > 0)
-            <x-text-input placeholder="Pesquisar" wire:model.live="search" id="discipline-input-search" />
+            <x-text-input placeholder="Pesquisar" wire:model.live="search" id="discipline-input-search"
+                class="border-[1px] focus:border-pink-500 focus:outline focus:outline-pink-50 px-3 py-2 block  mt-1" />
         @else
             <span></span>
         @endif
-        <x-mary-button label="Disciplina" class="bg-pink-600 text-gray-50 discipline-new" id="discipline-create"
-            icon-right="o-plus" x-on:click="$dispatch('create-content-modal',{open:true})" />
+        <button class="btn bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center" id="discipline-create"
+            x-on:click="$dispatch('create-content-modal',{open:true})" mary:key="discipline-create-button">
+            <x-mary-icon name="o-plus" class="w-5 h-5" /> <span class="text-sm tracking-wide">Disciplina</span>
+        </button>
 
     </div>
     @if ($disciplines->count() > 0)
@@ -82,22 +85,21 @@ new class extends Component {
                             <x-slot:trigger id="tour-operations-{{ $discipline->id }}">
                                 <x-mary-button icon="o-ellipsis-vertical" class="bg-white border-none" />
                             </x-slot:trigger>
-                            <x-mary-menu-item title="Detalhes" class="text-gray-600"
-                                id="discipline-detais-{{ $discipline->id }}" icon="o-document-magnifying-glass"
-                                @click="$dispatch('details-content-modal', { id: '{{ $discipline->id }}' })" />
+                            <x-mary-menu-item title="Detalhes" class="text-gray-600" icon="o-document-magnifying-glass"
+                                x-on:click="$dispatch('details-content-modal', { id: '{{ $discipline->id }}' })"
+                                class="tour-discipline-details-{{ $discipline->id }}" />
                             <x-mary-menu-item title="Editar" class="text-gray-600" icon="o-pencil-square"
-                                id="discipline-edit-{{ $discipline->id }}"
-                                @click="$dispatch('edit-content-modal', { id: '{{ $discipline->id }}' })" />
+                                class="tour-discipline-edit-{{ $discipline->id }}"
+                                x-on:click="$dispatch('edit-content-modal', { id: '{{ $discipline->id }}' })" />
                             <x-mary-menu-item title="Deletar" class="text-gray-600"
-                                id="discipline-delete-{{ $discipline->id }}" icon="o-trash"
-                                @click="$dispatch('delete-module-modal', { id: '{{ $discipline->id }}' })" />
+                                class="tour-discipline-delete-{{ $discipline->id }}" icon="o-trash"
+                                x-on:click="$dispatch('delete-module-modal', { id: '{{ $discipline->id }}' })" />
                         </x-mary-dropdown>
                     </div>
                     <div class="p-6 text-center">
                         <a class="text-gray-600 hover:text-blue-600 content-title tracking-wide text-[15px] font-medium"
                             id="discipline-manager-content-{{ $discipline->id }}" wire:navigate
                             href="{{ route('teacher.discipline.show', $discipline) }}">{{ $discipline->title }}</a>
-
                     </div>
                 </div>
                 <livewire:pages.teacher.discipline.modals.details :discipline="$discipline" />
@@ -111,7 +113,6 @@ new class extends Component {
         </div>
     @endif
     <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
-
         <!-- Centralizando a div -->
         <div
             class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
@@ -119,27 +120,27 @@ new class extends Component {
                 <div class="flex justify-end">
                     <x-mary-button icon="o-x-mark"
                         class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
-                        @click="$store.tourguide.cancelOptionsTourPage()" />
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
                 <h2 class="text-lg font-normal text-gray-700">Você tem as seguintes opções:</h2>
             </div>
             <div class="flex items-center gap-3 p-4 bg-gray-100">
                 <x-mary-button
-                    class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Criar disciplina" @click="$store.tourguide.start('StartTourCreateDiscipline')" />
+                    class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                    label="Criar disciplina" x-on:click="$store.tourguide.start('StartTourCreateDiscipline')" />
                 @if ($disciplines->count() > 0)
                     <x-mary-button
-                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Pesquisar disciplina" @click="$store.tourguide.start('StartTourSearchDiscipline')" />
                     <x-mary-button
-                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Gerenciar conteudo"
                         @click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
                     <x-mary-button
-                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Editar: Titulo,Descrição" @click="$store.tourguide.start('StartTourEditDiscipline')" />
                     <x-mary-button
-                        class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                        class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Deletar disciplina" @click="$store.tourguide.start('StartTourDeleteDiscipline')" />
                 @endif
             </div>
