@@ -20,13 +20,13 @@
         ],
         [
             'icon' => 'o-users',
-            'route' => '#', //route('teacher.messages'),
+            'route' => route('teacher.classes'),
             'label' => 'Turmas',
             //'badge' => ['value' => 2, 'class' => 'badge-error badge-dash text-white'],
         ],
         [
             'icon' => 'o-chat-bubble-left-right',
-            'route' => '#', //route('teacher.messages'),
+            'route' => route('teacher.forum'),
             'label' => 'Forum',
         ],
     ];
@@ -54,7 +54,7 @@
     <div class="flex-1 py-3">
         <nav>
             @foreach ($itemsMenu as $menu)
-                <a class="flex gap-4 py-4 text-gray-600 capitalize transition-all duration-300 ease-in-out dark:text-gray-200"
+                <a class="flex gap-4 py-4 text-gray-600 capitalize transition-all duration-300 ease-in-out dark:text-gray-200 hover:text-blue-400"
                     :class="{
                         'justify-center': !$store.expandedSidebar.expanded,
                         'text-white bg-blue-400 dark:bg-slate-800': isActive(

@@ -145,38 +145,39 @@ new #[Layout('layouts.app')] class extends Component {
     <livewire:pages.teacher.discipline.module.new :disciplineId="$discipline->id" />
     <livewire:pages.teacher.discipline.module.task.modal-create :lessons="$discipline->modules" :disciplineId="$discipline->id" />
     <!-- modal new module -->
-    <div x-data="{ openCollapseId: null }" class="p-5 bg-white">
+    <div x-data="{ openCollapseId: null }" class="p-5 bg-white" data-tour="$discipline->id">
         <div class="h-screen">
             <div class="flex items-center justify-between mt-4 mb-10" x-data>
                 <div class="flex flex-col gap-4">
                     <h2 class="text-lg font-semibold text-gray-800 tracking-wider">
                         {{ $discipline->title }}
                     </h2>
-                    <input wire:model="search" placeholder="Pesquisar aula" icon="o-magnifying-glass"
-                        id="content-input-search"
-                        class="rounded-lg px-3 py-2 focus:outline-1 focus:border-pink-500  focus:outline-pink-500 border-[1px] border-gray-400 " />
 
+                    @if ($discipline->modules->count() > 0)
+                        <input wire:model="search" placeholder="Pesquisar aula" icon="o-magnifying-glass"
+                            id="content-input-search"
+                            class="rounded-lg px-3 py-2 focus:outline-1 focus:border-pink-500  focus:outline-pink-500 border-[1px] border-gray-400 " />
+                    @endif
                 </div>
                 <div>
                     @if ($discipline->modules->count() > 0)
-                        <button class="btn bg-pink-600 text-gray-50 open-new-lesson rounded-lg"
-                            id="content-lesson-create" wire:click="openModalTask">
+                        <button class="btn bg-pink-600 text-gray-50 open-new-task rounded-lg " id="content-task-create"
+                            wire:click="openModalTask">
                             <x-mary-icon name="o-document-duplicate" /> Atividade / Avaliação
                         </button>
                     @endif
                     <button class="btn bg-pink-600 text-gray-50 open-new-lesson rounded-lg" id="content-lesson-create"
-                        x-on:click="$dispatch('open-modal-module',{open: true})">
-                        <span>Nova aula</span>
+                        x-on:click="$dispatch('open-modal-module',{open: true})"
+                        data-tour="new-lesson-{{ $discipline->id }}">
                         <x-mary-icon name="o-plus" />
+                        <span class="capitalize tracking-wider">aula</span>
                     </button>
-
                 </div>
             </div>
             <div class="flex gap-5 relative h-[calc(100vh-180px)]">
                 <div class="w-1/2 h-auto overflow-y-auto" wire:key="module-list-container" id="module-list-all">
                     @if ($discipline->modules->count() > 0)
                         @foreach ($discipline->modules as $module)
-                            {{--  modals --}}
                             <div class="w-full bg-white border-[1px] border-gray-200 px-3 py-2 accordion module-card"
                                 wire:key="module-{{ $module->id }}" x-data="{ isExpanded: false }" x-show="true"
                                 id="accordion-{{ $module->id }}" data-tour="{{ $module->id }}">
@@ -197,8 +198,8 @@ new #[Layout('layouts.app')] class extends Component {
                                         class="flex items-center justify-between w-full cursor-pointer open-collapse-btn">
                                         <span
                                             class="text-[15px] font-normal text-gray-700 capitalize relative left-[2%]">{{ $module->title }}</span>
-                                        <button class="bg-white open-new-block-lesson"
-                                            class="tour-open-accordion-block-{{ $module->id }}"
+                                        <button class="bg-white open-new-block-lesson cursor-pointer"
+                                            id="open-accordion-block-{{ $module->id }}"
                                             x-on:click="openCollapseId === '{{ $module->id }}' ? openCollapseId = null : openCollapseId = '{{ $module->id }}'; isExpanded = !isExpanded">
                                             <x-mary-icon name="o-chevron-down" />
                                         </button>
@@ -207,7 +208,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 <div class="flex flex-col gap-3 p-4 bg-gray-100"
                                     x-show="openCollapseId === '{{ $module->id }}'" x-collapse>
                                     <button id="block-open-new-block-{{ $module->id }}"
-                                        class="btn text-white capitalize bg-pink-600 tour-open-new-block-to-click"
+                                        class="btn text-white tracking-wider uppercase text-[12px] bg-pink-600 tour-open-new-block-to-click cursor-pointer"
                                         x-on:click="$dispatch('open-new-block-to-module', { open: true })">
                                         <x-mary-icon name="o-plus" /> bloco
                                     </button>
@@ -232,7 +233,8 @@ new #[Layout('layouts.app')] class extends Component {
                                         </div>
                                     @empty
                                         <div class="px-2 py-3" wire:key="no-lessons-{{ $module->id }}">
-                                            <span class="text-sm font-medium text-gray-500 uppercase">nenhum
+                                            <span
+                                                class="text-[12px] tracking-wide font-medium text-gray-600 uppercase">nenhum
                                                 bloco</span>
                                         </div>
                                     @endforelse
@@ -287,7 +289,8 @@ new #[Layout('layouts.app')] class extends Component {
                 <x-mary-button icon="o-x-mark" class="btn-square"
                     x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-normal text-gray-700">Aqui você pode adicionar novas aulas e
+                    <h2 class="text-[18px] tracking-wide font-normal text-gray-700">Aqui você pode adicionar novas
+                        aulas e
                         blocos?{{ $openFormNewLesson }}
                     </h2>
                 </div>
@@ -295,24 +298,24 @@ new #[Layout('layouts.app')] class extends Component {
                 @if (!$openFormNewLesson)
                     <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
                         <x-mary-button
-                            class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                            class="font- text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                             label="Criar nova aula?"
-                            x:on:click="$store.tourguide.start('StartTourDisciplineCreateContent')" />
+                            x-on:click="$store.tourguide.start('StartTourDisciplineCreateContent')" />
                         @if ($discipline->modules->count() > 0)
                             <x-mary-button
-                                class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                                 label="Adicionar um bloco?"
                                 x-on:click="$store.tourguide.start('StartTourDisciplineCreateContentUploadBlock')" />
                             <x-mary-button
-                                class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                                 label="Vamos deletar uma aula"
                                 x-on:click="$store.tourguide.startTourDeleteModule()" />
                             <x-mary-button
-                                class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                                 label="Vamos criar uma tarefa"
                                 x-on:click="$store.tourguide.startCreateTaskLesson()" />
                             <x-mary-button
-                                class="font-light text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                                 label="Vamos editar uma aula" x-on:click="$store.tourguide.startEditLesson()" />
                         @endif
                     </div>

@@ -28,11 +28,11 @@ new class extends Component {
     #[On('load-video-lesson')]
     public function loadVideoLesson($lesson_id)
     {
-        $this->lesson = Lesson::findOrFail($lesson_id);
+        $this->lesson = Lesson::findOrFail(string($lesson_id));
     }
 }; ?>
 
-<div class="flex flex-col w-full gap-5">
+<div class="flex flex-col w-full  bg-gray-100">
     <x-mary-modal wire:model="sureDeleteBlock" class="backdrop-blur">
         <div class="flex flex-col items-center w-full gap-6 mb-5 emjustify-center">
             <h3 class="text-lg text-red-700">Tem certeza que deseja deletar o bloco?</h3>
@@ -41,11 +41,15 @@ new class extends Component {
         <x-mary-button label="Sim" class="btn-error" />
     </x-mary-modal>
     @if ($lesson)
-        <div class="flex justify-end w-full gap-3 px-3 py-3">
-            <x-mary-button label="Deletar" icon-right="o-trash" @click="$wire.sureDeleteBlock = true"
-                class="bg-red-200" />
-            <x-mary-button label="Atualizar" icon-right="o-bars-arrow-down" class="bg-yellow-200" />
-            <x-mary-button label="Editar" icon-right="o-plus" class="bg-blue-200" />
+        <div class="flex justify-end w-full gap-3 px-3 py-3 ">
+            <button x-on:click="$wire.sureDeleteBlock = true" class="btn bg-red-50">
+                <x-mary-icon name="o-trash" />
+                Deletar
+            </button>
+            <button class="btn bg-red-50">
+                <x-mary-icon name="o-arrow-path" />
+                Atualizar
+            </button>
         </div>
         <!-- Player de vídeo -->
         <div>
@@ -68,11 +72,6 @@ new class extends Component {
                             <li class="px-2 py-3">
                                 <h3>{{ $lesson->title }}</h3>
                             </li>
-                            {{-- <li class="px-2 py-2"><span class="text-sm font-semibold text-gray-700">Hash Name:</span>
-                                {{ $lesson->hash_name }}</li>
-                            <li class="px-2 py-3"><span class="text-sm font-semibold text-gray-700">Original
-                                    Name:</span>
-                                {{ $lesson->original_name }}</li> --}}
                             <li class="px-2 py-3">
                                 <h2>Descrição</h2>
                                 <p>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Teacher\LessonUploadController;
+use App\Livewire\Teacher\Classes\Index;
 use App\Models\Discipline;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -27,6 +28,13 @@ Route::view('app/teacher/messages', 'app.teacher.messages.index')
 ->middleware(['auth', 'verified'])
 ->name('teacher.messages');
 
+Route::get('app/teacher/classes', Index::class)
+->middleware(['auth', 'verified'])
+->name('teacher.classes');
+
+Route::view('app/teacher/forum', 'app.teacher.forum.index')
+->middleware(['auth', 'verified'])
+->name('teacher.forum');
 
 Route::post('app/teacher/discipline/{module_id}/upload', [LessonUploadController::class, 'uploadVideo'])->name('media.upload');
 Route::get("app/teacher/lesson/{lesson_id}", [LessonUploadController::class, 'stream'])

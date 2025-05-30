@@ -78,18 +78,14 @@ new class extends Component {
         <p class="text-[16px] text-pink-600 tracking-wide">Deletando</p>
     </div>
 
-    <div id="discipline-delete-actions-{{ $id ?? '' }}" class="self-end" wire:loading.remove>
+    <div id="discipline-delete-actions-{{ $id ?? '' }}" class="w-full flex justify-end" wire:loading.remove>
         <button id="discipline-delete-cancel-{{ $id ?? '' }}" x-on:click="$wire.openModalModule = false"
             class="text-gray-500 btn capitalize">
             cancelar
         </button>
-        <button class="btn text-red-600 capitalize" x-on:click="$wire.delete" wire:loading.remove
+        <button class="btn bg-red-500 text-red-50 capitalize" x-on:click="$wire.delete" wire:loading.remove
             id="discipline-delete-send-{{ $id ?? '' }}">
             Deletar
         </button>
-        {{-- <div wire:loading wire:target="delete" class="flex items-center gap-2">
-            <span class="text-sm text-pink-600 tracking-wide">Deletando</span>
-            <x-mary-loading class=" text-pink-600 loading-dots" />
-        </div> --}}
     </div>
 </x-mary-modal>

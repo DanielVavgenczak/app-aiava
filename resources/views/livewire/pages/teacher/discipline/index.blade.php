@@ -54,7 +54,7 @@ new class extends Component {
     {
         return Blade::render('<div class="flex flex-col items-center justify-center gap-3 p-5 text-sm font-normal text-center text-gray-600 rounded">
                 <x-mary-loading />
-                <span class="tracking-wider text-sm text-gray-600">Carregando disciplinas...</span>
+                <span class="tracking-wider text-sm text-gray-600">Carregando disciplinas</span>
             </div>');
     }
 }; ?>

@@ -1,59 +1,54 @@
 import { AddButtonActions, configDriver, startDriverTour } from "./utils";
 Livewire.on("to-teste-continue-created", async () => {
-    console.log("Iniciando sequência de tours");
-
     try {
         // 1. Espera inicial
         await new Promise((resolve) => setTimeout(resolve, 3000));
-
         // 2. Executa o primeiro tour e ESPERA sua conclusão
-        console.log("Iniciando StartTourDisciplineCreateContent");
         const firstTourResult = await StartTourDisciplineCreateContent();
-
         if (!firstTourResult) {
             throw new Error("Primeiro tour não retornou resultado válido");
         }
-
         await new Promise((resolve) => setTimeout(resolve, 7000));
         // 3. Só então executa o segundo tour
-        console.log("Iniciando StartTourDisciplineCreateContentUploadBlock");
-
-        await StartTourDisciplineCreateContentUploadBlock();
-
-        console.log("Sequência completa com sucesso");
+        const uploadBloc =await StartTourDisciplineCreateContentUploadBlock();
+        if (!uploadBloc) {
+            throw new Error("Segundo tour não retornou resultado válido");
+        }
     } catch (error) {
         console.error("Erro na sequência:", error);
         // Adicione aqui qualquer tratamento de erro adicional
     }
 });
-
-const testeDoId = null;
-
 export async function StartTourDisciplineCreateContent() {
     let store = Alpine.store("tourguide");
     store.openMai = false;
     return new Promise(async (resolve) => {
+        //const disciplieID = document.getAttribute("data-tour");
+        let disciplineID = null;
         const btnCreateLesson = document.querySelector(
             "#content-lesson-create",
         );
-        if (btnCreateLesson) {
+
+        if (!btnCreateLesson) {
+            return;
+        }
+
+        //if (btnCreateLesson) {
             const driverObj = drivertour({
                 ...configDriver,
                 steps: [
                     {
                         element: `#${btnCreateLesson.id}`,
                         popover: {
-                            description: `<h2>Vou clicar no botão "Aula +"</h2>`,
+                            description: `Vou clicar no botão "+ Aula"`,
                             showButtons: [""],
                         },
                         onHighlighted: async (el) => {
                             await new Promise((resolve) =>
                                 setTimeout(resolve, 3000),
                             );
-                            if (!btnCreateLesson) {
-                                console.error("não encontramos ela aqui");
-                            }
-                            btnCreateLesson.click();
+                            disciplineID = el.getAttribute("data-tour");
+                            el.click();
                             await new Promise((resolve) =>
                                 setTimeout(resolve, 1000),
                             );
@@ -61,9 +56,19 @@ export async function StartTourDisciplineCreateContent() {
                         },
                     },
                     {
-                        element: `#lesson-input-title`,
+                        element: `#lesson-title`,
                         popover: {
                             description: "Escreva o Titulo da aula",
+                            onNextClick: async () => {
+                                const title = document.querySelector(
+                                    `#lesson-input-title`,
+                                )
+                                if(title.value.trim() === "") {
+                                    alert("por favor preencha o campo de texto");
+                                    return;
+                                }
+                                await driverObj.moveNext();
+                            },
                             onPopoverRender: (popover, { config, state }) => {
                                 const actions = AddButtonActions(
                                     popover,
@@ -106,14 +111,11 @@ export async function StartTourDisciplineCreateContent() {
                                 store.openMai = false;
                                 driverObj.destroy();
                             };
-                            const btnCancel = el.querySelector(
-                                "#create-content-cancel",
-                            );
-                            const btnCreate = el.querySelector(
-                                "#create-content-register",
-                            );
-                            if (!btnCancel || !btnCreate) {
-                                console.error("element not found", btnCancel);
+                            const btnCancel = el.querySelector(`#module-input-cancel`);
+                            const btnCreate = el.querySelector(`#module-input-create`);
+                            if (!btnCreate && !btnCancel) {
+                                console.error("element not found");
+                                return;
                             }
                             btnCancel.addEventListener("click", toCloseActions);
                             btnCreate.addEventListener("click", async () => {
@@ -123,30 +125,24 @@ export async function StartTourDisciplineCreateContent() {
                                 store.openMai = false;
                                 resolve(true);
                                 await driverObj.destroy();
-                                console.log("talves seja aqui o pepino");
                             });
                         },
                     },
                 ],
             });
             await driverObj.drive();
-        }
     });
 }
 export async function StartTourDisciplineCreateContentUploadBlock() {
     let store = Alpine.store("tourguide");
     store.openMai = false;
-
+    console.log('inicio upload bloco ...')
     return new Promise(async (resolve) => {
         const qtMpdules = document.querySelectorAll("div.module-card").length;
         const moduleText =
             qtMpdules > 1
-                ? `<div class="p-4"><p class="text-base">
-                                Em qual aula deseja adicionar um bloco?
-                                </p></div>`
-                : `<div class="p-4"><p class="text-base">
-                                Clique na aula para adicinar um bloco
-                                </p></div>`;
+                ? `Em qual aula deseja adicionar um bloco?`
+                : `Clique na aula para adicinar um bloco`;
         const driverObj = drivertour({
             ...configDriver,
             steps: [
@@ -172,10 +168,10 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                         otherModule.style.zIndex = "0";
                                     }
                                 });
-                                module.style.bac;
+                               // module.style.bac;
                                 //const moduleId = module.getAttribute('id');
                                 const dataId = module.getAttribute("data-tour");
-                                testeDoId = dataId;
+                               let testeDoId = dataId;
                                 // const tourOperations = `tour-operations-${dataId}`
                                 // const disciplinaInputEditTitle = `discipline-edit-form-title-${dataId}`
                                 // const disciplineInputEditDescription = `discipline-edit-form-description-${dataId}`
@@ -187,7 +183,7 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                     {
                                         element: `#accordion-module-${dataId}`,
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Vamos abrir as opções na aula selecionada</p></div>`,
+                                            description: `Vamos abrir as opções na aula selecionada`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons: [""],
@@ -196,14 +192,13 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                             await new Promise((resolve) =>
                                                 setTimeout(resolve, 3000),
                                             );
-
                                             await driverObj.moveNext();
                                         },
                                     },
                                     {
                                         element: `#open-accordion-block-${dataId}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">Vou clicar e abrir para listar os blocos</p></div>`,
+                                            description: `Vou clicar e abrir para listar os blocos`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons: [""],
@@ -223,8 +218,7 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                     {
                                         element: `#block-open-new-block-${dataId}`,
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">
-                                                    Vou clicar aqui para abrir a opção de adiconar um bloco</p></div>`,
+                                            description: `Vou clicar aqui para abrir a opção de adiconar um bloco`,
                                             side: "right",
                                             align: "center",
                                             showButtons: [""],
@@ -265,12 +259,7 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                     {
                                         element: `#browser-file-${dataId}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: `
-                                                <div class="p-4"><p class="text-base">
-                                                    Clique no icone para adiconar um novo video
-                                                </p>
-                                                </div>
-                                                `,
+                                            description: `Clique no icone para adiconar um novo video`,
                                             side: "top",
                                             align: "start",
                                             // onPopoverRender: (popover, { config, state }) => {
@@ -352,10 +341,7 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                     {
                                         element: `#temp-video-preview-${dataId}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">
-                                                Verificar se está ok, clique em 'Proximo' para continuar o upload
-                                                </p></div
-                                                `,
+                                            description: `Verificar se está ok, clique em 'Proximo' para continuar o upload`,
                                             side: "top",
                                             align: "start",
                                             onPopoverRender: (
@@ -365,7 +351,7 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                                 const actions =
                                                     AddButtonActions(
                                                         popover,
-                                                        "voltar  ao inicio",
+                                                        "Voltar ao inicio",
                                                     );
                                                 actions.addEventListener(
                                                     "click",
@@ -390,9 +376,7 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                     {
                                         element: `#temp-preview-actions-${dataId}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: `<div class="p-4"><p class="text-base">
-                                                Clique em 'Enviar' para enviar o video
-                                                </p></div>`,
+                                            description: `Clique em 'Enviar' para enviar o video`,
                                             side: "top",
                                             align: "start",
                                             onPopoverRender: (
@@ -402,7 +386,7 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                                 const actions =
                                                     AddButtonActions(
                                                         popover,
-                                                        "voltar  ao inicio",
+                                                        "Voltar ao inicio",
                                                     );
                                                 actions.addEventListener(
                                                     "click",
@@ -436,8 +420,7 @@ export async function StartTourDisciplineCreateContentUploadBlock() {
                                     {
                                         element: `#progress-bar-container-${dataId}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description:
-                                                "Aguarde enquanto o video e enviado",
+                                            description:"Aguarde enquanto o video e enviado",
                                             side: "top",
                                             align: "start",
                                             // onPopoverRender: (popover, { config, state }) => {
@@ -492,7 +475,7 @@ export function StartTourCreateActivitTask() {
                 {
                     element: `#create-title-question-${disciplieID}`,
                     popover: {
-                        description: "Descreva aqui a primeira quest",
+                        description: "Descreva aqui a primeira questão",
                         //showButtons: [""],
                         onNextClick: async () => {
                             const titleOfQuestion =

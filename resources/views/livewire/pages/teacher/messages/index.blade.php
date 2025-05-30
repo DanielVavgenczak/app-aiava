@@ -1,6 +1,7 @@
 <div>
     <div class="w-full flex">
-        <div class="flex w-1/3 h-screen">
+        <p>Em breve ferramante de chat</p>
+        {{-- <div class="flex w-1/3 h-screen">
             <div class="flex w-full">
                 <x-mary-button class="indicator bg-white w-2/4">
                     Grupos
@@ -22,6 +23,6 @@
             <div class="relative p-4">
                 <p class="text-gray-500 absolute text-center">Ainda não tem mensagems</p>
             </div>
-        </div>
+        </div> --}}
     </div>
 </div>
