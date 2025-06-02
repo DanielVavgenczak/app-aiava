@@ -6,10 +6,13 @@ use App\Models\Teacher\Classe;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
+use Mary\Traits\Toast;
 
 class Index extends Component
 {
+    use Toast;
     public string $search = '';
     public $title = "Ola seu bosta";
     public Collection $classes;
@@ -25,7 +28,11 @@ class Index extends Component
 
     protected function loadClasses()
     {
-        $this->classes = Classe::where('teacher_id', Auth::user()->id)->latest()->get();
+        $this->classes = Classe::with('students')->where('teacher_id', Auth::user()->id)->latest()->get();
+    }
+
+    #[On('student-created-success')]
+    public function refresh(){
 
     }
 }

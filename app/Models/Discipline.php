@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Teacher\Student;
 use App\Models\Traits\UuidTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,5 +22,9 @@ class Discipline extends Model
     public function modules()
     {
         return $this->hasMany(related: Module::class);
+    }
+    public function students()
+    {
+        return $this->hasMany(related: Student::class);
     }
 }

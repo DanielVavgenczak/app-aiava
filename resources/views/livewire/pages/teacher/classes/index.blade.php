@@ -10,10 +10,8 @@
              <h2 class="text-lg font-semibold text-gray-600">Minhas turmas</h2>
          </div>
          <div class="flex items-center justify-between">
-             {{-- <x-text-input placeholder="Pesquisar" wire:model.live="search" id="class-input-search"
-                 class="border-[1px] focus:border-pink-500 focus:outline focus:outline-pink-50 px-3 py-2 block  mt-1" /> --}}
              <x-mary-input wire:model="search" placeholder="Pesquisar turma" icon="o-magnifying-glass"
-                 class="class-input-search" />
+                 class="class-input-search !outline-none" />
              <button class="btn bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center"
                  id="discipline-create" x-on:click="$dispatch('open-form-class-create',{open:true})"
                  mary:key="discipline-create-button">
