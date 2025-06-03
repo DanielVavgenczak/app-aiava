@@ -13,6 +13,7 @@ new class extends Component {
     public string $classId = '';
     public string $classNameAdded = '';
     public string $studentName = '';
+    public string $studentEmail = '';
     public array $students = [];
 
     #[On('open-form-class-create')]
@@ -46,6 +47,7 @@ new class extends Component {
     {
         $students = [
             'name' => $this->studentName,
+            'email' => $this->studentEmail,
         ];
         $this->students[] = $students;
         $this->studentName = '';
@@ -69,6 +71,7 @@ new class extends Component {
                 foreach ($this->students as $student) {
                     Student::create([
                         'full_name' => $student['name'],
+                        'email' => $student['email'],
                         'class_id' => $this->classId,
                         'teacher_id' => Auth::user()->id,
                         'discipline_id' => $this->disciplineId,
@@ -141,32 +144,42 @@ new class extends Component {
         </form>
     @endif
     @if ($classId !== '')
-        <div>
+        <div class="bg-gray-100 p-3">
             <div class="mb-4">
                 <h2 class="text-lg font-semibold tracking-wide text-gray-700">{{ $classNameAdded }}</h2>
-                <p class="text-sm font-normal text-gray-500">adicionar alunos</p>
+                <p class="text-sm font-normal text-gray-600">Adicionar alunos</p>
             </div>
-
-            {{-- <form wire:submit.prevent="storeStudent" class="flex flex-col "> --}}
-            <div class="mb-3">
-                <x-mary-input label="Nome do aluno" wire:model="studentName" class="!outline-none"
-                    wire:keydown.enter="addStudent">
-                    <x-slot:append>
-                        <x-mary-button icon="o-plus" type="button" class="join-item btn-primary" .
-                            wire:click.prevent="addStudent" spinner />
-                    </x-slot:append>
-                </x-mary-input>
+            <div class="mb-3 grid grid-cols-12 gap-2 ">
+                <div class="col-span-5">
+                    <x-mary-input label="Nome do aluno" wire:model="studentName" class="w-full !outline-none"
+                        wire:keydown.enter="addStudent" />
+                </div>
+                <div class="col-span-5">
+                    <x-mary-input label="E-mail do aluno" wire:model="studentEmail" class="w-full !outline-none"
+                        wire:keydown.enter="addStudent" />
+                </div>
+                <div class="col-span-1 flex justify-center items-end">
+                    <x-mary-button icon="o-plus" type="button" class="btn-md btn-primary"
+                        wire:click.prevent="addStudent" spinner />
+                </div>
             </div>
             <div class="">
                 @if (count($students) > 0)
-                    @foreach ($students as $index => $student)
-                        <x-mary-list-item :item="$student" class="text-gray-500">
-                            <x-slot:actions>
+                    <ul>
+
+                        @foreach ($students as $index => $student)
+                            <li>
+                                <div>
+
+                                    <span>{{ $student['name'] }}</span>
+                                    <span>{{ $student['email'] }}</span>
+                                </div>
+
                                 <x-mary-button icon="o-trash" class="btn-sm btn-ghost text-red-400"
                                     wire:click="removeStudent({{ $index }})" spinner />
-                            </x-slot:actions>
-                        </x-mary-list-item>
-                    @endforeach
+                            </li>
+                        @endforeach
+                    </ul>
                 @endif
             </div>
             <div class="self-end mt-4" wire:loading.remove>
@@ -175,15 +188,13 @@ new class extends Component {
                 <button type="button" class="btn bg-pink-700 capitalize text-gray-50 tracking-wider"
                     wire:click.prevent="storeStudent">registrar</button>
             </div>
-            <div wire:loading wire:target="storeStudent">
-                <div class="flex flex-col items-center gap-4">
+            <div class="flex flex-col items-center gap-4">
+                <div wire:loading wire:target="storeStudent">
                     <x-mary-loading class="loading-dots loading-lg text-pink-700" />
                     <span class="text-sm uppercase font-semibold tracking-wider text-pink-700">cadastrando
                         estudantes</span>
                 </div>
             </div>
-            {{-- </form> --}}
         </div>
-
     @endif
 </x-mary-modal>

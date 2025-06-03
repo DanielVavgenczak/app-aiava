@@ -26,12 +26,16 @@
                          <li class="list-row flex justify-between">
                              <div>
                                  <div>{{ $classe->name }}</div>
-                                 <div class="text-xs uppercase font-semibold opacity-60">Alunos: 50</div>
                              </div>
                              <div>
-                                 <button class="btn btn-square btn-ghost">
-                                     <x-mary-icon name="o-arrow-uturn-right" class="w-5 h-5" />
-                                 </button>
+                                 <span class="text-xs uppercase font-semibold opacity-60">
+                                     <x-mary-icon name="o-users" class="w-5 h-5" />
+                                     {{ count($classe->students) }}
+                                 </span>
+                             </div>
+                             <div>
+                                 <x-mary-button class="btn btn-square btn-ghost" icon="o-arrow-uturn-right"
+                                     link="{{ route('teacher.classes.show', $classe) }}" />
                                  <button class="btn btn-square btn-ghost">
                                      <x-mary-icon name="o-pencil" class="w-5 h-5" />
                                  </button>

@@ -5,12 +5,12 @@ namespace App\Models\Teacher;
 use App\Models\Discipline;
 use App\Models\Traits\UuidTrait;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Teacher\{Student};
 use Illuminate\Database\Eloquent\Model;
 
 class Classe extends Model
 {
-    use HasFactory, UuidTrait;
+    use UuidTrait;
     public $incrementing = false;
     protected $keyType = "uuid";
     protected $fillable = ['id','name','discipline_id','teacher_id'];
@@ -27,7 +27,7 @@ class Classe extends Model
 
     public function students()
     {
-        return $this->hasMany( Student::class, 'class_id');
+        return $this->hasMany( Student::class, foreignKey: 'class_id');
     }
 
 }

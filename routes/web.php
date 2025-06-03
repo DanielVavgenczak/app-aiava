@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Teacher\LessonUploadController;
 use App\Livewire\Teacher\Classes\Index;
+use App\Livewire\Teacher\Classes\Show;
 use App\Models\Discipline;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
@@ -31,6 +32,10 @@ Route::view('app/teacher/messages', 'app.teacher.messages.index')
 Route::get('app/teacher/classes', Index::class)
 ->middleware(['auth', 'verified'])
 ->name('teacher.classes');
+
+Route::get('app/teacher/classes/{classe}', Show::class)
+->middleware(['auth', 'verified'])
+->name('teacher.classes.show');
 
 Route::view('app/teacher/forum', 'app.teacher.forum.index')
 ->middleware(['auth', 'verified'])

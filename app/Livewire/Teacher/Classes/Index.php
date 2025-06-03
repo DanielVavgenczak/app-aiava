@@ -28,7 +28,10 @@ class Index extends Component
 
     protected function loadClasses()
     {
-        $this->classes = Classe::with('students')->where('teacher_id', Auth::user()->id)->latest()->get();
+        $this->classes = Classe::with('students')
+            ->where('teacher_id', Auth::user()->id)
+            ->latest()
+            ->get();
     }
 
     #[On('student-created-success')]
