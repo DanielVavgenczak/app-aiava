@@ -33,7 +33,7 @@
 @endphp
 
 <aside x-data="sidebar"
-    class="fixed left-0 bottom-0 z-30 flex flex-col justify-between top-[80px] h-[calc(100%-80px)] bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out"
+    class="fixed left-0 bottom-0 z-30 flex flex-col justify-between top-[80px] h-[calc(100%-80px)] bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out  hidden md:flex"
     :class="$store.expandedSidebar.expanded ? 'w-1/6' : 'w-20'">
     <!-- Conteúdo superior -->
     <div class="py-5">
