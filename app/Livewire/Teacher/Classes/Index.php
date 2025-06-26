@@ -8,8 +8,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\{On,Lazy};
-use Livewire\{Component,WithPagination};
+use Livewire\Attributes\{On, Lazy};
+use Livewire\{Component, WithPagination};
 use Mary\Traits\Toast;
 
 class Index extends Component
@@ -22,14 +22,15 @@ class Index extends Component
     public Collection $disciplines;
     public ?Discipline $disciplineSelected = null;
 
-    public function mount(){
+    public function mount()
+    {
         $this->loadClasses();
         $this->getDisciplines();
         sleep(1);
     }
     public function updating($property, $value)
     {
-        if(!empty($value)){
+        if (!empty($value)) {
             sleep(2);
         }
     }
@@ -46,7 +47,7 @@ class Index extends Component
     private function getDisciplines()
     {
         $this->disciplines = Discipline::where('user_id', Auth::user()->id)
-                                ->get();
+            ->get();
     }
     private function loadClasses()
     {
@@ -59,17 +60,17 @@ class Index extends Component
             $query->where('discipline_id', $this->disciplineId);
         }
         $this->classes = $query->latest()->get();
-
         $this->loading = false;
     }
 
     #[On('action-event-classe')]
-    public function refresh($type){
-        if($type === 'delete'){
-            $this->error( 'Classe deletada com sucesso!');
+    public function refresh($type)
+    {
+        if ($type === 'delete') {
+            $this->error('Classe deletada com sucesso!');
         }
-        if($type === 'create'){
-            $this->success( 'Classe criada com sucesso!');
+        if ($type === 'create') {
+            $this->success('Classe criada com sucesso!', timeout: 4000);
             $this->loadClasses();
         }
     }

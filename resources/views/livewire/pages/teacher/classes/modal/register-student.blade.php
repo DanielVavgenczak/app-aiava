@@ -99,8 +99,8 @@ new class extends Component {
                     class="w-full !outline-none" wire:keydown.enter="addStudent" />
             </div>
             <div class="col-span-1">
-                <x-mary-button icon="o-plus" type="button" class="btn-sm btn-primary" wire:click.prevent="addStudent"
-                    spinner />
+                <x-mary-button icon="o-plus" label="adicionar" type="button" class="btn-sm btn-primary"
+                    wire:click.prevent="addStudent" spinner />
             </div>
         </div>
 

@@ -16,7 +16,7 @@
                      option-label="title" option-value="id" placeholder-value="" class="w-full !outline-none" />
              </div>
              <button class="btn btn-sm bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center"
-                 wire:target="disciplineId" wire:loading.attr="disabled" id="discipline-create"
+                 wire:target="disciplineId" wire:loading.attr="disabled" id="classe-create"
                  x-on:click="$dispatch('open-form-class-create',{open:true, disciplineId: '{{ $this->disciplineId }}'})"
                  mary:key="discipline-create-button">
                  <x-mary-icon name="o-plus" class="w-5 h-5" /> <span
@@ -113,5 +113,42 @@
              @endif
 
          </div>
+     </div>
+     <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+         <!-- Centralizando a div -->
+         <div
+             class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+             <div class="flex flex-col">
+                 <div class="flex justify-end">
+                     <x-mary-button icon="o-x-mark"
+                         class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                 </div>
+                 <h2 class="text-lg font-normal text-gray-700">Você tem as seguintes opções:</h2>
+             </div>
+             <div class="flex items-center gap-3 p-4 bg-gray-100">
+                 <x-mary-button
+                     class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                     label="Criar uma turma" x-on:click="$store.tourguide.start('StartTourClasseCreate')" />
+
+                 @if ($classes->count() > 0)
+                     restante das opções
+                     {{-- <x-mary-button
+                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                         label="Pesquisar disciplina" @click="$store.tourguide.start('StartTourSearchDiscipline')" />
+                     <x-mary-button
+                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                         label="Gerenciar conteudo"
+                         @click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
+                     <x-mary-button
+                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                         label="Editar: Titulo,Descrição" @click="$store.tourguide.start('StartTourEditDiscipline')" />
+                     <x-mary-button
+                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                         label="Deletar disciplina" @click="$store.tourguide.start('StartTourDeleteDiscipline')" /> --}}
+                 @endif
+             </div>
+         </div>
+         <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
      </div>
  </div>

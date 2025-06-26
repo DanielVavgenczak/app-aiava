@@ -33,6 +33,15 @@ document.addEventListener("alpine:init", () => {
                     "StartTourCreateActivitTask"
                 ],
                 isDynamic: true
+            },
+             {
+                exact: true,
+                path: "/app/teacher/classes",
+                tourModule: () => import("./classe_list"),
+                tours: [
+                    "StartTourClasseCreate",
+                ],
+                isDynamic: true
             }
         ],
         cancelOptionsTourPage() {

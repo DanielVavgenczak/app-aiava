@@ -5,7 +5,6 @@ export async function StartTourCreateDiscipline() {
     store.openMai = false;
     const newDisciplineButton = document.querySelector("button#discipline-create");
     if(!newDisciplineButton.id){
-        console.error("não encontramos ela aqui");
         return;
     }
     const driverObj = drivertour({
