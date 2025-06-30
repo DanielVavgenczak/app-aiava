@@ -89,11 +89,12 @@
                              <!-- Ações -->
                              <div class="col-span-2 md:col-span-3 flex justify-end gap-2">
                                  <a href="{{ route('teacher.classes.show', $classe) }}" class="btn btn-sm"
-                                     title="Acessar">
+                                     title="Acessar" id="classe-access-{{ $classe->id }}">
                                      <x-mary-icon name="o-eye" class="w-4 h-4" />
                                      <span class="text-xs uppercase ">acessar</span>
                                  </a>
                                  <button class="btn btn-sm" title="Editar" id="classe-edit-{{ $classe->id }}"
+                                     wire:key='edit-classe-modal-{{ $classe->id }}'
                                      x-on:click="$dispatch('edit-classe-modal',{id:'{{ $classe->id }}'})">
                                      <x-mary-icon name="o-pencil" class="w-4 h-4" />
                                      <span class="text-xs uppercase">Editar</span>
@@ -141,19 +142,9 @@
                      <x-mary-button
                          class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                          label="Deletar uma turma" @click="$store.tourguide.start('StartTourClasseDelete')" />
-
-                     {{--
-                     StartTourClasseEdit
                      <x-mary-button
                          class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                         label="Gerenciar conteudo"
-                         @click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
-                     <x-mary-button
-                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                         label="Editar: Titulo,Descrição" @click="$store.tourguide.start('StartTourEditDiscipline')" />
-                     <x-mary-button
-                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                         label="Deletar disciplina" @click="$store.tourguide.start('StartTourDeleteDiscipline')" /> --}}
+                         label="Acessar classe" @click="$store.tourguide.start('StartTourClasseAccess')" />
                  @endif
              </div>
          </div>

@@ -41,7 +41,8 @@ document.addEventListener("alpine:init", () => {
                 tours: [
                     "StartTourClasseCreate",
                     "StartTourClasseDelete",
-                    "StartTourClasseEdit"
+                    "StartTourClasseEdit",
+                    "StartTourClasseAccess"
                 ],
                 isDynamic: true
             }

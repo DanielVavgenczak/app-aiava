@@ -73,7 +73,6 @@ new class extends Component {
     public function cancelEdit()
     {
         $this->open = false;
-        $this->js('console.log("evente calling")');
     }
 
     protected function validateMultiple($fields)

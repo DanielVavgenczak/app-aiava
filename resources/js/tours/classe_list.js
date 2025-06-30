@@ -411,3 +411,95 @@ export async function StartTourClasseEdit()
         return await driverObj.drive();
     })
 }
+
+
+export async function StartTourClasseAccess()
+{
+    let store = Alpine.store("tourguide");
+    store.openMai = false;
+   return new Promise(async (resolve) => {
+        const classList = document.querySelector("#classe-list");
+        if(!classList) {
+            return
+        }
+
+        const driverObj = drivertour({
+            ...configDriver,
+            steps: [
+                {
+                    element: `#${classList.id}`,
+                    popover: {
+                        description: `Escolha a Turma que deseja acessar`,
+                        showButtons: [""],
+                    },
+                    onHighlighted: async (el) => {
+                        const classeCount = el.querySelectorAll("div.card-classe")
+                        let classeLected = null
+                        if (!classeCount || classeCount.length === 0) {
+                            return;
+                        }
+                        classeCount.forEach((classe) => {
+                            classe.style.zIndex = "200000000";
+                            classe.addEventListener('click', async (event) => {
+                                if (classeLected) return;
+                                event.preventDefault();
+                                classeLected = true;
+                                // Remove z-index das disciplinas não selecionadas
+                                classeCount.forEach((otherClasse) => {
+                                    if (classe !== otherClasse) {
+                                        otherClasse.style.zIndex = "0";
+                                    }
+                                });
+                                const dataId = classe.getAttribute('data-tour');
+                                await driverObj.destroy();
+                                const secondStep = [
+                                    {
+                                        element: `#classe-${dataId}`,
+                                        popover: {
+                                            description: `Vamos acessar essa turma`,
+                                            side: "bottom",
+                                            align: "start",
+                                            showButtons:['']
+                                        },
+                                        onHighlighted: async (el) => {
+                                            await new Promise((resolve) => setTimeout(resolve, 3000));
+                                            el.style.zIndex = "0";
+                                            await driverObj.moveNext();
+                                        }
+                                    },
+                                    {
+                                        element: `#classe-access-${dataId}`, // Seleciona o elemento com base no ID
+                                        popover: {
+                                            description: `Vou redirecionar para a turma selecionada`,
+                                            side: "bottom",
+                                            align: "start",
+                                            showButtons:['']
+                                        },
+                                        onHighlighted: async (el) => {
+                                            await new Promise((resolve) => setTimeout(resolve, 3000));
+                                            const btnAccess = document.querySelector(`#classe-access-${dataId}`)
+                                            if(!btnAccess) return;
+                                            await btnAccess.click()
+                                            el.style.zIndex = "0";
+                                            await driverObj.moveNext();
+                                        }
+                                    },
+                                ]
+
+                                // Cria um novo tour com os passos atualizados
+                                const updatedDriverObj = drivertour({
+                                    ...configDriver,
+                                    steps: secondStep,
+                                });
+
+                                // Inicia o novo tour
+                                await updatedDriverObj.drive();
+                            });
+                        });
+                    }
+                }
+            ]
+        })
+        return await driverObj.drive();
+    })
+}
