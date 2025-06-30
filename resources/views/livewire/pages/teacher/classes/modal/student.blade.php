@@ -17,13 +17,13 @@ new class extends Component {
         }
     }
 }; ?>
-<x-mary-modal wire:model="open" title="Detalhes do aluno">
+<x-mary-modal wire:model="open" title="Detalhes do aluno" box-class="w-11/12 h-screen max-w-6xl verflow-y-visible">
     <div class="flex flex-col gap-2">
         <h3> {{ $student->full_name }}</h3>
         <div class="flex flex-col gap-2">
             <span> {{ $student->email }}</span>
             <span>
-                {{ $student->phone ? $student->phone : 'Sem telefone' }}
+                {{ $student->phone ?? 'Nenhum telefone informado' }}
             </span>
         </div>
     </div>

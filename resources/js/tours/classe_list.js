@@ -1,4 +1,5 @@
-import { AddButtonActions, configDriver, startDriverTour } from "./utils";
+import { AddButtonActions, configDriver
+ } from "./utils";
 
 export async function StartTourClasseCreate() {
     let store = Alpine.store("tourguide");
@@ -503,3 +504,4 @@ export async function StartTourClasseAccess()
         return await driverObj.drive();
     })
 }
+

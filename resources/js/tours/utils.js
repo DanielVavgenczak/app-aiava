@@ -41,7 +41,7 @@ export function AddButtonActions(popover, title, callback) {
     return button;
 }
 export function startDriverTour(steps, customConfig = {}) {
-    const driverObj = driver({
+    const driverObj = drivertour({
         ...defaultDriverConfig,
         ...customConfig,
         steps: steps.map(step => ({

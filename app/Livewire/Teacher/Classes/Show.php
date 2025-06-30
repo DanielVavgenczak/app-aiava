@@ -30,7 +30,26 @@ class Show extends Component
     {
         return view('livewire.pages.teacher.classes.show');
     }
+    #[On('event-student')]
+    public function refresh($type)
+    {
+        match($type){
+            'updated' => $this->success('Aluno atulizado com sucesso', timeout: 4000), 
+            'delete' => $this->error('Aluno deletado com sucesso', timeout: 4000),
+            default => null,
+        };
+    }
 
+    protected function handlerAfterActionWithToast(string $type, string $message)
+    {
+        if($type !== 'delete') {
+            $this->success($message, timeout: 4000);
+            $this->loadClasses();
+            return;
+        }
+        $this->error($message, timeout: 4000);
+        return;
+    }
     private function getClasse(string $id)
     {
         $this->classe = Classe::with('students')->find($id);

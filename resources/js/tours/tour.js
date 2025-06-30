@@ -36,15 +36,25 @@ document.addEventListener("alpine:init", () => {
             },
              {
                 exact: true,
+                isDynamic: false,
                 path: "/app/teacher/classes",
                 tourModule: () => import("./classe_list"),
                 tours: [
                     "StartTourClasseCreate",
                     "StartTourClasseDelete",
                     "StartTourClasseEdit",
-                    "StartTourClasseAccess"
+                    "StartTourClasseAccess",
+                    
                 ],
-                isDynamic: true
+            },
+             {
+                exact: false,
+                isDynamic: true,
+                path: "/app/teacher/classes",
+                tourModule: () => import("./classe_content"),
+                tours: [
+                    "StartTourStudentRegister",                    
+                ],
             }
         ],
         cancelOptionsTourPage() {
@@ -98,6 +108,7 @@ document.addEventListener("alpine:init", () => {
         },
         async start(tourName) {
             const tourData = await this.initTour();
+            console.log('Carregamdp essa merda', tourData);
             if (!tourData || !tourData.module[tourName]) {
                 console.error(`Tour "${tourName}" não encontrado`);
                 return;
