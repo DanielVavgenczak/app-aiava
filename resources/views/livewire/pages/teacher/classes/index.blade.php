@@ -19,8 +19,7 @@
                  wire:target="disciplineId" wire:loading.attr="disabled" id="classe-create"
                  x-on:click="$dispatch('open-form-class-create',{open:true, disciplineId: '{{ $this->disciplineId }}'})"
                  mary:key="discipline-create-button">
-                 <x-mary-icon name="o-plus" class="w-5 h-5" /> <span
-                     class="text-sm tracking-wide font-medium capitalize">turma</span>
+                 <x-mary-icon name="o-plus" class="w-5 h-5" /> <span class="capitalize">turma</span>
              </button>
              <!-- modal to register class and alunos -->
              <livewire:pages.teacher.classes.modal.create />
@@ -56,20 +55,23 @@
                  <div wire:target="disciplineId" wire:loading>
                      <div class="flex flex-col justify-center items-center gap-3 py-8">
                          <x-mary-loading class="loading-spinner text-pink-700" />
-                         <span class="text-sm text-gray-600">Carregando turmas...</span>
+                         <span class="text-sm tracking-wider text-gray-500">Carregando turmas...</span>
                      </div>
                  </div>
 
                  <!-- Lista de turmas -->
-                 <div wire:target="disciplineId" wire:loading.remove class="space-y-2">
+                 <div wire:target="disciplineId" wire:loading.remove class="space-y-2" id="classe-list">
                      @foreach ($classes as $classe)
                          <livewire:pages.teacher.classes.modal.delete :classe="$classe"
                              wire:key="classe-delete-{{ $classe->id }}" />
-                         <div
-                             class="grid grid-cols-12 gap-4 p-3 items-center hover:bg-gray-50 border-b border-gray-100">
+                         <livewire:pages.teacher.classes.modal.edit :classe="$classe"
+                             wire:key="classe-edit-{{ $classe->id }}" />
+                         <div data-tour="{{ $classe->id }}"
+                             class="card-classe grid grid-cols-12 gap-4 p-3 items-center hover:bg-gray-50 border-[1px] border-gray-100"
+                             id="classe-{{ $classe->id }}">
                              <!-- Nome da Turma -->
                              <div class="col-span-4 md:col-span-3">
-                                 <span class="text-gray-700 font-medium text-[15px]">{{ $classe->name }}</span>
+                                 <span class="text-gray-600 text-sm">{{ $classe->name }}</span>
                              </div>
 
                              <!-- Contagem de Alunos -->
@@ -84,23 +86,24 @@
                              <div class="col-span-3 md:col-span-4">
                                  <span class="text-gray-600 text-sm">{{ $classe->discipline->title }}</span>
                              </div>
-
                              <!-- Ações -->
                              <div class="col-span-2 md:col-span-3 flex justify-end gap-2">
-                                 <a href="{{ route('teacher.classes.show', $classe) }}"
-                                     class="btn btn-sm btn-ghost text-gray-600 hover:text-pink-700" title="Acessar">
+                                 <a href="{{ route('teacher.classes.show', $classe) }}" class="btn btn-sm"
+                                     title="Acessar">
                                      <x-mary-icon name="o-eye" class="w-4 h-4" />
-                                     <span class="md:hidden">Ver</span>
+                                     <span class="text-xs uppercase ">acessar</span>
                                  </a>
-                                 <button class="btn btn-sm btn-ghost text-gray-600 hover:text-blue-600" title="Editar">
+                                 <button class="btn btn-sm" title="Editar" id="classe-edit-{{ $classe->id }}"
+                                     x-on:click="$dispatch('edit-classe-modal',{id:'{{ $classe->id }}'})">
                                      <x-mary-icon name="o-pencil" class="w-4 h-4" />
-                                     <span class="md:hidden">Editar</span>
+                                     <span class="text-xs uppercase">Editar</span>
                                  </button>
-                                 <button type="button" class="btn btn-sm btn-ghost text-gray-600 hover:text-red-600"
-                                     title="Deletar" wire:key='delete-classe-modal-{{ $classe->id }}'
+                                 <button type="button" class="btn btn-sm" title="Deletar"
+                                     id="classe-delete-{{ $classe->id }}"
+                                     wire:key='delete-classe-modal-{{ $classe->id }}'
                                      x-on:click="$dispatch('delete-classe-modal',{id:'{{ $classe->id }}'})">
                                      <x-mary-icon name="o-trash" class="w-4 h-4" />
-                                     <span class="md:hidden">Excluir</span>
+                                     <span class="text-xs uppercase">Excluir</span>
                                  </button>
                              </div>
                          </div>
@@ -132,10 +135,15 @@
                      label="Criar uma turma" x-on:click="$store.tourguide.start('StartTourClasseCreate')" />
 
                  @if ($classes->count() > 0)
-                     restante das opções
-                     {{-- <x-mary-button
+                     <x-mary-button
                          class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                         label="Pesquisar disciplina" @click="$store.tourguide.start('StartTourSearchDiscipline')" />
+                         label="Editar uma turma" @click="$store.tourguide.start('StartTourClasseEdit')" />
+                     <x-mary-button
+                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                         label="Deletar uma turma" @click="$store.tourguide.start('StartTourClasseDelete')" />
+
+                     {{--
+                     StartTourClasseEdit
                      <x-mary-button
                          class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                          label="Gerenciar conteudo"

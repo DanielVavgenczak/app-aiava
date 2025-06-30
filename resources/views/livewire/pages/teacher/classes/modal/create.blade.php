@@ -73,6 +73,7 @@ new class extends Component {
         $this->open = false;
     }
 
+    #[On('classe-create-cancel')]
     public function cancelRegister()
     {
         $this->class_name = '';

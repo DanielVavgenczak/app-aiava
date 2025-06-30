@@ -39,6 +39,7 @@ class Index extends Component
     {
         return view('livewire.pages.teacher.classes.index');
     }
+
     public function updated()
     {
         $this->loadClasses();
@@ -66,13 +67,23 @@ class Index extends Component
     #[On('action-event-classe')]
     public function refresh($type)
     {
-        if ($type === 'delete') {
-            $this->error('Classe deletada com sucesso!');
-        }
-        if ($type === 'create') {
-            $this->success('Classe criada com sucesso!', timeout: 4000);
+        match($type){
+            'delete' => $this->handlerAfterActionWithToast($type, 'Classe deletada com sucesso!'),
+            'create' => $this->handlerAfterActionWithToast($type,'Classe criada com sucesso!'),
+            'update' => $this->handlerAfterActionWithToast($type,'Classe editada com sucesso!'),
+            default => $this->loadClasses(),
+        };
+    }
+
+    protected function handlerAfterActionWithToast(string $type, string $message)
+    {
+        if($type !== 'delete') {
+            $this->success($message, timeout: 4000);
             $this->loadClasses();
+            return;
         }
+        $this->error($message, timeout: 4000);
+        return;
     }
 
 }

@@ -5,7 +5,7 @@ use App\Models\{Discipline};
 use Livewire\Attributes\On;
 
 new class extends Component {
-    public bool $openEditContent = false;
+    public bool $open = false;
     public ?Discipline $discipline = null;
     public $title;
 
@@ -13,14 +13,14 @@ new class extends Component {
     public function open($id)
     {
         if ($this->discipline->id === $id) {
-            $this->openEditContent = true;
+            $this->open = true;
         }
     }
 
     #[On('to-close')]
     public function toClose()
     {
-        $this->openEditContent = false;
+        $this->open = false;
     }
 
     public function mount(Discipline $discipline)
@@ -37,12 +37,12 @@ new class extends Component {
         $this->discipline->update([
             'title' => $this->title,
         ]);
-        $this->openEditContent = false;
+        $this->open = false;
         $this->dispatch('content-update', title: $this->title, action: 'update');
     }
 }; ?>
 
-<x-mary-modal wire:model="openEditContent">
+<x-mary-modal wire:model="open">
     <div>
         <h2>Editar: {{ $discipline->title ?? 'Discipline' }}</h2>
     </div>

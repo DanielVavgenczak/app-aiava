@@ -23,10 +23,14 @@ new class extends Component {
             $this->classe = null;
             $this->dispatch('action-event-classe', type: 'delete');
         } catch (\Exception $e) {
-            dd('Erro ao tentar deletar', $e->getMessage());
+            $this->openDelete = false;
+            if (!empty($e->getMessage())) {
+                $this->error('Erro interno no sistema', 'Error interno no sistema para essa funcionalidade por favor tente novamente mais tarde', position: 'toast-top toast-end', timeout: 8000);
+            }
         }
     }
 
+    #[On('classe-delete-cancel')]
     public function close()
     {
         $this->openDelete = false;
@@ -35,29 +39,25 @@ new class extends Component {
 
 <x-mary-modal wire:model="openDelete">
     @if ($classe)
-        <div class="mb-9 flex flex-col items-center gap-3 p-5" id="classe-delete-text-{{ $id ?? '' }}"
+        <div class="mb-6 flex justify-center items-center gap-3 p-5" id="classe-delete-text-{{ $classe->id ?? '' }}"
             wire:loading.remove>
-            <div class="p-5 rounded-full bg-red-100">
-                <x-mary-icon name="o-trash" class="text-red-700 w-6 h-6" />
-            </div>
-            <p class="mb-3 tracking-wide text-[18px] font-medium text-red-700">
-                {{ $classe->name }}
-            </p>
+            <x-mary-icon name="o-trash" class="text-red-500 w-4 h-4" />
+            <span class="text-red-500">Tem certeza que deseja deletar? {{ $classe->title }}</span>
         </div>
-        <div class=" flex flex-col items-center text-center gap-3 p-5 w-full" wire:loading wire:target="delete">
+        <div class="flex flex-col items-center text-center gap-3 p-5 w-full" wire:loading wire:target="delete">
             <div class="mb-4">
                 <x-mary-loading class="progress-error w-7 h-7" />
             </div>
             <p class="text-[16px] text-pink-600 tracking-wide">Deletando</p>
         </div>
 
-        <div id="discipline-delete-actions-{{ $id ?? '' }}" class="w-full flex justify-end" wire:loading.remove>
-            <button id="discipline-delete-cancel-{{ $id ?? '' }}" x-on:click="$wire.openDelete = false"
-                class="text-gray-500 btn capitalize">
-                cancelar
+        <div id="classe-delete-actions-{{ $classe->id ?? '' }}" class="w-full flex justify-end" wire:loading.remove>
+            <button id="classe-delete-cancel-{{ $classe->id ?? '' }}" x-on:click="$wire.openDelete = false"
+                class=" btn btn-sm capitalize">
+                Cancelar
             </button>
-            <button class="btn bg-red-500 text-red-50 capitalize" x-on:click="$wire.delete" wire:loading.remove
-                id="discipline-delete-send-{{ $id ?? '' }}">
+            <button class="btn btn-sm btn-error text-red-50" x-on:click="$wire.delete" wire:loading.remove
+                id="classe-delete-confirm-{{ $classe->id ?? '' }}">
                 Deletar
             </button>
         </div>
