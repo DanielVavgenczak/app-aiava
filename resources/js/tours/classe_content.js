@@ -1,4 +1,123 @@
 import { AddButtonActions, configDriver } from "./utils";
+export async function StartTourStudentFilter()
+{
+    let store = Alpine.store("tourguide");
+    store.openMai = false;
+    return new Promise(async (resolve) => {
+        const inputStudentFilter = document.querySelector("#student-filter");
+        if(!inputStudentFilter) return;
+        const driverObj = drivertour({
+            ...configDriver,
+            steps: [
+                {
+                    element: `#student-filter`,
+                    popover: {
+                        description: `Insira o nome do estudante que deseja filtrar`,
+                        //showButtons: [""],
+                    },
+                    // onHighlighted: async (el) => {
+                    //     await new Promise((resolve) => setTimeout(resolve, 3000));
+                    //     if (!btnStudentRegister) {
+                    //         return;
+                    //     }
+                    //     btnStudentRegister.click();
+                    //     await new Promise((resolve) => setTimeout(resolve, 1000));
+                    //     await driverObj.moveNext();
+                    // },
+                },
+
+                // {
+                //     element: `#student-input-full_name`,
+                //     popover: {
+                //         description: "Insira o nome completo do aluno",
+                //     },
+                // },
+                // {
+                //     element: `#student-input-email`,
+                //     popover: {
+                //         description: "Insira o email do aluno",
+                //     },
+                // },
+                // {
+                //     element: `#student-input-phone`,
+                //     popover: {
+                //         description: "Caso queira insira o telefone do aluno",
+                //     },
+                // },
+                // {
+                //     element: `#student-input-add`,
+                //     popover: {
+                //         description: "Clique em '+ adicionar', para adicionar o aluno a lista",
+                //     },
+                //     onHighlighted: async (el) => {
+                //         await new Promise((resolve) => setTimeout(resolve, 3000));
+                //         await driverObj.moveNext();
+                //     },
+                // },
+                // {
+                //     element: `#student-input-list`,
+                //     popover: {
+                //         description: "Verifique os dados do aluno, caso esteja errado exclua da lista clicando na lixeira",
+                //         onPopoverRender: (popover, { config, state }) => {
+                //             const actions = AddButtonActions(
+                //                 popover,
+                //                 "voltar ao inicio",
+                //             );
+                //             actions.addEventListener("click", () => {
+                //                 Livewire.dispatch("student-register-cancel");
+                //                 driverObj.destroy();
+                //                 store.openMai = true;
+                //             });
+                //         },
+                //     },
+                //     onHighlighted:async(el) => {
+                //         await new Promise((resolve) => setTimeout(resolve, 2000));
+                //     }
+                // },
+                // {
+                //     element: `#student-input-actions`,
+                //     popover: {
+                //         description: "Escolher Cancelar ou Registrar",
+                //         onPopoverRender: (popover, { config, state }) => {
+                //             const actions = AddButtonActions(
+                //                 popover,
+                //                 "voltar ao inicio",
+                //             );
+                //             actions.addEventListener("click", async() => {
+                //                 Livewire.dispatch("student-register-cancel");
+                //                 await driverObj.destroy();
+                //                 store.openMai = true;
+                //             });
+                //         },
+                //     },
+                //     onHighlighted:async(el) => {
+                //         const cancel = el.querySelector("#student-input-cancel");
+                //         const save = el.querySelector("#student-input-register");
+                //         if (!cancel && !save) {
+                //             return;
+                //         }
+                //         cancel.addEventListener("click",async(event) => {
+                //             event.preventDefault();
+                            
+                //             Livewire.dispatch("student-register-cancel");
+                //             await driverObj.destroy();
+                //             store.openMai = true;
+                //         });
+
+                //         save.addEventListener("click", async () => {
+                //             Livewire.dispatch("student-register-cancel");
+                //             await driverObj.destroy();
+                //             store.openMai = true;
+                //         });
+                //     },
+                // },
+            ]
+        })
+        return await driverObj.drive();
+    })
+
+}
+
 export async function StartTourStudentRegister()
 {
     let store = Alpine.store("tourguide");
@@ -282,7 +401,7 @@ export async function StartTourStudentEdit()
                                             if(!btnEdit) return;
                                             await btnEdit.click()
                                             el.style.zIndex = "0";
-                                            await new Promise((resolve) => setTimeout(resolve, 2000));
+                                            await new Promise((resolve) => setTimeout(resolve, 1000));
                                             await driverObj.moveNext();
                                            
                                         }
@@ -324,28 +443,34 @@ export async function StartTourStudentEdit()
                                             onPopoverRender: (popover, { config, state }) => {
                                                 const actions =  AddButtonActions(popover, "voltar ao inicio")
                                                 actions.addEventListener('click', async () => {
-                                                    //Livewire.dispatch("classe-delete-cancel");
+                                                    Livewire.dispatch("student-edit-cancel");
                                                     await driverObj.destroy();
                                                     store.openMai = true;
                                                 })
                                             }
                                         },
                                         onHighlighted: async(el) => {
-                                            await new Promise((resolve) => setTimeout(resolve, 2000));
-                                            const btnCancel = el.querySelector(`#student-input-cancel`)
-                                            const btnConfirm = el.querySelector(`#student-input-register-${dataId}`)
+                                            //await new Promise((resolve) => setTimeout(resolve, 2000));
+                                            const btnCancel = el.querySelector(`#student-edit-cancel-${dataId}`)
+                                            const btnConfirm = el.querySelector(`#student-edit-confirm-${dataId}`)
+                                            console.log('Achados', btnCancel, btnConfirm);
                                             if(!btnCancel || !btnConfirm) return;
-                                            btnCancel.addEventListener('click', async () => {
-                                                Livewire.dispatch("student-edit-cancel");
-                                                await driverObj.destroy();
-                                                store.openMai = true;
-                                            })
-                                            btnConfirm.addEventListener('click', async () => {
-                                                Livewire.dispatch("student-edit-cancel");
-                                                await driverObj.destroy();
-                                                store.openMai = true;
 
+                                            await btnCancel.addEventListener('click', async (event) => {
+                                                event.preventDefault();
+                                                console.log('cliquei nessa merda');
+                                                await  handlerCloseModal();
                                             })
+                                            await btnConfirm.addEventListener('click', async () => {
+                                               await handlerCloseModal()
+                                            })
+
+                                            async function handlerCloseModal()
+                                            {
+                                                Livewire.dispatch("student-edit-cancel");
+                                                await updatedDriverObj.destroy();
+                                                store.openMai = true;
+                                            }
                                         }
                                     },
                                 ]

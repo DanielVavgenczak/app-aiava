@@ -23,12 +23,10 @@
                  <!-- Header com controle e busca -->
                  <div
                      class="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b border-gray-100 dark:border-slate-700">
-
-
                      <div class="flex items-center gap-3 w-full md:w-auto">
-                         <div class="relative flex-1 md:w-64">
-                             <x-mary-input placeholder="Buscar aluno..." icon="o-magnifying-glass"
-                                 class="!pl-10 !outline-none" />
+                         <div class="relative flex-1 md:w-64" id="student-filter">
+                             <x-mary-input placeholder="Buscar aluno..." wire:model.live="search"
+                                 icon="o-magnifying-glass" class="!pl-10 !outline-none" />{{ $search }}
                          </div>
                      </div>
                  </div>
@@ -58,7 +56,8 @@
                          <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
                              @foreach ($classe->students as $index => $student)
                                  <tr class="hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors card-student"
-                                     id="student-{{ $student->id }}" data-tour="{{ $student->id }}">
+                                     id="student-{{ $student->id }}" data-tour="{{ $student->id }}"
+                                     mary:key="student-bykey-{{ $student->id }}">
                                      <td class="p-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                          {{ $index + 1 }}
                                      </td>
@@ -151,6 +150,9 @@
                      x-on:click.prevent="$store.tourguide.start('StartTourStudentRegister')" />
 
                  @if ($classe->students->count() > 0)
+                     <x-mary-button
+                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                         label="Filtrar Alunos" x-on:click="$store.tourguide.start('StartTourStudentFilter')" />
                      <x-mary-button
                          class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                          label="Ver aluno" x-on:click="$store.tourguide.start('StartTourStudentAccess')" />

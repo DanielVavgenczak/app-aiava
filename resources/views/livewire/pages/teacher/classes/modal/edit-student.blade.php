@@ -58,7 +58,6 @@ new class extends Component {
             $this->open = false;
         } catch (\Exception $e) {
             $this->open = false;
-            dd($e->getMessage());
             if (!empty($e->getMessage())) {
                 $this->error('Erro interno no sistema', 'Error interno no sistema para essa funcionalidade por favor tente novamente mais tarde', position: 'toast-top toast-end', timeout: 8000);
             }
@@ -103,9 +102,9 @@ new class extends Component {
         <div id="student-edit-actions-{{ $student->id }}">
             <div class="self-end mt-4" wire:loading.remove>
                 <button type="button" class="btn btn-sm btn-ghost tracking-wider capitalize"
-                    x-on:click="$wire.open = false" id="student-input-cancel">cancelar</button>
+                    x-on:click="$wire.cancel()" id="student-edit-cancel-{{ $student->id }}">cancelar</button>
                 <button type="submit" class="btn btn-sm bg-pink-700 capitalize text-gray-50 tracking-wider"
-                    wire:click="updateStudent" id="student-input-register-{{ $student->id }}">editar</button>
+                    wire:click="updateStudent" id="student-edit-confirm-{{ $student->id }}">editar</button>
             </div>
             <div wire:loading wire:target="updateStudent" class="w-full flex justify-center">
                 <div class="flex flex-col justify-center items-center gap-4">

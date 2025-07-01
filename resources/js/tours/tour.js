@@ -53,7 +53,11 @@ document.addEventListener("alpine:init", () => {
                 path: "/app/teacher/classes",
                 tourModule: () => import("./classe_content"),
                 tours: [
-                    "StartTourStudentRegister",                    
+                    "StartTourStudentRegister", 
+                    "StartTourStudentFilter",
+                    "StartTourStudentEdit",
+                    "StartTourStudentAccess",
+                    "StartTourStudentDelete"                  
                 ],
             }
         ],
