@@ -14,6 +14,7 @@ class Student extends Model
     public $incrementing = false;
 
     protected $fillable = [
+        'position',
         'full_name',
         'email',
         'phone',

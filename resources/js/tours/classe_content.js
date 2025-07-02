@@ -12,105 +12,49 @@ export async function StartTourStudentFilter()
                 {
                     element: `#student-filter`,
                     popover: {
-                        description: `Insira o nome do estudante que deseja filtrar`,
-                        //showButtons: [""],
+                        description: `Insira o nome do estudante que deseja encontrar`,
+                       //showButtons: [""],
+                        onPopoverRender: (popover, { config, state }) => {
+                            const actions = AddButtonActions(
+                                popover,
+                                "voltar ao inicio",
+                            );
+                            actions.addEventListener("click", () => {
+                                driverObj.destroy();
+                                store.openMai = true;
+                            });
+                        },
                     },
-                    // onHighlighted: async (el) => {
-                    //     await new Promise((resolve) => setTimeout(resolve, 3000));
-                    //     if (!btnStudentRegister) {
-                    //         return;
-                    //     }
-                    //     btnStudentRegister.click();
-                    //     await new Promise((resolve) => setTimeout(resolve, 1000));
-                    //     await driverObj.moveNext();
-                    // },
+                    onHighlighted: async (el) => {
+                        await new Promise((resolve) => setTimeout(resolve, 3000));
+                        const noResult = document.querySelector(`#student-no-result`);
+                        if(noResult) {
+                            alert("Nenhum aluno encontrado com esse filtro");
+                            driverObj.destroy();
+                            store.openMai = true;
+                            return;
+                        }
+
+                    },
                 },
 
-                // {
-                //     element: `#student-input-full_name`,
-                //     popover: {
-                //         description: "Insira o nome completo do aluno",
-                //     },
-                // },
-                // {
-                //     element: `#student-input-email`,
-                //     popover: {
-                //         description: "Insira o email do aluno",
-                //     },
-                // },
-                // {
-                //     element: `#student-input-phone`,
-                //     popover: {
-                //         description: "Caso queira insira o telefone do aluno",
-                //     },
-                // },
-                // {
-                //     element: `#student-input-add`,
-                //     popover: {
-                //         description: "Clique em '+ adicionar', para adicionar o aluno a lista",
-                //     },
-                //     onHighlighted: async (el) => {
-                //         await new Promise((resolve) => setTimeout(resolve, 3000));
-                //         await driverObj.moveNext();
-                //     },
-                // },
-                // {
-                //     element: `#student-input-list`,
-                //     popover: {
-                //         description: "Verifique os dados do aluno, caso esteja errado exclua da lista clicando na lixeira",
-                //         onPopoverRender: (popover, { config, state }) => {
-                //             const actions = AddButtonActions(
-                //                 popover,
-                //                 "voltar ao inicio",
-                //             );
-                //             actions.addEventListener("click", () => {
-                //                 Livewire.dispatch("student-register-cancel");
-                //                 driverObj.destroy();
-                //                 store.openMai = true;
-                //             });
-                //         },
-                //     },
-                //     onHighlighted:async(el) => {
-                //         await new Promise((resolve) => setTimeout(resolve, 2000));
-                //     }
-                // },
-                // {
-                //     element: `#student-input-actions`,
-                //     popover: {
-                //         description: "Escolher Cancelar ou Registrar",
-                //         onPopoverRender: (popover, { config, state }) => {
-                //             const actions = AddButtonActions(
-                //                 popover,
-                //                 "voltar ao inicio",
-                //             );
-                //             actions.addEventListener("click", async() => {
-                //                 Livewire.dispatch("student-register-cancel");
-                //                 await driverObj.destroy();
-                //                 store.openMai = true;
-                //             });
-                //         },
-                //     },
-                //     onHighlighted:async(el) => {
-                //         const cancel = el.querySelector("#student-input-cancel");
-                //         const save = el.querySelector("#student-input-register");
-                //         if (!cancel && !save) {
-                //             return;
-                //         }
-                //         cancel.addEventListener("click",async(event) => {
-                //             event.preventDefault();
-                            
-                //             Livewire.dispatch("student-register-cancel");
-                //             await driverObj.destroy();
-                //             store.openMai = true;
-                //         });
-
-                //         save.addEventListener("click", async () => {
-                //             Livewire.dispatch("student-register-cancel");
-                //             await driverObj.destroy();
-                //             store.openMai = true;
-                //         });
-                //     },
-                // },
+                {
+                    element: `#student-list`,
+                    popover: {
+                        description: "Resultados da busca",
+                        onPopoverRender: (popover, { config, state }) => {
+                            const actions = AddButtonActions(
+                                popover,
+                                "voltar ao inicio",
+                            );
+                            actions.addEventListener("click", () => {
+                               //Livewire.dispatch("student-register-cancel");
+                                driverObj.destroy();
+                                store.openMai = true;
+                            });
+                        },
+                    },
+                },
             ]
         })
         return await driverObj.drive();
@@ -217,7 +161,7 @@ export async function StartTourStudentRegister()
                         }
                         cancel.addEventListener("click",async(event) => {
                             event.preventDefault();
-                            
+
                             Livewire.dispatch("student-register-cancel");
                             await driverObj.destroy();
                             store.openMai = true;
@@ -403,7 +347,7 @@ export async function StartTourStudentEdit()
                                             el.style.zIndex = "0";
                                             await new Promise((resolve) => setTimeout(resolve, 1000));
                                             await driverObj.moveNext();
-                                           
+
                                         }
                                     },
                                     {
@@ -414,7 +358,7 @@ export async function StartTourStudentEdit()
                                             align: "start",
                                             //showButtons:['']
                                         },
-                                        
+
                                     },
                                     {
                                         element: `#student-input-email-${dataId}`, // Seleciona o elemento com base no ID
@@ -424,7 +368,7 @@ export async function StartTourStudentEdit()
                                             align: "start",
                                             //showButtons:['']
                                         },
-                                        
+
                                     },
                                     {
                                         element: `#student-input-phone-${dataId}`, // Seleciona o elemento com base no ID
@@ -434,7 +378,7 @@ export async function StartTourStudentEdit()
                                             align: "start",
                                             //showButtons:['']
                                         },
-                                        
+
                                     },
                                     {
                                         element: `#student-edit-actions-${dataId}`, // Seleciona o elemento com base no ID
@@ -565,7 +509,7 @@ export async function StartTourStudentDelete()
                                             el.style.zIndex = "0";
                                             await new Promise((resolve) => setTimeout(resolve, 2000));
                                             await driverObj.moveNext();
-                                           
+
                                         }
                                     },
                                     {
@@ -583,7 +527,7 @@ export async function StartTourStudentDelete()
                                                     store.openMai = true;
                                                 })
                                             }
-                                        }, 
+                                        },
                                         onHighlighted: async(el) => {
                                             await new Promise((resolve) => setTimeout(resolve, 2000));
                                             const btnCancel = el.querySelector(`#student-delete-cancel-${dataId}`)
@@ -601,7 +545,7 @@ export async function StartTourStudentDelete()
 
                                             })
                                         }
-                                        
+
                                     },
                                 ]
 

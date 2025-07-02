@@ -6,13 +6,14 @@ use App\Models\Teacher\Student;
 
 new class extends Component {
     public bool $open = false;
-    public string $id;
+    //public string $id;
     public ?Student $student;
 
     #[On('show-student-details')]
     public function open($id)
     {
-        if ($this->student->id === $id) {
+        $this->js("console.log('open student details');");
+        if ($this->student->id === $id || !$this->student->id === '') {
             $this->open = true;
         }
     }

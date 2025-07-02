@@ -64,10 +64,13 @@ new class extends Component {
                 }
             });
             $this->reset('studentName', 'studentEmail', 'studentPhone', 'students');
-            $this->dispatch('student-registed-success');
+            $this->dispatch('event-student', type: 'created');
             $this->open = false;
         } catch (\Exception $e) {
-            dd('Deu erro ao cadastrar estuante', $e->getMessage());
+            $this->open = false;
+            if (!empty($e->getMessage())) {
+                $this->error('Erro interno no sistema', 'Error interno no sistema para essa funcionalidade por favor tente novamente mais tarde', position: 'toast-top toast-end', timeout: 8000);
+            }
         }
     }
 

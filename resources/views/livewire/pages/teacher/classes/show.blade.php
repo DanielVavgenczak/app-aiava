@@ -16,8 +16,8 @@
              </button>
          </div>
          <livewire:pages.teacher.classes.modal.register-student :classe="$classe" />
-         <span>Alunos: {{ count($classe->students) }}</span>
-         @if (count($classe->students) > 0)
+         <span>Alunos: {{ count($students) }}</span>
+         @if (count($students) > 0)
              <div
                  class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden dark:bg-slate-800 dark:border-slate-700">
                  <!-- Header com controle e busca -->
@@ -25,8 +25,8 @@
                      class="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b border-gray-100 dark:border-slate-700">
                      <div class="flex items-center gap-3 w-full md:w-auto">
                          <div class="relative flex-1 md:w-64" id="student-filter">
-                             <x-mary-input placeholder="Buscar aluno..." wire:model.live="search"
-                                 icon="o-magnifying-glass" class="!pl-10 !outline-none" />{{ $search }}
+                             <x-mary-input placeholder="Filtrar aluno" wire:model.live="search"
+                                 icon="o-magnifying-glass" class="!pl-10 !outline-none" />
                          </div>
                      </div>
                  </div>
@@ -45,25 +45,24 @@
                                  <th
                                      class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                                      Contato</th>
-                                 <th
-                                     class="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                                     Status</th>
+
                                  <th
                                      class="p-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                                      Ações</th>
                              </tr>
                          </thead>
                          <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-                             @foreach ($classe->students as $index => $student)
+
+                             @foreach ($students as $index => $student)
                                  <tr class="hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors card-student"
-                                     id="student-{{ $student->id }}" data-tour="{{ $student->id }}"
-                                     mary:key="student-bykey-{{ $student->id }}">
+                                     id="student-{{ $student->id }}" data-tour="{{ $student->id }}">
                                      <td class="p-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                         {{ $index + 1 }}
+                                         {{ $student->position }}
                                      </td>
 
                                      <td class="p-3 whitespace-nowrap">
-                                         <div class="flex items-center gap-3">
+                                         <div class="flex items-center gap-3"
+                                             mary:key="student-infos-name-{{ $student->id }}">
                                              <div
                                                  class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 dark:bg-blue-900/50 dark:text-blue-300">
                                                  {{ strtoupper(substr($student->first_name, 0, 1)) }}
@@ -71,7 +70,7 @@
                                              <div>
                                                  <div class="font-medium text-gray-900 dark:text-white">
                                                      {{ $student->full_name }}</div>
-                                                 <div class="text-xs text-gray-500 dark:text-gray-400">Matrícula:
+                                                 <div class="text-xs text-gray-500 dark:text-gray-400">Registro:
                                                      {{ $student->created_at ?? 'N/A' }}</div>
                                              </div>
                                          </div>
@@ -84,50 +83,48 @@
                                              {{ $student->phone ?? 'Sem telefone' }}</div>
                                      </td>
 
-                                     <td class="p-3 whitespace-nowrap">
-                                         <span
-                                             class="px-2 py-1 text-xs rounded-full {{ $student->active ? 'bg-red-100 text-red-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
-                                             {{ $student->active ? 'Ativo' : 'Inativo' }}
-                                         </span>
-                                     </td>
-
                                      <td class="p-3 whitespace-nowrap text-right text-sm font-medium">
                                          <div class="flex justify-end gap-2">
                                              <button id="student-access-{{ $student->id }}"
                                                  x-on:click="$dispatch('show-student-details', { id: '{{ $student->id }}' })"
-                                                 class="btn btn-sm text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                                                 title="Ver detalhes">
+                                                 class="btn btn-sm" title="Ver detalhes">
                                                  <x-mary-icon name="o-eye" class="w-5 h-5" />
                                              </button>
 
                                              <button type="button" id="student-btn-edit-{{ $student->id }}"
                                                  x-on:click="$dispatch('edit-student', { id: '{{ $student->id }}' })"
-                                                 class="btn btn-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-                                                 title="Editar">
+                                                 class="btn btn-sm" title="Editar">
                                                  <x-mary-icon name="o-pencil-square" class="w-5 h-5" />
                                              </button>
 
                                              <button type="button" id="student-btn-delete-{{ $student->id }}"
                                                  x-on:click="$dispatch('delete-student', {id:'{{ $student->id }}'})"
-                                                 class="btn btn-sm text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                                 title="Remover">
+                                                 class="btn btn-sm " title="Remover">
                                                  <x-mary-icon name="o-trash" class="w-5 h-5" />
                                              </button>
                                          </div>
                                      </td>
+                                     <livewire:pages.teacher.classes.modal.edit-student :student="$student"
+                                         :key="'edit-' . $student->id" />
+                                     <livewire:pages.teacher.classes.modal.delete-student :student="$student"
+                                         :key="'delete-' . $student->id" />
+                                     <livewire:pages.teacher.classes.modal.student :student="$student"
+                                         :key="'student-' . $student->id" />
                                  </tr>
-                                 <livewire:pages.teacher.classes.modal.student :student="$student"
-                                     mary:key="student-details-{{ $student->id }}" />
-                                 <livewire:pages.teacher.classes.modal.edit-student :student="$student"
-                                     mary:key="student-edit-{{ $student->id }}" />
-                                 <livewire:pages.teacher.classes.modal.delete-student :student="$student"
-                                     mary:key="student-delete-{{ $student->id }}" />
                              @endforeach
                          </tbody>
                      </table>
                  </div>
              @else
-                 <p>Nenhum aluno resgistrado a essa turma</p>
+                 <div class="flex flex-col justify-center items-center gap-2" id="student-no-result">
+                     <p>Nenhum aluno resgistrado a essa turma</p>
+                     @if (!empty($search))
+                         <button class="pointer hover:text-pink-800 text-pink-600 text-sm tracking-wide" type="submit"
+                             wire:click="resetSearch">voltar a listagem
+                             completa</button>
+                     @endif
+                 </div>
+
          @endif
 
      </div>
