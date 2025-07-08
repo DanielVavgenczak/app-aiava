@@ -33,41 +33,36 @@ new class extends Component {
         $this->validate([
             'title' => 'required|string|max:255',
         ]);
-
         $this->discipline->update([
             'title' => $this->title,
         ]);
         $this->open = false;
-        $this->dispatch('content-update', title: $this->title, action: 'update');
+        $this->dispatch('discipline-event', type: 'update', msg: 'Disciplina editada com sucesso!');
     }
 }; ?>
 
-<x-mary-modal wire:model="open">
-    <div>
-        <h2>Editar: {{ $discipline->title ?? 'Discipline' }}</h2>
-    </div>
+<x-mary-modal wire:model="open" title="Editar" subtitle="Edite a disciplina: {{ $discipline->title ?? 'Discipline' }}">
     <form wire:submit.prevent="update">
-        <div class="my-3" id="discipline-edit-form-title-{{ $discipline->id ?? '' }}">
-            <x-input-label for="title" :value="__('Titulo')" />
-            <x-text-input wire:model="title" id="title"
-                class="border-[1px] focus:border-pink-500 focus:outline focus:outline-pink-50 px-3 py-2 block w-full mt-1"
-                type="text" name="title" required autofocus autocomplete="title" />
-            <x-input-error :messages="$errors->get('title')" class="mt-2" />
+        <div wire:loading.remove class="my-3" id="discipline-edit-form-title-{{ $discipline->id ?? '' }}">
+            <x-mary-input for="title" :value="__('Titulo')" wire:model="title" class="!outline-none" />
         </div>
         <div class="flex justify-end my-3" id="discipline-edit-form-actions-{{ $discipline->id ?? '' }}">
             <div class="flex items-center gap-2">
-                <button class="btn text-gray-500 capitalize  hover:text-pink-900"
-                    x-on:click="$wire.openEditContent = false" id="discipline-edit-cancel-{{ $discipline->id ?? '' }}">
+                <button class="cursor-pointer btn btn-sm btn-ghost" x-on:click="$wire.openEditContent = false"
+                    id="discipline-edit-cancel-{{ $discipline->id ?? '' }}">
                     Cancelar
                 </button>
-                <button class="btn text-white capitalize bg-pink-600 hover:bg-pink-900" type="submit"
+                <button class="bg-pink-600 btn btn-sm text-gray-50" type="submit"
                     id="discipline-edit-form-send-{{ $discipline->id ?? '' }}">
                     Editar
                 </button>
-                <div wire:loading>
-                    <span class="text-pink-600 loading loading-spinner loading-xs"></span>
-                </div>
             </div>
+        </div>
+        <div wire:loading class="flex flex-col justify-center w-full text-center">
+            <div class="mb-2">
+                <x-mary-loading class="text-pink-600 loading-dots" />
+            </div>
+            <span class="text-xs text-pink-600">Editando</span>
         </div>
     </form>
 </x-mary-modal>

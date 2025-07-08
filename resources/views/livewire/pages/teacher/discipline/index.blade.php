@@ -12,8 +12,7 @@ new class extends Component {
     public string $search = '';
     public Collection $disciplines;
     public int $totalDisciplines = 0;
-    //TODO: criar um id fixo para isso
-    public string $toKey;
+
     public function with()
     {
         return $this->disciplines = $this->loadDisciplines();
@@ -21,7 +20,6 @@ new class extends Component {
     public function mount()
     {
         sleep(1);
-        $this->toKey = Auth::user()->id;
     }
 
     private function loadDisciplines()
@@ -39,45 +37,62 @@ new class extends Component {
         $this->success('Disciplina adicionada com sucesso!');
     }
 
-    #[On('content-update')]
-    #[On('content-deleted')]
-    public function refreshDisciplineList($title, $action)
+    #[On('discipline-event')]
+    public function refresh($type, $msg)
     {
-        if ($action === 'update') {
-            $this->toast(type: 'success', title: "{$title} atualizada com sucesso!", icon: 'o-check', css: 'alert-success');
-        } elseif ($action === 'delete') {
-            $this->error('Disciplina excluida com sucesso!');
-        }
+        match ($type) {
+            'update', 'create' => $this->handleEventWithToast($type, $msg),
+            'delete' => $this->handleEventWithToast($type, $msg),
+            default => null,
+        };
     }
 
+    protected function handleEventWithToast($type, $msg)
+    {
+        if ($type !== 'delete') {
+            $this->toast(type: 'success', title: "{$msg}", icon: 'o-check', css: 'alert-success');
+            $this->loadDisciplines();
+            return;
+        }
+        $this->toast(type: 'error', title: "{$msg}", icon: 'o-trash', css: 'alert-error');
+        return;
+    }
+
+    public function resetSearch()
+    {
+        $this->search = '';
+        $this->disciplines = $this->loadDisciplines();
+    }
     public function placeholder()
     {
         return Blade::render('<div class="flex flex-col items-center justify-center gap-3 p-5 text-sm font-normal text-center text-gray-600 rounded">
                 <x-mary-loading />
-                <span class="tracking-wider text-sm text-gray-600">Carregando disciplinas</span>
+                <span class="text-xs tracking-wider text-gray-800">Carregando</span>
             </div>');
     }
 }; ?>
 <div class="flex flex-col gap-8" id="content-intial">
-    <livewire:pages.teacher.discipline.modals.create />
+    <livewire:pages.teacher.discipline.modals.create mary:key="create-modal-{{ Str::random(5) }}" />
     <div class="flex items-center justify-between">
         @if ($disciplines->count() > 0)
-            <x-text-input placeholder="Pesquisar" wire:model.live="search" id="discipline-input-search"
-                class="border-[1px] focus:border-pink-500 focus:outline focus:outline-pink-50 px-3 py-2 block  mt-1" />
+            <div id="discipline-input-search">
+                <x-mary-input placeholder="Pesquisar disciplina" wire:model.live="search" class="!outline-none" />
+            </div>
         @else
             <span></span>
         @endif
-        <button class="btn bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center" id="discipline-create"
-            x-on:click="$dispatch('create-content-modal',{open:true})" mary:key="discipline-create-button">
-            <x-mary-icon name="o-plus" class="w-5 h-5" /> <span class="text-sm tracking-wide">Disciplina</span>
+        <button class="btn btn-md bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center"
+            id="discipline-create" x-on:click="$dispatch('create-content-modal',{open:true})"
+            mary:key="create-button-{{ Str::uuid7() }}">
+            <x-mary-icon name="o-plus" class="w-5 h-5" /> <span class="">Disciplina</span>
         </button>
-
     </div>
     @if ($disciplines->count() > 0)
         <div class="relative grid w-full grid-cols-5 gap-3 pb-5 mt-8" id="disciplines-all">
             @foreach ($disciplines as $discipline)
-                <div class="border-[1px] border-gray-200 shadow-md  rounded-sm flex flex-col discipline-card"
-                    id="discipline-{{ $discipline->id }}" data-tour="{{ $discipline->id }}">
+                <div class="border-[1px] border-gray-200 shadow-sm  rounded-sm flex flex-col discipline-card"
+                    mary:key="discipline-card-{{ $discipline->id }}" id="discipline-{{ $discipline->id }}"
+                    data-tour="{{ $discipline->id }}">
                     <div class="flex items-center justify-between">
                         <span>
                         </span>
@@ -97,19 +112,27 @@ new class extends Component {
                         </x-mary-dropdown>
                     </div>
                     <div class="p-6 text-center">
-                        <a class="text-gray-600 hover:text-blue-600 content-title tracking-wide text-[15px] font-medium"
+                        <a class="text-sm font-medium text-gray-600 hover:text-blue-00 content-title"
                             id="discipline-manager-content-{{ $discipline->id }}" wire:navigate
                             href="{{ route('teacher.discipline.show', $discipline) }}">{{ $discipline->title }}</a>
                     </div>
                 </div>
-                <livewire:pages.teacher.discipline.modals.details :discipline="$discipline" />
-                <livewire:pages.teacher.discipline.modals.edit :discipline="$discipline" />
-                <livewire:pages.teacher.discipline.modals.delete :id="$discipline->id" :title="$discipline->title" />
+                <livewire:pages.teacher.discipline.modals.details :key="'details-' . $discipline->id" :discipline="$discipline" />
+                <livewire:pages.teacher.discipline.modals.edit :key="'edit-' . $discipline->id" :discipline="$discipline" />
+                <livewire:pages.teacher.discipline.modals.delete :key="'delete-' . $discipline->id" :id="$discipline->id"
+                    :title="$discipline->title" />
             @endforeach
         </div>
     @else
-        <div class="flex flex-col items-center justify-center w-full gap-6 p-6 text-center ">
-            <p class="text-lg font-medium text-gray-500">Você não possue nenhuma disciplina cadastrada</p>
+        <div class="flex flex-col items-center justify-center w-full gap-6 p-6 text-center" id="disciplines-empty">
+            @if (!empty($search) && count($disciplines) === 0)
+                <p class="text-sm font-medium tracking-wider text-gray-600">Nenhuma disciplina encontrada para
+                    "{{ $search }}"</p>
+                <button class="btn btn-sm btn-ghost" type="button" wire:click="resetSearch">voltar a lista</button>
+            @else
+                <p class="text-sm font-medium tracking-wider text-gray-600">Você não possue nenhuma disciplina
+                    cadastrada</p>
+            @endif
         </div>
     @endif
     <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
@@ -122,7 +145,7 @@ new class extends Component {
                         class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
-                <h2 class="text-lg font-normal text-gray-700">Você tem as seguintes opções:</h2>
+                <h2 class="text-sm font-normal tracking-wider text-gray-700">Você tem as seguintes opções:</h2>
             </div>
             <div class="flex items-center gap-3 p-4 bg-gray-100">
                 <x-mary-button
@@ -138,7 +161,7 @@ new class extends Component {
                         @click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
                     <x-mary-button
                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                        label="Editar: Titulo,Descrição" @click="$store.tourguide.start('StartTourEditDiscipline')" />
+                        label="Editar: Titulo" @click="$store.tourguide.start('StartTourEditDiscipline')" />
                     <x-mary-button
                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Deletar disciplina" @click="$store.tourguide.start('StartTourDeleteDiscipline')" />

@@ -6,62 +6,52 @@ use App\Livewire\Forms\{DisciplineForm};
 
 new class extends Component {
     public DisciplineForm $form;
-    public bool $openCreateContent = false;
-
+    public bool $open = false;
     #[On('create-content-modal')]
     public function open($open)
     {
-        $this->openCreateContent = $open;
+        $this->open = $open;
     }
-    #[On('to-close-create')]
-    public function close()
+    #[On('close-create')]
+    public function cancel()
     {
-        $this->openCreateContent = false;
+        $this->open = false;
+        $this->form->reset();
+        $this->js("console.log('Modal closed and form reset');");
     }
 
     public function store()
     {
         $this->form->disciplineStore();
-        $this->openCreateContent = false;
-        $this->dispatch('content-created', title: $this->form->title, action: 'create');
+        $this->open = false;
+        $this->dispatch('discipline-event', type: 'create', msg: 'Disciplina criada com sucesso!');
         $this->dispatch('send-id-discipline', discipline_id: $this->form->getDisciplineId());
         $this->form->reset();
         sleep(2);
     }
 }; ?>
-<x-mary-modal wire:model="openCreateContent" class="">
-    <div class="py-4">
-        <h2 class="text-gray-800 text-lg font-semibold tracking-wide">Nova disciplina</h2>
-    </div>
+<x-mary-modal wire:model="open" title="Nova disciplina" subtitle="Registre uma nova disciplina">
     <form wire:submit.prevent="store">
-        <div class="my-3" id="discipline-input-title">
-            <x-input-label for="title" class="text-gray-700 text-[18px]" :value="__('Titulo')" />
-            <x-text-input wire:model.live.debounce.0ms="form.title" id="title"
-                class="border-[1px] focus:border-pink-500 focus:outline focus:outline-pink-50 px-3 py-2 block w-full mt-1"
-                type="text" name="title" required autofocus autocomplete="title" />
-            <div class="w-full py-2">
-                @error('form.title')
-                    <span class="text-red-500 error tracking-wide text-[15px]">{{ $message }}</span>
-                @enderror
-            </div>
+        <div id="discipline-input-title" wire:loading.remove>
+            <x-mary-input wire:model="form.title" label="Titulo da disciplina" class="title !outline-none"
+                autocomplete="title" />
         </div>
-        <div class="flex gap-2 items-center justify-end my-3" id="discipline-save">
-            <div class="flex items-center gap-2">
-                <button class="text-gray-500 btn-ghost cursor-pointer" x-on:click="$wire.openCreateContent = false"
-                    id="create-cancel">
+        <div class="flex items-center justify-end gap-2 my-3" id="discipline-save">
+            <div class="flex items-center gap-2" id="create-cancel" wire:loading.remove>
+                <button type="button" class="cursor-pointer btn btn-sm btn-ghost" x-on:click="$wire.cancel()">
                     Cancelar
                 </button>
             </div>
-            <div class="flex items-center gap-2">
-                <button class="btn text-white capitalize bg-pink-600 hover:bg-pink-900" type="submit"
-                    id="create-confirm" wire:loading.remove>
+            <div id="create-confirm" wire:loading.remove>
+                <button class="bg-pink-600 btn btn-sm text-gray-50 hover:bg-pink-900" type="submit">
                     cadastrar
                 </button>
-                <div wire:loading wire:target="store" class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-pink-600 tracking-wider">Registrando
-                        disciplina</span>
-                    <x-mary-loading class="loading-dots text-pink-600" />
+            </div>
+            <div wire:loading wire:target="store" class="flex flex-col justify-center w-full text-center">
+                <div class="mb-2">
+                    <x-mary-loading class="text-pink-600 loading-dots" />
                 </div>
+                <span class="text-xs tracking-wider text-pink-600">Registrando</span>
             </div>
         </div>
     </form>

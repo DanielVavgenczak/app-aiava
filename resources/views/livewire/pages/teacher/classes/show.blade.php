@@ -52,7 +52,6 @@
                              </tr>
                          </thead>
                          <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
-
                              @foreach ($students as $index => $student)
                                  <tr class="hover:bg-gray-100 dark:hover:bg-slate-700/50 transition-colors card-student"
                                      id="student-{{ $student->id }}" data-tour="{{ $student->id }}">

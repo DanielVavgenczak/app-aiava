@@ -1,7 +1,7 @@
-import { StartTourDisciplineCreateContent } from "./discipline_content";
-import { AddButtonActions, configDriver,startDriverTour } from "./utils";
+import { AddButtonActions, configDriver } from "./utils";
+const store =  Alpine.store("tourguide");
+
 export async function StartTourCreateDiscipline() {
-    let store = Alpine.store("tourguide");
     store.openMai = false;
     const newDisciplineButton = document.querySelector("button#discipline-create");
     if(!newDisciplineButton.id){
@@ -13,13 +13,12 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#${newDisciplineButton.id}`,
                 popover: {
-                    description: `Vou clicar no botão "Disciplina +"`,
+                    description: `Vou clicar no botão "+ Disciplina"`,
                     showButtons: [""],
                 },
                 onHighlighted: async (el) => {
                     await new Promise((resolve) => setTimeout(resolve, 3000));
                     if (!newDisciplineButton) {
-                        console.error("não encontramos ela aqui");
                         return;
                     }
                     newDisciplineButton.click();
@@ -36,9 +35,9 @@ export async function StartTourCreateDiscipline() {
                             popover,
                             "voltar ao inicio",
                         );
-                        actions.addEventListener("click", () => {
-                            Livewire.dispatch("to-close-create");
-                            driverObj.destroy();
+                        actions.addEventListener("click", async () => {
+                            Livewire.dispatch("close-create");
+                            await driverObj.destroy();
                             store.openMai = true;
                         });
                     },
@@ -53,24 +52,23 @@ export async function StartTourCreateDiscipline() {
                             popover,
                             "voltar ao inicio",
                         );
-                        actions.addEventListener("click", () => {
-                            Livewire.dispatch("to-close-create");
-                            driverObj.destroy();
+                        actions.addEventListener("click", async() => {
+                            Livewire.dispatch("close-create");
+                            await driverObj.destroy();
                             store.openMai = true;
                         });
                     },
                 },
                 onHighlighted: async (el) => {
-                    let disciplineIdToManager = null;
-                    const toCloseActions = () => {
-                        Livewire.dispatch("to-close-create");
-                        store.openMai = false;
-                        driverObj.destroy();
-                    };
                     const btnCancel = el.querySelector("#create-cancel");
                     const btnCreate = el.querySelector("#create-confirm");
+                    let disciplineIdToManager = null;
+                    const toCloseActions = async () => {
+                        Livewire.dispatch("close-create");
+                        await driverObj.destroy();
+                        store.openMai = true;
+                    };
                     if (!btnCancel || !btnCreate) {
-                        console.error("element not found", btnCancel);
                         return;
                     }
                     btnCancel.addEventListener("click", toCloseActions);
@@ -79,7 +77,8 @@ export async function StartTourCreateDiscipline() {
                      * depois devemos rever as funcionalidades
                      */
                     btnCreate.addEventListener("click", async () =>{
-                        await Livewire.dispatch("to-close-create");
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        await Livewire.dispatch("close-create");
                         store.openMai = false;
                         Livewire.on('send-id-discipline', async (event) => {
                             disciplineIdToManager = event.discipline_id
@@ -96,7 +95,6 @@ export async function StartTourCreateDiscipline() {
                                     },
                                     onHighlighted: async (el) => {
                                         await new Promise((resolve) => setTimeout(resolve, 3000));
-                                        //.style.zIndex = "0";
                                         await driverObj.moveNext();
                                     }
                                 },
@@ -111,19 +109,18 @@ export async function StartTourCreateDiscipline() {
                                     onHighlighted: async (el) => {
                                         await new Promise((resolve) => setTimeout(resolve, 1000));
                                         el.click();
-                                        await driverObj.destroy()
-                                        await Livewire.dispatch('to-teste-continue-created')
+                                        await updatedDriverObj.destroy()
+                                        store.continueTour = true;
+                                        Livewire.dispatch('continue-created-content', {continue:true});
                                     }
                                 },
                             ];
-                            // Cria um novo tour com os passos atualizados
                             const updatedDriverObj = drivertour({
                                 ...configDriver,
-                                steps:  continueStepe,
+                                steps: continueStepe,
                             });
-                            //Inicia o novo tour
                             await updatedDriverObj.drive();
-                        })
+                        });
                     });
                 },
             },
@@ -227,7 +224,7 @@ export async function StartTourEditDiscipline() {
                                     {
                                         element: `#${disciplinaInputEditTitle}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: "Mude o titulo para o qual deseja, ou então vá até o campo descrição clicando em Proximo",
+                                            description: "Altere o titulo para o qual deseja ou clique em Proximo",
                                             side: "top",
                                             align: "start",
                                             onPopoverRender: (popover, { config, state }) => {
@@ -452,6 +449,11 @@ export async function StartTourDeleteDiscipline() {
 export async function StartTourSearchDiscipline(){
     let store = Alpine.store("tourguide");
     store.openMai = false;
+    const inputSearch = document.querySelector("#discipline-input-search");
+    if(!inputSearch){
+        console.error("Input de pesquisa não encontrado");
+        return;
+    }
      const createInitialTour = () => {
         return drivertour({
             ...configDriver,
@@ -470,6 +472,22 @@ export async function StartTourSearchDiscipline(){
                             });
                         }
                     },
+                },
+                {
+                    element:"#discipline-card",
+                    popover:{
+                        description: `A disciplina que você procura deve aparecer aqui`,
+                    },
+                    onHighlighted: async (el) => {
+                        const noDiscipline = document.querySelector("#disciplines-empty");
+                        if(noDiscipline){
+                           alert("Nenhuma disciplina encontrada");
+                           await driverObj.destroy();
+                           store.openMai = true;
+                           return;
+                        }
+                    }
+
                 }
             ],
         });

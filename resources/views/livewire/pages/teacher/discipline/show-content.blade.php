@@ -138,8 +138,8 @@ new #[Layout('layouts.app')] class extends Component {
     {{-- TODO: criar um componente para receber o link de voltar  --}}
     <div class="py-4">
         <a href="{{ route('teacher.discipline') }}" wire:navigate>
-            <x-mary-icon name="o-arrow-left" class="w-4" />
-            <span class="text-xs font-semibold text-gray-600 uppercase">voltar</span>
+            <x-mary-icon name="o-arrow-left" class="w-4 text-gray-500" />
+            <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">voltar</span>
         </a>
     </div>
     <livewire:pages.teacher.discipline.module.new :disciplineId="$discipline->id" />
@@ -149,28 +149,30 @@ new #[Layout('layouts.app')] class extends Component {
         <div class="h-screen">
             <div class="flex items-center justify-between mt-4 mb-10" x-data>
                 <div class="flex flex-col gap-4">
-                    <h2 class="text-lg font-semibold text-gray-800 tracking-wider">
-                        {{ $discipline->title }}
-                    </h2>
-
+                    <div>
+                        <h2 class="text-lg font-semibold tracking-wider text-gray-800">
+                            {{ $discipline->title }}
+                        </h2>
+                        <p class="text-sm text-gray-500">Conteudo da disciplina</p>
+                    </div>
                     @if ($discipline->modules->count() > 0)
-                        <input wire:model="search" placeholder="Pesquisar aula" icon="o-magnifying-glass"
-                            id="content-input-search"
-                            class="rounded-lg px-3 py-2 focus:outline-1 focus:border-pink-500  focus:outline-pink-500 border-[1px] border-gray-400 " />
+                        <div id="content-input-search">
+                            <x-mary-input placeholder="Pesquisar aula" wire:model.live="search" class="!outline-none" />
+                        </div>
                     @endif
                 </div>
                 <div>
                     @if ($discipline->modules->count() > 0)
-                        <button class="btn bg-pink-600 text-gray-50 open-new-task rounded-lg " id="content-task-create"
+                        <button class="bg-pink-600 btn btn-md text-gray-50 open-new-task " id="content-task-create"
                             wire:click="openModalTask">
                             <x-mary-icon name="o-document-duplicate" /> Atividade / Avaliação
                         </button>
                     @endif
-                    <button class="btn bg-pink-600 text-gray-50 open-new-lesson rounded-lg" id="content-lesson-create"
+                    <button class="bg-pink-600 btn-md btn text-gray-50 open-new-lesson" id="content-lesson-create"
                         x-on:click="$dispatch('open-modal-module',{open: true})"
                         data-tour="new-lesson-{{ $discipline->id }}">
                         <x-mary-icon name="o-plus" />
-                        <span class="capitalize tracking-wider">aula</span>
+                        <span class="capitalize">Aula</span>
                     </button>
                 </div>
             </div>
@@ -198,7 +200,7 @@ new #[Layout('layouts.app')] class extends Component {
                                         class="flex items-center justify-between w-full cursor-pointer open-collapse-btn">
                                         <span
                                             class="text-[15px] font-normal text-gray-700 capitalize relative left-[2%]">{{ $module->title }}</span>
-                                        <button class="bg-white open-new-block-lesson cursor-pointer"
+                                        <button class="bg-white cursor-pointer open-new-block-lesson"
                                             id="open-accordion-block-{{ $module->id }}"
                                             x-on:click="openCollapseId === '{{ $module->id }}' ? openCollapseId = null : openCollapseId = '{{ $module->id }}'; isExpanded = !isExpanded">
                                             <x-mary-icon name="o-chevron-down" />
@@ -245,12 +247,12 @@ new #[Layout('layouts.app')] class extends Component {
                                     <div class="flex gap-3 px-10 py-2 cursor-pointer bg-pink-50 hover:bg-gray-300"
                                         x-on:click="$dispatch('task-module', {activit_id:'{{ $activit->id }}'})">
                                         <div class="flex items-center gap-3 ">
-                                            <div class="p-2  rounded-sm">
+                                            <div class="p-2 rounded-sm">
                                                 <x-mary-icon name="o-document-duplicate"
                                                     class="w-4 h-4 text-pink-600" />
                                             </div>
                                             <span
-                                                class="text-xs tracking-wide font-light uppercase text-pink-600">atividade
+                                                class="text-xs font-light tracking-wide text-pink-600 uppercase">atividade
                                             </span>
                                         </div>
                                     </div>
@@ -260,7 +262,7 @@ new #[Layout('layouts.app')] class extends Component {
                         @endforeach
                     @else
                         <div wire:key="no-modules" class="absolute w-full h-screen bg-white">
-                            <p class="text-lg font-light text-center text-gray-600">Esse conteúdo não possui nenhum
+                            <p class="text-sm font-medium text-center text-gray-700">Esse conteúdo não possui nenhum
                                 módulo</p>
                         </div>
                     @endif
