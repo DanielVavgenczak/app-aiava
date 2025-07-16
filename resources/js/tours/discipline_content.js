@@ -63,12 +63,12 @@ export async function StartTourDisciplineCreateContent() {
                         element: `#lesson-title`,
                         popover: {
                             description: "Escreva o Titulo da aula",
-                            onNextClick: async () => {
-                                const title = document.querySelector(
-                                    `#lesson-input-title`,
+                            onNextClick: async (el) => {
+                                const title = el.querySelector(
+                                    `input.lesson-input-title`,
                                 )
                                 if(title.value.trim() === "") {
-                                    alert("por favor preencha o campo de texto");
+                                    alert("por favor preencha o campo de titulo");
                                     return;
                                 }
                                 await driverObj.moveNext();

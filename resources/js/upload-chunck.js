@@ -23,9 +23,9 @@ document.addEventListener('alpine:init', () => {
             });
 
             // Debugging helpers
-            this.resumable.on('catchAll', (event) => {
-                console.log('Resumable event:', event);
-            });
+            // this.resumable.on('catchAll', (event) => {
+            //     console.log('Resumable event:', event);
+            // });
 
             this.resumable.assignBrowse(document.getElementById(`fileInputVideo-${moduleId}`));
 
@@ -44,17 +44,20 @@ document.addEventListener('alpine:init', () => {
                 console.log('Upload complete!');
                 this.isUploading = false;
                 this.isUploaded = true;
+
                 document.getElementById(`success-message-${moduleId}`).style.display = 'flex';
 
                 setTimeout(() => {
                     this.resetForm(moduleId);
-                    console.log('aqui para gente', moduleId)
-                    //this.isUploaded = false
-                    //window.location.reload()
+                    this.resumable.removeFile(this.file);
+                    this.resumable.files = [];
+                    this.file = null
+                     //window.location.reload()
                     Livewire.dispatch('open-new-block-to-module', {open: false});
-                    Livewire.dispatch('uploaded-video');
+                    //Livewire.dispatch('upload-block-close');
+                    Livewire.dispatch('module-event', {type:'uploaded', msg:'Bloco enviado com sucesso'} );
+                    //this.resetState();
                 },1000)
-                //this.previewFinalVideo();
             });
 
             this.resumable.on('error', (message, file) => {
@@ -73,12 +76,13 @@ document.addEventListener('alpine:init', () => {
             this.file = null;
             this.isFileSelected = false;
             this.showDurationError = false;
+            this.isUploaded = false;
 
             // Oculta mensagem de sucesso (se ainda visível)
             document.getElementById(`success-message-${moduleId}`).style.display = 'none';
 
             // Debug
-            console.log('Formulário resetado com sucesso');
+            console.log('Formulário resetado com sucesso', this.file);
         },
         updateProgressBar(progress) {
             this.$nextTick(() => {

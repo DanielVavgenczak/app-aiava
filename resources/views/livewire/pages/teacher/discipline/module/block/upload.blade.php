@@ -4,28 +4,17 @@ use Livewire\Volt\Component;
 
 new class extends Component {
     public string $module_id;
-    //public string $description = '';
 
     public function mount(string $module_id)
     {
         $this->module_id = $module_id;
     }
 }; ?>
-<div x-data="chunkUpload('{{ $module_id }}')" class="max-w-3xl p-3 mx-auto">
+<div x-data="chunkUpload('{{ $module_id }}')" class="max-w-3xl p-3 mx-auto" :key="'upload-content-block'.$module_id">
     <div class="space-y-6">
-        {{-- Campo de Descrição
-        <div id="open-module-input-content-description-{{ $module_id }}" class="p-5">
-            <label for="description-{{ $module_id }}" class="block mb-2 text-sm font-semibold text-gray-800">
-                Descrição do Vídeo
-            </label>
-            <textarea id="description-{{ $module_id }}"
-                class="w-full p-4 text-gray-700 border border-gray-200 rounded-lg shadow-sm resize-y focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                rows="4" placeholder="Adicione uma descrição para o seu vídeo..."></textarea>
-        </div> --}}
-
         <!-- Área de Upload -->
         <div x-show="!isFileSelected && !isUploading && !isUploaded" id="browser-file-{{ $module_id }}"
-            @click="selectFile()" data-url="{{ route('media.upload', ['module_id' => $module_id]) }}"
+            x-on:click="selectFile()" data-url="{{ route('media.upload', ['module_id' => $module_id]) }}"
             class="flex flex-col items-center justify-center gap-4 px-5 py-5 transition-all duration-300 bg-white cursor-pointer rounded-xl hover:bg-indigo-50 hover:border-pink-400">
             <x-mary-icon name="o-video-camera" class="w-10 h-10 text-gray-600" />
             <span class="text-sm font-medium tracking-wide text-gray-500">Clique para adicionar o vídeo</span>
@@ -38,11 +27,11 @@ new class extends Component {
             <video id="temp-video-preview-{{ $module_id }}" controls
                 class="w-3/4 rounded-lg shadow-md w-max-2xl"></video>
             <div class="flex gap-4" id="temp-preview-actions-{{ $module_id }}">
-                <button @click="uploadStart()" id="lesson-send-video-block-content-{{ $module_id }}"
+                <button x-on:click="uploadStart()" id="lesson-send-video-block-content-{{ $module_id }}"
                     class="px-6 py-2 text-white transition duration-200 bg-indigo-500 rounded-lg hover:bg-indigo-600">
                     Enviar
                 </button>
-                <button @click="cancelSelection()"
+                <button x-on:click="cancelSelection()"
                     class="px-6 py-2 text-gray-700 transition duration-200 bg-gray-300 rounded-lg hover:bg-gray-400">
                     Cancelar
                 </button>
@@ -86,8 +75,5 @@ new class extends Component {
         <!-- Vídeo Temporário para Validação (Oculto) -->
         <video id="temp-video-{{ $module_id }}" style="display: none;"></video>
     </div>
-    {{-- <button id="removeVideoButton-{{ $module_id }}" @click="removeVideo()"
-        class="px-6 py-2 text-white transition duration-200 bg-red-500 rounded-lg hover:bg-red-600">
-        cancelar
-    </button> --}}
+
 </div>

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "72b2b21a4c9930d7c538a1fc601d3bf1",
+    "content-hash": "91ceba38411953029199db3e151c7ed6",
     "packages": [
         {
             "name": "blade-ui-kit/blade-heroicons",
@@ -284,6 +284,64 @@
                 }
             ],
             "time": "2024-02-09T16:56:22+00:00"
+        },
+        {
+            "name": "devrabiul/livewire-doctor",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/devrabiul/livewire-doctor.git",
+                "reference": "fddf301e72b9ac5a7170389e469cef024ba7cf4b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/devrabiul/livewire-doctor/zipball/fddf301e72b9ac5a7170389e469cef024ba7cf4b",
+                "reference": "fddf301e72b9ac5a7170389e469cef024ba7cf4b",
+                "shasum": ""
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "LivewireDoctor": "Devrabiul\\LivewireDoctor\\Facades\\LivewireDoctor"
+                    },
+                    "providers": [
+                        "Devrabiul\\LivewireDoctor\\LivewireDoctorServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Devrabiul\\LivewireDoctor\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Muhammad Rabiul",
+                    "email": "devrabiul@gmail.com"
+                }
+            ],
+            "description": "Automatically detect and fix common Livewire issues, with helpful commands and developer tools to streamline your Laravel development.",
+            "homepage": "https://github.com/devrabiul/livewire-doctor",
+            "keywords": [
+                "debug livewire",
+                "laravel",
+                "laravel livewire tools",
+                "livewire",
+                "livewire doctor",
+                "livewire fixer",
+                "livewire health check",
+                "livewire helper"
+            ],
+            "support": {
+                "issues": "https://github.com/devrabiul/livewire-doctor/issues",
+                "source": "https://github.com/devrabiul/livewire-doctor/tree/v1.0.0"
+            },
+            "time": "2025-05-28T17:49:06+00:00"
         },
         {
             "name": "dflydev/dot-access-data",

@@ -14,6 +14,7 @@ new class extends Component {
         $this->lesson = $lesson;
         //dd('oi jo', $lesson);
         $this->loadBlock();
+        $this->js("console.log('verificando se o bloco carrega junto')");
     }
     protected function loadBlock()
     {
@@ -28,7 +29,7 @@ new class extends Component {
     #[On('load-video-lesson')]
     public function loadVideoLesson($lesson_id)
     {
-        $this->lesson = Lesson::findOrFail(string($lesson_id));
+        $this->lesson = Lesson::findOrFail($lesson_id);
     }
 }; ?>
 

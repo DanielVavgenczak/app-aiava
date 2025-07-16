@@ -48,7 +48,7 @@ new class extends Component {
             $discipline->delete();
             $this->dispatch('discipline-event', type: 'delete', msg: 'Disciplina excluída com sucesso!');
             $this->resetState();
-            sleep(3);
+            // sleep(3);
         } catch (Exception $ex) {
             $this->open = false; // Fecha o modal em caso de erro
             $this->title = ''; // Reseta o título

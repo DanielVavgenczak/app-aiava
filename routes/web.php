@@ -5,6 +5,7 @@ use App\Livewire\Teacher\Classes\Index;
 use App\Livewire\Teacher\Classes\Show;
 use App\Models\Discipline;
 use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 use Livewire\Volt\Volt;
 
 Route::view('/', 'welcome');
@@ -21,7 +22,7 @@ Route::view('app/teacher/discipline', 'app.teacher.discipline.index')
 ->middleware(['auth', 'verified'])
 ->name('teacher.discipline');
 
-Volt::route("app/teacher/discipline/{discipline}", componentName: "pages.teacher.discipline.show-content")
+Volt::route("app/teacher/discipline/{id}", componentName: "pages.teacher.discipline.show")
 ->middleware((['auth', 'verified']))
 ->name(name: 'teacher.discipline.show');
 

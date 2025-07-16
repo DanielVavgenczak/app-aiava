@@ -13,33 +13,20 @@ new #[Layout('layouts.app')] class extends Component {
     public $allLessons = [];
     public string $search = '';
     public bool $showTaskModule = false;
+    public string $disciplineID = '';
 
     #[Url]
     public ?string $highlight = null;
 
-    public function mount($discipline)
+    public function mount(string $id)
     {
-        // Garanta que $discipline é um objeto Discipline
-        // Ordena módulos e lições por data de criação (mais novo primeiro)
-        if (session('module_created')) {
-            $this->success('Nova aula registrada com sucesso!');
+        if (session('delete-with-files')) {
+            $this->error(session('delete-with-files'), icon: 'o-trash', css: 'alert-error');
+            session()->forget('delete-with-files');
         }
-        $this->discipline = $discipline->load([
-            'modules' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente (mais antigo primeiro)
-            },
-            'modules.lessons' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente (mais antigo primeiro)
-            },
-            'modules.activitTasks' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente (mais antigo primeiro)
-            },
-        ]);
-
-        $this->allLessons = $this->discipline->modules
-            ->flatMap(fn($module) => $module->lessons)
-            ->values() // Reseta os índices do array
-            ->all();
+        $this->disciplineID = $id;
+        $this->discipline = $this->loadDisciplineContent($id);
+        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->all();
     }
     #[On('select-lesson')]
     public function selectedBlock($block_id)
@@ -48,10 +35,10 @@ new #[Layout('layouts.app')] class extends Component {
         $this->dispatch('load-video-lesson', $block_id)->to('pages.teacher.discipline.module.block.video-content');
     }
 
-    #[On('uploaded-video')]
-    public function handleVideoUploaded()
+    public function refreshUploadVideo()
     {
-        $this->success('Novo bloco adicionado com sucesso!');
+        $this->toast(type: 'success', title: 'Bloco adicionado com sucesso', icon: 'o-check', css: 'alert-success');
+        $this->js("console.log('upload event exec')");
     }
     #[On('next-video-content')]
     public function next($id)
@@ -127,12 +114,57 @@ new #[Layout('layouts.app')] class extends Component {
         $this->success($message);
     }
 
-    #[On('task-deleted')]
-    public function refreshShowContent()
+    #[On('delete-with-files')]
+    public function refreshDeleteFiles($msg)
     {
-        $this->success('Atividade excluida com sucesso!', icon: 'o-check', css: 'bg-pink-500 text-base-100');
-        return $this->redirect(route('teacher.discipline.show', $this->discipline), navigate: true);
+        $this->js("console.log('deleteado com sucesso')");
+        $this->toast(type: 'success', title: "{$msg}", icon: 'o-check', css: 'alert-success');
     }
+
+    #[On('module-event')]
+    public function update($type, $msg)
+    {
+        match ($type) {
+            'update', 'create', 'uploaded' => $this->handleEventWithToast($type, $msg),
+            'delete' => $this->handleEventWithToast($type, $msg),
+            default => null,
+        };
+        $this->discipline = $this->loadDisciplineContent($this->disciplineID);
+        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->all();
+    }
+
+    protected function handleEventWithToast(string $type, string $msg)
+    {
+        if ($type !== 'delete') {
+            $this->toast(type: 'success', title: "{$msg}", icon: 'o-check', css: 'alert-success');
+
+            return;
+        }
+        $this->toast(type: 'error', title: "{$msg}", icon: 'o-trash', css: 'alert-error');
+        return;
+    }
+
+    protected function loadDisciplineContent(string $id): Discipline
+    {
+        return Discipline::with([
+            'modules' => function ($q) {
+                $q->orderBy('created_at', 'ASC'); // Ordem crescente
+            },
+            'modules.lessons' => function ($q) {
+                $q->orderBy('created_at', 'ASC'); // Ordem crescente
+            },
+            'modules.activitTasks' => function ($q) {
+                $q->orderBy('created_at', 'ASC'); // Ordem crescente
+            },
+        ])->find($id);
+    }
+
+    // #[On('task-deleted')]
+    // public function refreshShowContent()
+    // {
+    //     $this->success('Atividade excluida com sucesso!', icon: 'o-check', css: 'bg-pink-500 text-base-100');
+    //     return $this->redirect(route('teacher.discipline.show', $this->discipline), navigate: true);
+    // }
 }; ?>
 <div>
     {{-- TODO: criar um componente para receber o link de voltar  --}}
@@ -142,8 +174,8 @@ new #[Layout('layouts.app')] class extends Component {
             <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">voltar</span>
         </a>
     </div>
-    <livewire:pages.teacher.discipline.module.new :disciplineId="$discipline->id" />
-    <livewire:pages.teacher.discipline.module.task.modal-create :lessons="$discipline->modules" :disciplineId="$discipline->id" />
+    <livewire:pages.teacher.discipline.module.modals.create :disciplineId="$discipline->id" :key="'create-module-' . $discipline->id" />
+    <livewire:pages.teacher.discipline.module.task.modal-create :lessons="$discipline->modules" :disciplineId="$discipline->id" :key="'new-task-' . $discipline->id" />
     <!-- modal new module -->
     <div x-data="{ openCollapseId: null }" class="p-5 bg-white" data-tour="$discipline->id">
         <div class="h-screen">
@@ -165,11 +197,11 @@ new #[Layout('layouts.app')] class extends Component {
                     @if ($discipline->modules->count() > 0)
                         <button class="bg-pink-600 btn btn-md text-gray-50 open-new-task " id="content-task-create"
                             wire:click="openModalTask">
-                            <x-mary-icon name="o-document-duplicate" /> Atividade / Avaliação
+                            <x-mary-icon name="o-document-duplicate" class="w-5 h-5" /> Atividade / Avaliação
                         </button>
                     @endif
                     <button class="bg-pink-600 btn-md btn text-gray-50 open-new-lesson" id="content-lesson-create"
-                        x-on:click="$dispatch('open-modal-module',{open: true})"
+                        x-on:click="$dispatch('open-module-create',{open: true})"
                         data-tour="new-lesson-{{ $discipline->id }}">
                         <x-mary-icon name="o-plus" />
                         <span class="capitalize">Aula</span>
@@ -191,10 +223,12 @@ new #[Layout('layouts.app')] class extends Component {
                                                 class="bg-white border-none btn-set-dropdown" />
                                         </x-slot:trigger>
                                         <x-mary-menu-item title="Editar" id="content-lesson-edit-btn"
+                                            x-on:click="$dispatch('open-edit-module', { id: '{{ $module->id }}' })"
                                             icon="o-pencil-square" />
                                         <x-mary-menu-item id="content-lesson-delete-btn" class="btn-to-delete"
                                             title="Deletar" icon="o-trash"
-                                            x-on:click="$dispatch('delete-module-modal', { id: '{{ $module->id }}'})" />
+                                            x-on:click="$dispatch('open-delete-module', {
+                                            id: '{{ $module->id }}' })" />
                                     </x-mary-dropdown>
                                     <div id="content-lesson-add-new-block-{{ $module->id }}"
                                         class="flex items-center justify-between w-full cursor-pointer open-collapse-btn">
@@ -215,7 +249,8 @@ new #[Layout('layouts.app')] class extends Component {
                                         <x-mary-icon name="o-plus" /> bloco
                                     </button>
                                     <livewire:pages.teacher.discipline.module.block.index :module_id="$module->id"
-                                        :title="$module->title" wire:key="block-index-{{ $module->id }}" />
+                                        :title="$module->title" :key="'block-index-' . $module->id" />
+
                                     @forelse ($module->lessons as $lesson)
                                         <div class="flex flex-col gap-2 px-2 py-3 cursor-pointer hover:bg-gray-300"
                                             wire:key="lesson-{{ $lesson->id }}"
@@ -259,6 +294,9 @@ new #[Layout('layouts.app')] class extends Component {
                                 @endforeach
                                 <!-- drawer task module -->
                             @endif
+                            <livewire:pages.teacher.discipline.module.modals.edit :$module :key="'module-edit-' . $module->id" />
+                            <livewire:pages.teacher.discipline.module.modals.delete :$module :id="$module->id"
+                                :key="'module-delete-' . $module->id" />
                         @endforeach
                     @else
                         <div wire:key="no-modules" class="absolute w-full h-screen bg-white">
@@ -270,7 +308,7 @@ new #[Layout('layouts.app')] class extends Component {
                 <div class="w-full h-screen">
                     @if ($blockSelected && $blockSelected->path_file)
                         <livewire:pages.teacher.discipline.module.block.video-content :lesson="$blockSelected"
-                            wire:key="video-block-{{ $blockSelected->id }}" />
+                            :key="'video-block-' . $blockSelected->id" />
                     @else
                         <div class="flex flex-col items-center justify-center h-full gap-4 bg-gray-100 rounded-lg">
                             <x-mary-icon name="o-video-camera" class="w-16 h-16 text-gray-400"
@@ -282,7 +320,7 @@ new #[Layout('layouts.app')] class extends Component {
             </div>
         </div>
         <!-- drawer task module -->
-        <livewire:pages.teacher.discipline.module.task.show-task />
+        <livewire:pages.teacher.discipline.module.task.show-task :key="'task-module-' . Str::uuid7()" />
 
         <!-- Modal options tour -->
         <div x-data class="fixed inset-0 z-40 bg-gray-900/50" x-show="$store.tourguide.openMai">

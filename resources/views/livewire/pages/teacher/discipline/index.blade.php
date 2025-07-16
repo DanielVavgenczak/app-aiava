@@ -54,7 +54,7 @@ new class extends Component {
             $this->loadDisciplines();
             return;
         }
-        $this->toast(type: 'error', title: "{$msg}", icon: 'o-trash', css: 'alert-error');
+        $this->error($msg, timeout: 4000, position: 'toast-bottom toast-end');
         return;
     }
 
