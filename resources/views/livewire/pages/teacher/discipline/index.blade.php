@@ -15,10 +15,12 @@ new class extends Component {
 
     public function with()
     {
+        $this->js("console.log('foi chamando')");
         return $this->disciplines = $this->loadDisciplines();
     }
     public function mount()
     {
+        $this->js("console.log('foi chamando o mount de disciplinas')");
         sleep(1);
     }
 
@@ -72,7 +74,7 @@ new class extends Component {
     }
 }; ?>
 <div class="flex flex-col gap-8" id="content-intial">
-    <livewire:pages.teacher.discipline.modals.create mary:key="create-modal-{{ Str::random(5) }}" />
+    <livewire:pages.teacher.discipline.modals.create :key="'create-modal-' . Str::random(5)" />
     <div class="flex items-center justify-between">
         @if ($disciplines->count() > 0)
             <div id="discipline-input-search">

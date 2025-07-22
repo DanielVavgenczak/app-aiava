@@ -11,15 +11,12 @@ new class extends Component {
     public string $id = '';
     public ?Module $module = null;
 
-    public function mount(Module $module)
-    {
-        $this->module = $module;
-    }
     #[On('open-delete-module')]
     public function openModal($id)
     {
         if ($this->id === $id) {
             $this->open = true;
+            $this->module = Module::findOrFail($id);
         }
     }
 
@@ -94,7 +91,6 @@ new class extends Component {
     {
         $msg = $e->getMessage() ?: 'Erro ao deletar aula';
         $this->error($msg, timeout: 1000, position: 'toast-bottom toast-start');
-        $this->js("console.error('Erro ao deletar módulo:', " . json_encode($msg) . ')');
     }
 }; ?>
 <x-mary-modal wire:model="open">

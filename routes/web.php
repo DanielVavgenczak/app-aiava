@@ -3,9 +3,7 @@
 use App\Http\Controllers\Teacher\LessonUploadController;
 use App\Livewire\Teacher\Classes\Index;
 use App\Livewire\Teacher\Classes\Show;
-use App\Models\Discipline;
 use Illuminate\Support\Facades\Route;
-use Livewire\Livewire;
 use Livewire\Volt\Volt;
 
 Route::view('/', 'welcome');
@@ -45,5 +43,10 @@ Route::view('app/teacher/forum', 'app.teacher.forum.index')
 Route::post('app/teacher/discipline/{module_id}/upload', [LessonUploadController::class, 'uploadVideo'])->name('media.upload');
 Route::get("app/teacher/lesson/{lesson_id}", [LessonUploadController::class, 'stream'])
 ->name( 'media.stream');
+
+Route::middleware('guest')->group(function () {
+    Volt::route('app/student/login', 'pages.student.auth.login')
+        ->name('student.login');
+});
 
 require __DIR__.'/auth.php';

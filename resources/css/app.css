@@ -1,11 +1,11 @@
 @import "tailwindcss";
 /*@source "../views";*/
 
-/* daisyUI */
+/* daisyUI  dark --prefersdark */
 @plugin "daisyui" {
     themes:
-        light --default,
-        dark --prefersdark;
+        light --default
+
 }
 
 @source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";

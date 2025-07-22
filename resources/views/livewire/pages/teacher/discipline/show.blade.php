@@ -2,13 +2,13 @@
 
 use Livewire\Volt\Component;
 use Livewire\Attributes\{Layout, On, Url};
-use App\Models\{Discipline, Lesson, Module};
+use App\Models\{Discipline};
 use Mary\Traits\Toast;
 
 new #[Layout('layouts.app')] class extends Component {
     use Toast;
     public bool $openFormNewLesson = false;
-    public Discipline $discipline;
+    public $discipline;
     public $blockSelected = null;
     public $allLessons = [];
     public string $search = '';
@@ -17,7 +17,6 @@ new #[Layout('layouts.app')] class extends Component {
 
     #[Url]
     public ?string $highlight = null;
-
     public function mount(string $id)
     {
         if (session('delete-with-files')) {
@@ -25,8 +24,8 @@ new #[Layout('layouts.app')] class extends Component {
             session()->forget('delete-with-files');
         }
         $this->disciplineID = $id;
-        $this->discipline = $this->loadDisciplineContent($id);
-        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->all();
+        $this->discipline = $this->loadDisciplineContent($this->disciplineID);
+        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
     }
     #[On('select-lesson')]
     public function selectedBlock($block_id)
@@ -114,36 +113,36 @@ new #[Layout('layouts.app')] class extends Component {
         $this->success($message);
     }
 
-    #[On('delete-with-files')]
-    public function refreshDeleteFiles($msg)
+    #[On('event-delete-block')]
+    public function refreshDeleteBlock()
     {
-        $this->js("console.log('deleteado com sucesso')");
-        $this->toast(type: 'success', title: "{$msg}", icon: 'o-check', css: 'alert-success');
+        $this->discipline = $this->loadDisciplineContent($this->disciplineID);
+        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
     }
 
     #[On('module-event')]
     public function update($type, $msg)
     {
+        $this->js("console.log('Executado com sucesso " . $msg . "')");
         match ($type) {
             'update', 'create', 'uploaded' => $this->handleEventWithToast($type, $msg),
             'delete' => $this->handleEventWithToast($type, $msg),
             default => null,
         };
         $this->discipline = $this->loadDisciplineContent($this->disciplineID);
-        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->all();
+        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
     }
 
     protected function handleEventWithToast(string $type, string $msg)
     {
         if ($type !== 'delete') {
             $this->toast(type: 'success', title: "{$msg}", icon: 'o-check', css: 'alert-success');
-
+            $this->js("console.log('Executado apo o negocio " . $msg . "')");
             return;
         }
         $this->toast(type: 'error', title: "{$msg}", icon: 'o-trash', css: 'alert-error');
         return;
     }
-
     protected function loadDisciplineContent(string $id): Discipline
     {
         return Discipline::with([
@@ -156,7 +155,9 @@ new #[Layout('layouts.app')] class extends Component {
             'modules.activitTasks' => function ($q) {
                 $q->orderBy('created_at', 'ASC'); // Ordem crescente
             },
-        ])->find($id);
+        ])
+            ->where('id', $id)
+            ->first();
     }
 
     // #[On('task-deleted')]
@@ -212,7 +213,7 @@ new #[Layout('layouts.app')] class extends Component {
                 <div class="w-1/2 h-auto overflow-y-auto" wire:key="module-list-container" id="module-list-all">
                     @if ($discipline->modules->count() > 0)
                         @foreach ($discipline->modules as $module)
-                            <div class="w-full bg-white border-[1px] border-gray-200 px-3 py-2 accordion module-card"
+                            <div class="w-full bg-white border-[1px] border-gray-100 px-3 py-2 accordion module-card"
                                 wire:key="module-{{ $module->id }}" x-data="{ isExpanded: false }" x-show="true"
                                 id="accordion-{{ $module->id }}" data-tour="{{ $module->id }}">
                                 <div class="flex items-center" id="accordion-module-{{ $module->id }}">
@@ -233,7 +234,7 @@ new #[Layout('layouts.app')] class extends Component {
                                     <div id="content-lesson-add-new-block-{{ $module->id }}"
                                         class="flex items-center justify-between w-full cursor-pointer open-collapse-btn">
                                         <span
-                                            class="text-[15px] font-normal text-gray-700 capitalize relative left-[2%]">{{ $module->title }}</span>
+                                            class="text-[14px] font-normal tracking-wide text-gray-700 capitalize relative left-[2%]">{{ $module->title }}</span>
                                         <button class="bg-white cursor-pointer open-new-block-lesson"
                                             id="open-accordion-block-{{ $module->id }}"
                                             x-on:click="openCollapseId === '{{ $module->id }}' ? openCollapseId = null : openCollapseId = '{{ $module->id }}'; isExpanded = !isExpanded">
@@ -253,18 +254,18 @@ new #[Layout('layouts.app')] class extends Component {
 
                                     @forelse ($module->lessons as $lesson)
                                         <div class="flex flex-col gap-2 px-2 py-3 cursor-pointer hover:bg-gray-300"
-                                            wire:key="lesson-{{ $lesson->id }}"
-                                            x-on:click="$dispatch('select-lesson', { block_id: '{{ $lesson->id }}' })">
+                                            :key="'lesson-'. $lesson->id "
+                                            x-on:click="$dispatch('select-video-block', { lesson_id: '{{ $lesson->id }}' })">
                                             <div class="flex flex-col gap-3">
                                                 <div class="flex items-center gap-3">
                                                     <x-mary-icon name="o-play" class="w-4 h-4 mr-2 text-pink-400" />
                                                     <span
-                                                        class="text-sm font-semibold text-gray-700">{{ $lesson->title }}</span>
+                                                        class="text-sm font-semibold tracking-wide text-gray-600">{{ $lesson->title }}</span>
                                                 </div>
                                                 <div class="flex">
-                                                    <x-mary-icon name="o-clock" class="w-4 h-4 mr-2 text-gray-400" />
+                                                    {{-- <x-mary-icon name="o-clock" class="w-4 h-4 mr-2 text-gray-400" />
                                                     <span
-                                                        class="text-xs font-medium text-gray-400 uppercase">10min</span>
+                                                        class="text-xs font-medium text-gray-400 uppercase">10min</span> --}}
                                                 </div>
                                             </div>
                                         </div>
@@ -295,7 +296,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 <!-- drawer task module -->
                             @endif
                             <livewire:pages.teacher.discipline.module.modals.edit :$module :key="'module-edit-' . $module->id" />
-                            <livewire:pages.teacher.discipline.module.modals.delete :$module :id="$module->id"
+                            <livewire:pages.teacher.discipline.module.modals.delete :id="$module->id"
                                 :key="'module-delete-' . $module->id" />
                         @endforeach
                     @else
@@ -306,21 +307,22 @@ new #[Layout('layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="w-full h-screen">
-                    @if ($blockSelected && $blockSelected->path_file)
-                        <livewire:pages.teacher.discipline.module.block.video-content :lesson="$blockSelected"
-                            :key="'video-block-' . $blockSelected->id" />
+
+                    <livewire:pages.teacher.discipline.module.block.video-content :key="'video-block-' . Str::random(10)" />
+                    {{-- @if ($blockSelected && $blockSelected->path_file)
+
                     @else
                         <div class="flex flex-col items-center justify-center h-full gap-4 bg-gray-100 rounded-lg">
                             <x-mary-icon name="o-video-camera" class="w-16 h-16 text-gray-400"
                                 wire:key="no-video-placeholder" />
                             <p class="text-sm text-gray-500">Selecione um bloco</p>
                         </div>
-                    @endif
+                    @endif --}}
                 </div>
             </div>
         </div>
         <!-- drawer task module -->
-        <livewire:pages.teacher.discipline.module.task.show-task :key="'task-module-' . Str::uuid7()" />
+        <livewire:pages.teacher.discipline.module.task.show-task :key="'task-module-' . $discipline->id ?? ''" />
 
         <!-- Modal options tour -->
         <div x-data class="fixed inset-0 z-40 bg-gray-900/50" x-show="$store.tourguide.openMai">

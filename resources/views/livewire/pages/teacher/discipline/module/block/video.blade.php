@@ -6,8 +6,7 @@ use Livewire\Attributes\{On, Reactive};
 
 new class extends Component {
     #[Reactive]
-    public string $lesson_id;
-
+    public string $lesson_id = '';
     /**
      *  Genrerate ur with videoID
      * @return void
@@ -26,12 +25,11 @@ new class extends Component {
     }
 }; ?>
 <div wire:init="initVideo" class="relative w-full overflow-hidden bg-black rounded-lg">
-    <video wire:ignore id="videoPlayer" controls width="800px" height="900px" />
+    <video wire:ignore id="videoPlayer" controls width="800px" height="900px"></video>
 </div>
 @script
     <script>
         $wire.on('init-complete', event => {
-            console.log('URL recebida:', event.url);
             let video = document.getElementById("videoPlayer");
             video.src = event.url;
         });
