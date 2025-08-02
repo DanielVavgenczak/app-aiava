@@ -16,10 +16,9 @@ class ActivitTask extends Model
     public $incrementing = false;
     protected $keyType = "uuid";
     protected $fillable = ['id', 'title', 'start', 'end', 'module_id', 'discipline_id', 'teacher_id'];
-
     public function teacher()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Teacher::class);
     }
     public function module()
     {

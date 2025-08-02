@@ -8,11 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class TaskOptions extends Model
 {
-
     use HasFactory, UuidTrait;
     public $incrementing = false;
     protected $keyType = "uuid";
-    protected $fillable = ['id','task_id','text','correct','order'];
+    protected $fillable = ['id', 'task_id', 'text', 'correct', 'order'];
     protected $casts = [
         'order' => 'integer'
     ];
