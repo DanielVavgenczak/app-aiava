@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Devrabiul\LivewireDoctor\LivewireDoctor;
+use Livewire\Livewire;
+use App\Http\Middleware\IsTeacher;
+use App\Http\Middleware\IsStudent;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        LivewireDoctor::initCustomAsset();
+       // LivewireDoctor::initCustomAsset();
+        Livewire::addPersistentMiddleware([
+            IsTeacher::class,
+            IsStudent::class
+        ]);
     }
 }

@@ -12,7 +12,7 @@
         <x-mary-button class="relative border-0 btn-ghost hover:bg-transparent hover:text-pink-600">
             <x-mary-theme-toggle />
         </x-mary-button>
-        <x-mary-dropdown label="{{ Auth::user()->first_name }}"
+        <x-mary-dropdown label="{{ Auth::guard('teacher')->user()->first_name }}"
             class="capitalize border-0 btn-ghost hover:bg-transparent hover:text-pink-600">
             <x-mary-menu-item title="Perfil" wire:click.stop="delete2" link="{{ route('teacher.profile') }}"
                 spinner="delete2" icon="o-user" />

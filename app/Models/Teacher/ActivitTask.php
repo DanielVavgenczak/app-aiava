@@ -15,7 +15,7 @@ class ActivitTask extends Model
     use HasFactory, UuidTrait;
     public $incrementing = false;
     protected $keyType = "uuid";
-    protected $fillable = ['id','title','start','end', 'module_id','discipline_id','teacher_id'];
+    protected $fillable = ['id', 'title', 'start', 'end', 'module_id', 'discipline_id', 'teacher_id'];
 
     public function teacher()
     {
@@ -29,7 +29,6 @@ class ActivitTask extends Model
     {
         return $this->belongsTo(Discipline::class);
     }
-
     public function tasks()
     {
         return $this->hasMany(Task::class);
@@ -37,8 +36,7 @@ class ActivitTask extends Model
     protected static function booted()
     {
         static::creating(function ($model) {
-            $model->title  = 'atividade '. now()->format('d/m/Y').Str::uuid()->toString();
+            $model->title  = 'atividade ' . now()->format('d/m/Y') . Str::uuid()->toString();
         });
     }
-
 }

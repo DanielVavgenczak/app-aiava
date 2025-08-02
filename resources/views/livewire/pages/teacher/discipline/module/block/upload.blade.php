@@ -14,7 +14,7 @@ new class extends Component {
     <div class="space-y-6">
         <!-- Área de Upload -->
         <div x-show="!isFileSelected && !isUploading && !isUploaded" id="browser-file-{{ $module_id }}"
-            x-on:click="selectFile()" data-url="{{ route('media.upload', ['module_id' => $module_id]) }}"
+            x-on:click="selectFile()" data-url="{{ route('teacher.media.upload', ['module_id' => $module_id]) }}"
             class="flex flex-col items-center justify-center gap-4 px-5 py-5 transition-all duration-300 bg-white cursor-pointer rounded-xl hover:bg-indigo-50 hover:border-pink-400">
             <x-mary-icon name="o-video-camera" class="w-10 h-10 text-gray-600" />
             <span class="text-sm font-medium tracking-wide text-gray-500">Clique para adicionar o vídeo</span>

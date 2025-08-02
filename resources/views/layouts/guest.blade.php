@@ -18,6 +18,7 @@
 </head>
 
 <body class="font-sans antialiased text-gray-900">
+    <x-mary-toast />
     <div class="flex flex-col items-center min-h-screen pt-6 bg-gray-100 sm:justify-center sm:pt-0">
         <div>
             <a href="/" wire:navigate>

@@ -27,14 +27,13 @@ new class extends Component {
         $this->dispatch('discipline-event', type: 'create', msg: 'Disciplina criada com sucesso!');
         $this->dispatch('send-id-discipline', discipline_id: $this->form->getDisciplineId());
         $this->form->reset();
-        sleep(2);
     }
 }; ?>
 <x-mary-modal wire:model="open" title="Nova disciplina" subtitle="Registre uma nova disciplina">
     <form wire:submit.prevent="store">
         <div id="discipline-input-title" wire:loading.remove>
-            <x-mary-input wire:model="form.title" label="Titulo da disciplina" class="title !outline-none"
-                autocomplete="title" />
+            <x-mary-input wire:model="form.title" label="Titulo" placeholder="Nome da disciplina"
+                class="title !outline-none" autocomplete="title" />
         </div>
         <div class="flex items-center justify-end gap-2 my-3" id="discipline-save">
             <div class="flex items-center gap-2" id="create-cancel" wire:loading.remove>

@@ -212,7 +212,7 @@ new class extends Component {
                 $activit = ActivitTask::create([
                     'module_id' => $this->selectedLessonId,
                     'discipline_id' => $this->disciplineId,
-                    'teacher_id' => Auth::user()->id,
+                    'teacher_id' => Auth::guard('teacher')->user()->id,
                 ]);
                 foreach ($this->questions as $question) {
                     $task = $activit->tasks()->create([
@@ -238,6 +238,7 @@ new class extends Component {
             $this->close();
             $this->questions = [];
         } catch (\Exception $e) {
+            //dd('Error ao criar tarefa', $e->getMessage());
             $this->addError('save', 'Erro ao salvar tarefa: ' . $e->getMessage());
         }
     }
@@ -366,7 +367,7 @@ new class extends Component {
                                 'bg-indigo-500 hover:bg-indigo-600' :
                                 'bg-indigo-300 cursor-not-allowed'"
                             x-bind:disabled="$wire.titleOfQuestion.length < 8 || $wire.options.length < 2">
-                            Criar pergunta de multipla escolha
+                            Criar questão de multipla escolha
                         </button>
                     @else
                         <button type="submit" wire:click.prevent="addQuestion"
@@ -375,7 +376,7 @@ new class extends Component {
                             x-bind:class="$wire.titleOfQuestion.length >= 8 ?
                                 'bg-indigo-500 hover:bg-indigo-600' :
                                 'bg-indigo-300 cursor-not-allowed'"
-                            x-bind:disabled="$wire.titleOfQuestion.length < 8">Criar pergunta dissertativa
+                            x-bind:disabled="$wire.titleOfQuestion.length < 8">Criar questão dissertativa
                         </button>
                     @endif
                 </div>
@@ -490,10 +491,10 @@ new class extends Component {
                         <div class="self-end">
                             <x-mary-button label="Cancelar" type="button" wire:click="cancelCreation"
                                 wire:loading.attr="disabled" icon="o-x-mark" class="bg-red-500 text-red-50" />
-                            <x-mary-button label="Criar enunciado" type="submit" wire:click="save"
+                            <x-mary-button label="Criar questinário" type="submit" wire:click="save"
                                 icon="o-clipboard" class="bg-blue-600 text-blue-50" wire:loading.attr="disabled" />
                             <div wire:loading wire:target="save" class="flex items-center gap-2">
-                                <span class="text-sm text-pink-600 tracking-wide">Salvando as questionário</span>
+                                <span class="text-sm text-pink-600 tracking-wide">Salvando o questionário</span>
                                 <x-mary-loading class=" text-pink-600 loading-dots" />
                             </div>
                         </div>

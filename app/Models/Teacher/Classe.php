@@ -12,8 +12,8 @@ class Classe extends Model
 {
     use UuidTrait;
     public $incrementing = false;
-    protected $keyType = "uuid";
-    protected $fillable = ['id','name','discipline_id','teacher_id'];
+    protected $keyType = "string";
+    protected $fillable = ['name','discipline_id','teacher_id'];
 
     public function discipline()
     {
@@ -22,12 +22,12 @@ class Classe extends Model
 
     public function teacher()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Teacher::class);
     }
 
     public function students()
     {
-        return $this->hasMany( Student::class, foreignKey: 'class_id');
+        return $this->hasMany( Student::class, foreignKey: 'classe_id');
     }
 
 }

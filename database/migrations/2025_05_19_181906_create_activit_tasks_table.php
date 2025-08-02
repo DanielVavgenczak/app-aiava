@@ -16,7 +16,7 @@ return new class extends Migration
             $table->text("title");
             $table->dateTime("start")->nullable();
             $table->dateTime("end")->nullable();
-            $table->foreignUuid('teacher_id')->constrained('users')->onDelete('cascade');
+            $table->foreignUuid('teacher_id')->constrained('teachers')->onDelete('cascade');
             $table->foreignUuid('module_id')->constrained('modules')->onDelete('cascade');
             $table->foreignUuid('discipline_id')->constrained('disciplines')->onDelete('cascade');
             $table->timestamps();

@@ -28,7 +28,7 @@ return new class extends Migration
         Schema::table('tasks', function (Blueprint $table) {
             $table->foreignUuid('module_id')->nullable()->constrained('modules')->onDelete('cascade');
             $table->foreignUuid('discipline_id')->nullable()->constrained('disciplines')->onDelete('cascade');
-            $table->foreignUuid('teacher_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignUuid('teacher_id')->nullable()->constrained('teachers')->onDelete('cascade');
         });
     }
 };

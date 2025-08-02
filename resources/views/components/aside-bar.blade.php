@@ -2,7 +2,7 @@
     $itemsMenu = [
         [
             'icon' => 'o-home',
-            'route' => route('teacher.home'),
+            'route' => route('teacher.index'),
             'label' => 'home',
             'badge' => null,
         ],
@@ -38,15 +38,16 @@
     <!-- Conteúdo superior -->
     <div class="py-5">
         <div class="flex flex-col items-center justify-center gap-2">
-            @if (!Auth::user()->profile?->avatar)
-                <livewire:pages.teacher.components.avatar initiais="{{ Auth::user()->initialLetterToAvatar() }}"
-                    class="w-20 h-20">
+            @if (!Auth::guard('teacher')->user()->profile?->avatar)
+                <livewire:pages.teacher.components.avatar
+                    initiais="{{ Auth::guard('teacher')->user()->initialLetterToAvatar() }}" class="w-20 h-20">
                 @else
-                    <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}"
+                    <img src="{{ asset('storage/' . Auth::guard('teacher')->user()->profile->avatar) }}"
                         :class="$store.expandedSidebar.expanded ? 'w-20 h-20' : 'w-12 h-12'"
                         class="transition-all duration-300 ease-in-out border-2 border-gray-200 rounded-full dark:border-slate-700" />
             @endif
-            <h4 class="font-medium text-gray-600 capitalize dark:text-gray-200">{{ Auth::user()->first_name }}</h4>
+            <h4 class="font-medium text-gray-600 capitalize dark:text-gray-200">
+                {{ Auth::guard('teacher')->user()->first_name }}</h4>
         </div>
     </div>
 

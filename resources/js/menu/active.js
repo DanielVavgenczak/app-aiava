@@ -25,14 +25,19 @@ document.addEventListener('alpine:init', () => {
             if (current === route) return true;
 
             // Caso 2: Subrotas (ex: /app/teacher/discipline/123)
-            if (route.startsWith('/app/teacher/')) {
-                const routeBase = route.split('/app/teacher/')[1].split('/')[0];
-                const currentBase = current.split('/app/teacher/')[1]?.split('/')[0];
+            if (route.startsWith('/teacher/')) {
+                const routeBase = route.split('/teacher/')[1].split('/')[0];
+                const currentBase = current.split('/teacher/')[1]?.split('/')[0];
+                if (routeBase && currentBase === routeBase) {
+                    return true;
+                }
+            }else if (route.startsWith('/student/')) {
+                const routeBase = route.split('/student/')[1].split('/')[0];
+                const currentBase = current.split('/student/')[1]?.split('/')[0];
                 if (routeBase && currentBase === routeBase) {
                     return true;
                 }
             }
-
             return false;
         }
     }));

@@ -2,16 +2,18 @@
     <div class="flex flex-col items-center gap-3">
         <div class="flex justify-between w-full ">
             <div></div>
-            @if (Auth::user()->profile?->avatar)
-                <img src="{{ asset('storage/' . Auth::user()->profile->avatar) }}" class="w-20 h-20 rounded-full" />
+            @if (Auth::guard('teacher')->user()->profile?->avatar)
+                <img src="{{ asset('storage/' . Auth::guard('teacher')->user()->profile->avatar) }}"
+                    class="w-20 h-20 rounded-full" />
             @else
                 <div class="flex flex-col items-center justify-center gap-3">
-                    <livewire:pages.teacher.components.avatar initiais="{{ Auth::user()->initialLetterToAvatar() }}">
-                        <h3 class="text-base text-gray-600">{{ Auth::user()->fullName() }}</h3>
+                    <livewire:pages.teacher.components.avatar
+                        initiais="{{ Auth::guard('teacher')->user()->initialLetterToAvatar() }}">
+                        <h3 class="text-base text-gray-600">{{ Auth::guard('teacher')->user()->fullName() }}</h3>
                 </div>
             @endif
             <x-mary-button label="Editar Perfil" icon-right="o-pencil-square"
-                @click="$dispatch('open-modal-update-profile', { open:true })" />
+                x-on:click="$dispatch('open-modal-update-profile', { open:true })" />
             <livewire:pages.teacher.profile.modals.update />
         </div>
     </div>
@@ -19,17 +21,18 @@
         <div>
             <h3 class="text-lg font-semibold">Informações da conta</h3>
             <div>
-                {{ Auth::user()->fullName() }}
+                {{ Auth::guard('teacher')->user()->fullName() }}
             </div>
             <div>
                 <h3 class="text-lg font-semibold">E-mail</h3>
-                {{ Auth::user()->email }}
+                {{ Auth::guard('teacher')->user()->email }}
             </div>
         </div>
         <div>
             <h3 class="text-lg font-semibold">Informações do plano</h3>
             <div>
                 <h4>Plano atual</h4>
+                <p>Informações do plano</p>
             </div>
         </div>
     </div>

@@ -3,6 +3,7 @@
 use Livewire\Volt\Component;
 use App\Models\Teacher\{Classe, Student};
 use Livewire\Attributes\{On, Validate};
+use Illuminate\Support\Facades\Hash;
 
 new class extends Component {
     public bool $open = false;
@@ -57,9 +58,10 @@ new class extends Component {
                         'full_name' => $student['name'],
                         'email' => $student['email'],
                         'phone' => $student['phone'] ? $student['phone'] : null,
-                        'class_id' => $this->classe->id,
-                        'teacher_id' => Auth::user()->id,
+                        'classe_id' => $this->classe->id,
+                        'teacher_id' => Auth::guard('teacher')->user()->id,
                         'discipline_id' => $this->classe->discipline_id,
+                        'password' => Hash::make('123456'),
                     ]);
                 }
             });
@@ -67,6 +69,7 @@ new class extends Component {
             $this->dispatch('event-student', type: 'created');
             $this->open = false;
         } catch (\Exception $e) {
+            dd('Error', $e->getMessage());
             $this->open = false;
             if (!empty($e->getMessage())) {
                 $this->error('Erro interno no sistema', 'Error interno no sistema para essa funcionalidade por favor tente novamente mais tarde', position: 'toast-top toast-end', timeout: 8000);

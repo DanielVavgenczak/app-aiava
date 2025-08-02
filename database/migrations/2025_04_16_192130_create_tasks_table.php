@@ -18,7 +18,7 @@ return new class extends Migration
 
             $table->foreignUuid('module_id')->constrained('modules')->onDelete('cascade');
             $table->foreignUuid('discipline_id')->constrained('disciplines')->onDelete('cascade');
-            $table->foreignUuid('teacher_id')->constrained(table: 'users')->onDelete('cascade');
+            $table->foreignUuid('teacher_id')->constrained(table: 'teachers')->onDelete('cascade');
             $table->timestamps();
         });
     }

@@ -15,8 +15,10 @@ class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, UuidTrait;
+
     public $incrementing = false;
     protected $keyType = "uuid";
+    //protected $guarded = ['teacher'];
     /**
      * The attributes that are mass assignable.
      *
@@ -61,7 +63,7 @@ class User extends Authenticatable
         return $this->hasOne(TeacherProfile::class);
     }
 
-    public function fullName():string 
+    public function fullName():string
     {
         $full = $this->first_name. ' '. $this->last_name;
         return $full;
@@ -70,7 +72,7 @@ class User extends Authenticatable
     {
         $first = $this->first_name ? Str::substr($this->first_name, 0,1) : '';
         $last = $this->last_name ? Str::substr($this->last_name, 0,1) : '';
-        $avatar  = Str::upper($first.$last); 
+        $avatar  = Str::upper($first.$last);
         return $avatar;
     }
 }

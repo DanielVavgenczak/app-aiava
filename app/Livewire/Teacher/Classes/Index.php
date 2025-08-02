@@ -47,13 +47,13 @@ class Index extends Component
 
     private function getDisciplines()
     {
-        $this->disciplines = Discipline::where('user_id', Auth::user()->id)
+        $this->disciplines = Discipline::where('teacher_id', Auth::guard('teacher')->user()->id)
             ->get();
     }
     private function loadClasses()
     {
         $query = Classe::with('students')
-            ->where('teacher_id', Auth::user()->id);
+            ->where('teacher_id', Auth::guard('teacher')->user()->id);
 
         if (!empty($this->disciplineId)) {
             $this->loading = true;

@@ -15,8 +15,8 @@ return new class extends Migration
             $table->uuid("id")->primary();
             $table->string('avatar')->nullable();
             $table->string('cover')->nullable();
-            $table->foreignUuid('user_id')
-                ->constrained('users')
+            $table->foreignUuid('teacher_id')
+                ->constrained('teachers')
                 ->onDelete('cascade');
             $table->timestamps();
         });

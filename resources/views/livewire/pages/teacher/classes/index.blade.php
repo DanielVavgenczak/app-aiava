@@ -12,10 +12,10 @@
          <div class="flex items-center justify-between">
              <div class="mb-4">
                  <x-mary-select label="Disciplina  (Selecine a disciplina)" icon="o-academic-cap"
-                     wire:model.change="disciplineId" placeholder="Todas as turmas" :options="$disciplines"
+                     wire:model.change="disciplineId" placeholder="Minhas disciplinas" :options="$disciplines"
                      option-label="title" option-value="id" placeholder-value="" class="w-full !outline-none" />
              </div>
-             <button class="btn btn-sm bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center"
+             <button class="btn btn-md bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center"
                  wire:target="disciplineId" wire:loading.attr="disabled" id="classe-create"
                  x-on:click="$dispatch('open-form-class-create',{open:true, disciplineId: '{{ $this->disciplineId }}'})"
                  mary:key="discipline-create-button">
@@ -111,9 +111,7 @@
                      @endforeach
                  </div>
              @else
-                 <div class="flex justify-center items-center p-8 bg-gray-50 rounded-lg">
-                     <p class="text-gray-500">Nenhuma turma cadastrada</p>
-                 </div>
+                 <p class="text-gray-500 text-sm tracking-wider font-normal text-center">Nenhuma turma cadastrada</p>
              @endif
 
          </div>

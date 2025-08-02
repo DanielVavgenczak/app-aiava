@@ -16,10 +16,24 @@ return new class extends Migration
             $table->string('full_name');
             $table->string('email')->unique()->nullable();
             $table->string('phone')->unique()->nullable();
-            $table->foreignUuid('class_id')->constrained('classes')->onDelete('cascade');
-            $table->foreignUuid('teacher_id')->constrained('users')->onDelete('cascade');
+            $table->foreignUuid('teacher_id')->constrained('teachers')->onDelete('cascade')->nullable();
+            $table->foreignUuid('classe_id')->constrained('classes')->onDelete('cascade');
             $table->timestamps();
         });
+         Schema::create('password_reset_tokens_students', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        // Schema::create('sessions_students', function (Blueprint $table) {
+        //     $table->string('id')->primary();
+        //     $table->foreignUuid('student_id')->nullable()->index();
+        //     $table->string('ip_address', 45)->nullable();
+        //     $table->text('user_agent')->nullable();
+        //     $table->longText('payload');
+        //     $table->integer('last_activity')->index();
+        // });
     }
 
     /**
@@ -28,5 +42,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('students');
+        Schema::dropIfExists('password_reset_tokens_students');
+       // Schema::dropIfExists('sessions_students');
     }
+    
 };

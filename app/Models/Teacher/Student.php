@@ -4,11 +4,14 @@ namespace App\Models\Teacher;
 
 use App\Models\Traits\UuidTrait;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 
-class Student extends Model
+class Student extends Authenticatable
 {
-    use UuidTrait;
+    use HasFactory, Notifiable, UuidTrait;
 
     protected $keyType = 'string';
     public $incrementing = false;
@@ -18,18 +21,50 @@ class Student extends Model
         'full_name',
         'email',
         'phone',
-        'class_id',
+        'classe_id',
         'teacher_id',
-        'discipline_id'
+        'discipline_id',
+        'password',
     ];
 
-    public function class()
+     protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    public function classe()
     {
-        return $this->belongsTo(Classe::class, 'class_id');
+        return $this->belongsTo(Classe::class, 'classe_id');
     }
 
     public function teacher()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Teacher::class);
+    }
+
+     public function profile()
+    {
+        return $this->hasOne(StudentProfile::class);
+    }
+
+    public function firstName():string
+    {
+        return explode(' ', $this->full_name)[0];
+    }
+    public function initialLetterToAvatar()
+    {
+        $parts = explode(' ', $this->full_name);
+        $first = array_slice($parts, 0, 2);
+        $letras = array_map(fn($p) => strtoupper(substr($p, 0, 1)), $first);
+
+        return implode(' ', $letras);
+    }
+    protected function casts(): array
+    {
+        return [
+            'id' => 'string',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
     }
 }

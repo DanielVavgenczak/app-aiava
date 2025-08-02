@@ -14,7 +14,7 @@ new class extends Component {
     public function initVideo()
     {
         // As mentioned above, generate url with $videoId
-        $url = URL::temporarySignedRoute('media.stream', now()->addMinutes(30), ['lesson_id' => $this->lesson_id]);
+        $url = URL::temporarySignedRoute('teacher.media.stream', now()->addMinutes(30), ['lesson_id' => $this->lesson_id]);
         // Notify client to set source
         $this->dispatch('init-complete', url: $url);
     }

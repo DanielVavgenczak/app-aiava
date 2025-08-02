@@ -18,12 +18,13 @@ class DisciplineForm extends Form
 
     public function disciplineStore()
     {
-       $this->validate();
-        $discipline = Discipline::create([
-            "user_id" => Auth::user()->id,
-            "title" => $this->title,
-        ]);
-        $this->setDisciplineId($discipline->id);
+            $this->validate();
+            $teacher_id = Auth::guard('teacher')->user()->id;
+            $discipline = Discipline::create([
+                "teacher_id" => $teacher_id,
+                "title" => $this->title,
+            ]);
+            $this->setDisciplineId($discipline->id);
    }
 
    private function setDisciplineId(string $id)

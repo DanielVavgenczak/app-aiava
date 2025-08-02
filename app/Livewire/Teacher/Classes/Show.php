@@ -40,17 +40,17 @@ class Show extends Component
     {
 
         if(!empty($this->search)) {
-            return Student::where('class_id', $this->classe->id)
+            return Student::where('classe_id', $this->classe->id)
             ->when($this->search, function($query) {
                 $query->where(function($q) {
                     $q->where('full_name', 'like', '%'.$this->search.'%')
                       ->orWhere('email', 'like', '%'.$this->search.'%')
                       ->orWhere('phone', 'like', '%'.$this->search.'%');
                 });
-            })->orderBy('position', 'asc')->get();
+            })->orderBy('full_name', 'asc')->get();
         }
-        return Student::where('class_id', $this->classe->id)
-            ->orderBy('position', 'asc')
+        return Student::where('classe_id', $this->classe->id)
+            ->orderBy('full_name', 'asc')
             ->get();
 
     }

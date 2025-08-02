@@ -20,7 +20,8 @@
     <div class="flex flex-col items-center justify-center w-full h-screen gap-4">
         <img src="{{ asset('images/logo.png') }}" alt="Logo plaraforma de ensino ailumnus" class="w-48 " />
         <div class="">
-            @if (Route::has('login'))
+
+            @if (Route::has('teacher.login'))
                 <livewire:welcome.navigation />
             @endif
         </div>

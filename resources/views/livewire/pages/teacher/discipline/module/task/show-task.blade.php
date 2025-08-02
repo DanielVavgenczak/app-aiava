@@ -23,7 +23,7 @@ new class extends Component {
         $this->showTaskModule = true;
         $this->activitTask = ActivitTask::with([
             'tasks' => function ($query) {
-                $query->with(['options'])->orderBy('created_at'); // Carrega as options de cada task
+                $query->with(['options'])->orderBy('created_at');
             },
         ])->find((string) $activit_id);
     }
@@ -138,7 +138,7 @@ new class extends Component {
                         <div class="mt-3 ml-6 space-y-2">
                             @foreach ($task['options'] as $optIndex => $option)
                                 @if ($editingQuestionIndex === $index && $editingOptionIndex === $optIndex)
-                                    <div class="items-center gap-2 fslex">
+                                    <div class="items-center gap-2 flex">
                                         <span class="w-5 text-gray-500">{{ chr(65 + $optIndex) }}.</span>
                                         <x-text-input wire:model="editingOptionText"
                                             class="px-3 py-2 text-[15px] flex-1 focus:border-pink-500 focus:outline focus:outline-pink-500"

@@ -26,7 +26,8 @@ new class extends Component {
 
     private function loadDisciplines()
     {
-        return Discipline::where('user_id', Auth::user()->id)
+        $teacher_id = Auth::guard('teacher')->user()->id;
+        return Discipline::where('teacher_id', $teacher_id)
             ->when($this->search, function ($query) {
                 $query->where('title', 'like', '%' . $this->search . '%');
             })

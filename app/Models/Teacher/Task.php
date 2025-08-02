@@ -13,19 +13,15 @@ class Task extends Model
     use HasFactory, UuidTrait;
     public $incrementing = false;
     protected $keyType = "uuid";
-    protected $fillable = ['id','question','type','module_id','discipline_id','teacher_id'];
-
+    protected $fillable = ['id', 'question', 'type', 'module_id', 'discipline_id', 'teacher_id'];
     public function module()
     {
-
         return $this->belongsTo(Module::class);
     }
-
     public function options()
     {
         return $this->hasMany(TaskOptions::class);
     }
-
     public function teacher()
     {
         return $this->belongsTo(User::class);

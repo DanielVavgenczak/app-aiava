@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Teacher\Student;
+use App\Models\Teacher\Teacher;
 use App\Models\Traits\UuidTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,11 +14,11 @@ class Discipline extends Model
     public $incrementing = false;
 
     protected $keyType = "uuid";
-    protected $fillable = ['user_id','title', 'description'];
+    protected $fillable = ['teacher_id','title'];
 
-    public function user()
+    public function Teacher()
     {
-        return $this->belongsTo(related: User::class);
+        return $this->belongsTo(related: Teacher::class);
     }
     public function modules()
     {

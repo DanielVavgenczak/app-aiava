@@ -4,9 +4,9 @@ use Livewire\Volt\Component;
 use Livewire\Attributes\{On, Validate};
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
-
+use Mary\Traits\Toast;
 new class extends Component {
-    use WithFileUploads;
+    use WithFileUploads, Toast;
     public $user;
     public $open = false;
     #[Validate('image|max:51200')]
@@ -14,7 +14,7 @@ new class extends Component {
 
     public function mount()
     {
-        $this->user = Auth::user();
+        $this->user = Auth::guard('teacher')->user();
     }
 
     #[On('open-modal-update-profile')]
@@ -35,13 +35,23 @@ new class extends Component {
                     // Deleta a imagem antiga
                     Storage::disk('public')->delete($this->user->profile->avatar);
                 }
-                $this->user->profile()->updateOrCreate(['user_id' => $this->user->id], ['avatar_path' => 'profile', 'avatar' => $path]);
+                $this->user->profile()->updateOrCreate(
+                    [
+                        'teacher_id' => $this->user->id,
+                    ],
+                    [
+                        'avatar_path' => 'profile',
+                        'avatar' => $path,
+                    ],
+                );
                 $this->dispatch('upload-image');
                 $this->avatar = null;
             }
             $this->open = false;
         } catch (\Exception $err) {
-            dd('Deu error mo upload', $err->getMessage());
+            if (!empty($err->getMessage())) {
+                $this->error($err->getMessage());
+            }
         }
     }
     private function generateAvatarName($file)
@@ -60,8 +70,7 @@ new class extends Component {
             <div class="my-4">
                 <div>
                     <x-mary-file wire:model="avatar" accept="image/png, image/jpeg, image/jpg">
-                        <img src="{{ asset('storage/' . $user->profile?->avatar) ?? asset('images/user-noavatar.png') }}"
-                            class="h-32" />
+                        <img src="{{ Auth::guard('teacher')->user()->getAvatarUrlAttribute() }}" class="h-32" />
                     </x-mary-file>
                 </div>
             </div>

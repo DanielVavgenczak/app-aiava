@@ -32,14 +32,14 @@ new class extends Component {
                 attributes: [
                     'name' => $this->class_name,
                     'discipline_id' => $this->disciplineId,
-                    'teacher_id' => Auth::user()->id,
+                    'teacher_id' => Auth::guard('teacher')->user()->id,
                 ],
             );
-            sleep(1);
             $this->dispatch('action-event-classe', type: 'create');
             $this->reset('class_name', 'disciplineId');
             $this->open = false;
         } catch (\Exception $e) {
+            dd($e->getMessage());
             $this->open = false;
             if (!empty($e->getMessage())) {
                 $this->error('Erro interno no sistema', 'Error interno no sistema para essa funcionalidade por favor tente novamente mais tarde', position: 'toast-top toast-end', timeout: 8000);
@@ -53,15 +53,12 @@ new class extends Component {
             $this->disciplineId = $id;
             $this->disciplines = Discipline::with('students')
                 ->where('id', $id)
-                ->where('user_id', Auth::user()->id)
+                ->where('teacher_id', Auth::guard('teacher')->user()->id)
                 ->get()
                 ->toArray();
             return;
         }
-        $this->disciplines = Discipline::with('students')
-            ->where('user_id', Auth::user()->id)
-            ->get()
-            ->toArray();
+        $this->disciplines = Discipline::with('students')->where(column: 'teacher_id', operator: Auth::guard('teacher')->user()->id)->get()->toArray();
     }
     /**
      * Clean labels
@@ -92,8 +89,7 @@ new class extends Component {
     }
 }; ?>
 
-<x-mary-modal wire:model="open" title="Nova turma" subtitle="Registre uma nova turma" box-class="w-11/12  max-w-6xl"
-    persistent>
+<x-mary-modal wire:model="open" title="Nova turma" subtitle="Registre uma nova turma">
     <form wire:submit.prevent="storeClasse" wire:loading.class="flex flex-col justify-center items-center">
         <div class="flex flex-col" wire:loading.remove>
             <div class="mb-4" id="classe-input-discipline">
@@ -108,8 +104,8 @@ new class extends Component {
                 @endif
             </div>
             <div class="my-3" id="classe-input-name">
-                <x-mary-input wire:model="class_name" label="Turma" class="class-input-name !outline-none"
-                    autocomplete="title" />
+                <x-mary-input wire:model="class_name" label="Titulo" placeholder="Nome da turma"
+                    class="class-input-name !outline-none" autocomplete="title" />
             </div>
             <div class="flex gap-2 items-center justify-end my-3" id="classe-input-actions">
                 <div class="flex items-center gap-2" id="classe-input-cancel">
@@ -119,7 +115,7 @@ new class extends Component {
                     </button>
                 </div>
                 <div class="flex  items-center gap-2" id="classe-input-save">
-                    <button class="btn btn-sm text-gray-50 capitalize bg-pink-700 hover:bg-pink-900" type="submit"
+                    <button class="btn btn-md text-gray-50 capitalize bg-pink-700 hover:bg-pink-900" type="submit"
                         id="create-confirm">
                         cadastrar
                     </button>

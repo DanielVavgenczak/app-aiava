@@ -12,7 +12,7 @@ class Module extends Model
 {
     use HasFactory, UuidTrait;
     public $incrementing = false;
-    protected $keyType = "uuid";
+    protected $keyType = "string";
     protected $fillable = ['id','title','discipline_id'];
 
     public function discipline()

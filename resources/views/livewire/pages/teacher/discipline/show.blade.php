@@ -123,7 +123,7 @@ new #[Layout('layouts.app')] class extends Component {
     #[On('module-event')]
     public function update($type, $msg)
     {
-        $this->js("console.log('Executado com sucesso " . $msg . "')");
+        //$this->js("console.log('Executado com sucesso " . $msg . "')");
         match ($type) {
             'update', 'create', 'uploaded' => $this->handleEventWithToast($type, $msg),
             'delete' => $this->handleEventWithToast($type, $msg),
@@ -301,8 +301,8 @@ new #[Layout('layouts.app')] class extends Component {
                         @endforeach
                     @else
                         <div wire:key="no-modules" class="absolute w-full h-screen bg-white">
-                            <p class="text-sm font-medium text-center text-gray-700">Esse conteúdo não possui nenhum
-                                módulo</p>
+                            <p class="text-sm font-medium text-center text-gray-700 tracking-wider">Essa disciplina não
+                                possui nenhuma aula!</p>
                         </div>
                     @endif
                 </div>

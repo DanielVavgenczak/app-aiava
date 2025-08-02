@@ -6,7 +6,6 @@ use App\Models\Lesson;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Pion\Laravel\ChunkUpload\Exceptions\UploadMissingFileException;
@@ -17,6 +16,13 @@ class LessonUploadController extends Controller
 {
     // Diretório de armazenamento de vídeos
     private const VIDEO_STORAGE_PATH = 'videos/lessons';
+     // Tipos MIME suportados
+    private const SUPPORTED_MIME_TYPES = [
+        'mp4' => 'video/mp4',
+        'webm' => 'video/webm',
+        'ogg' => 'video/ogg',
+    ];
+
 
     /**
      * Stream do vídeo.
@@ -26,27 +32,21 @@ class LessonUploadController extends Controller
      */
     public function stream($lesson_id)
     {
-        $lesson = Lesson::findOrFail($lesson_id);
-        // if (!Auth::user()->can('view', $lesson)) {
-        //     abort(403);
-        // }
-        $path = storage_path('app/private/' . $lesson->path_file);
-        if (!file_exists($path)) {
-            abort(404);
-        }
+            $lesson = Lesson::findOrFail($lesson_id);
 
-        return response()->stream(function() use ($path) {
-            $stream = fopen($path, 'rb');
-            fpassthru($stream);
-            if (is_resource($stream)) {
-                fclose($stream);
+            if (!Storage::disk('private')->exists($lesson->path_file)) {
+                abort(404, message: 'Vídeo não encontrado');
             }
-        }, 200, [
-            'Content-Type' => mime_content_type($path) ?: 'video/mp4',
-            'Content-Length' => filesize($path),
-            'Cache-Control' => 'no-cache, must-revalidate',
-            'Accept-Ranges' => 'bytes'
-        ]);
+
+            $path = Storage::disk('private')->path($lesson->path_file);
+            $fileSize = filesize($path);
+            $mimeType = $this->resolveMimeType($path);
+
+            $this->adjustMemoryLimit($fileSize);
+
+            return response()->stream(function () use ($path, $fileSize) {
+                $this->readFileChunked($path, $fileSize);
+            }, 200, $this->prepareHeaders($mimeType, $fileSize, $path));
     }
 
     /**
@@ -76,7 +76,7 @@ class LessonUploadController extends Controller
             'resumableRelativePath' => 'required|string',
         ]);
         // Verifica se o módulo pertence a uma disciplina do usuário
-        if (!Auth::user()->disciplines()->whereHas('modules', function ($query) use ($module_id) {
+        if (!Auth::guard('teacher')->user()->disciplines()->whereHas('modules', function ($query) use ($module_id) {
             $query->where('id', $module_id);
         })->exists()) {
             return response()->json(['error' => 'Módulo não encontrado ou sem permissão.'], 404);
@@ -117,7 +117,7 @@ class LessonUploadController extends Controller
                 "title" => $title,
                 "description" => $request->input('description', ''), //"Descrição teste para o vídeo $fileName",
                 "module_id" => $module_id,
-                "user_id" => Auth::id(),
+                "teacher_id" => Auth::guard('teacher')->user()->id,
             ]);
 
             // Gera uma URL temporária para o stream do vídeo
@@ -174,4 +174,104 @@ class LessonUploadController extends Controller
 
         return $filename;
     }
+
+    // streaming
+    /**
+     * Resolve o tipo MIME do arquivo com fallback seguro
+     */
+    private function resolveMimeType(string $path): string
+    {
+      $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        if (!array_key_exists($extension, self::SUPPORTED_MIME_TYPES)) {
+            abort(415, 'Tipo de arquivo de vídeo não suportado');
+        }
+
+        return self::SUPPORTED_MIME_TYPES[$extension];
+    }
+
+/*
+ * Prepara os headers HTTP para streaming
+ */
+private function prepareHeaders(string $mimeType, int $fileSize, string $filePath): array
+{
+    return [
+        'Content-Type' => $mimeType,
+        'Content-Length' => $fileSize,
+        'Accept-Ranges' => 'bytes',
+        'Cache-Control' => 'private, max-age=604800', // 1 semana
+        'Expires' => gmdate('D, d M Y H:i:s', time() + 604800) . ' GMT',
+        'Last-Modified' => gmdate('D, d M Y H:i:s', filemtime($filePath)) . ' GMT',
+        'X-Content-Type-Options' => 'nosniff',
+    ];
+}
+
+
+    /**
+     * Leitura otimizada do arquivo em chunks com suporte a byte-range
+     */
+    private function readFileChunked(string $path, int $fileSize): void
+    {
+          $stream = fopen($path, 'rb');
+        if ($stream === false) {
+            abort(500, 'Não foi possível abrir o arquivo de vídeo');
+        }
+
+        $start = 0;
+        $end = $fileSize - 1;
+        $length = $fileSize;
+
+        if (isset($_SERVER['HTTP_RANGE'])) {
+            if (!preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches)) {
+                header("HTTP/1.1 416 Range Not Satisfiable");
+                header("Content-Range: bytes */$fileSize");
+                exit;
+            }
+
+            $start = (int)($matches[1] ?? 0);
+            $end = isset($matches[2]) ? (int)$matches[2] : $fileSize - 1;
+            $length = $end - $start + 1;
+
+            header("HTTP/1.1 206 Partial Content");
+            header("Content-Range: bytes $start-$end/$fileSize");
+        }
+
+        fseek($stream, $start);
+
+        $bufferSize = 1024 * 8;
+        $bytesSent = 0;
+
+        while (!feof($stream) && $bytesSent < $length && connection_status() == 0) {
+            $remaining = $length - $bytesSent;
+            $chunkSize = min($bufferSize, $remaining);
+
+            echo fread($stream, $chunkSize);
+            $bytesSent += $chunkSize;
+
+            if (ob_get_level() > 0) ob_flush();
+            flush();
+        }
+
+        if (is_resource($stream)) fclose($stream);
+    }
+    private function adjustMemoryLimit(int $fileSize): void
+        {
+            $memoryLimit = ini_get('memory_limit');
+            if ($fileSize > $this->convertToBytes($memoryLimit) * 0.5) {
+                ini_set('memory_limit', $fileSize * 2 . 'B');
+            }
+        }
+       private function convertToBytes(string $memoryLimit): int
+        {
+            $unit = strtolower(substr($memoryLimit, -1));
+            $value = (int) substr($memoryLimit, 0, -1);
+
+            return match ($unit) {
+                'g' => $value * 1024 * 1024 * 1024,
+                'm' => $value * 1024 * 1024,
+                'k' => $value * 1024,
+                default => (int) $memoryLimit,
+            };
+        }
+
 }

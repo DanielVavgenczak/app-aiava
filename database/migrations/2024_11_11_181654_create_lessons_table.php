@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string("title")->nullable();
             $table->text("description")->nullable();
             $table->foreignUuid("module_id")->constrained("modules");
-            $table->uuid("user_id");
+            $table->foreignUuid("teacher_id")->contrained("teachers")->onDelete("cascade");
             $table->timestamps();
         });
     }

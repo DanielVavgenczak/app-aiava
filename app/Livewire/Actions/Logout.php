@@ -12,9 +12,16 @@ class Logout
      */
     public function __invoke(): void
     {
-        Auth::guard('web')->logout();
+      if(Auth::guard('teacher')->check()) {
+         $this->logoutTeacher();
+      }
+    }
+
+    protected function logoutTeacher()
+    {
+        Auth::guard('teacher')->logout();
         Session::invalidate();
         Session::regenerateToken();
-        //sleep(100);
+
     }
 }

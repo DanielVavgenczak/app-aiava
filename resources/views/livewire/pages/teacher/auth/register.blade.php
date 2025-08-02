@@ -1,8 +1,7 @@
 <?php
 
-use App\Models\User;
+use App\Models\Teacher\Teacher;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Livewire\Attributes\Layout;
@@ -23,16 +22,16 @@ new #[Layout('layouts.guest')] class extends Component {
         $validated = $this->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . Teacher::class],
             'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        event(new Registered(($user = User::create($validated))));
+        event(new Registered(Teacher::create($validated)));
 
         //Auth::login($user);
 
-        $this->redirect(route('login'));
+        $this->redirect(route('teacher.login'));
     }
 }; ?>
 
@@ -40,54 +39,53 @@ new #[Layout('layouts.guest')] class extends Component {
     <form wire:submit="register">
         <!-- Name -->
         <div>
-            <x-input-label for="first_name" :value="__('Nome')" />
-            <x-text-input wire:model="first_name" id="first_name"
-                class="px-3 py-2 border-[1px]   focus:border-pink-500 focus:outline focus:outline-pink-50 block w-full mt-1"
-                type="text" name="first_name" required autofocus autocomplete="first_name" />
-            <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
+
+            <x-mary-input label="Nome" placeholder="Nome" for="first_name" :value="__('Nome')" wire:model="first_name"
+                class="!outline-none" />
+
         </div>
         <div class="mt-4">
-            <x-input-label for="last_name" :value="__('Sobrenome')" />
-            <x-text-input wire:model="last_name" id="last_name"
-                class="px-3 py-2 border-[1px] focus:border-pink-500 focus:outline focus:outline-pink-50 block w-full mt-1"
-                type="text" name="last_name" required autofocus autocomplete="first_name" />
-            <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
+
+            <x-mary-input label="Sobrenome" placeholder="Sobrenome" for="last_name" :value="__('Sobrenome')"
+                wire:model="last_name" class="!outline-none" />
+
         </div>
         <!-- Email Address -->
         <div class="mt-4">
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="email" id="email"
-                class="px-3 py-2 border-[1px]   focus:border-pink-500 focus:outline focus:outline-pink-50 block w-full mt-1"
-                type="email" name="email" required autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <x-mary-input label="E-mail" placeholder="Seu email" for="email" :value="__('Email')" wire:model="email"
+                type="email" class="!outline-none" />
         </div>
 
         <!-- Password -->
         <div class="mt-4">
-            <x-input-label for="password" :value="__('Senha')" />
+            <x-mary-input label="Senha" placeholder="******" wire:model="password" type="password"
+                class="!outline-none" />
+            {{-- <x-input-label for="password" :value="__('Senha')" />
             <x-text-input wire:model="password" id="password"
                 class="px-3 py-2 border-[1px] focus:border-pink-500 focus:outline focus:outline-pink-50 block w-full mt-1"
                 type="password" name="password" required autocomplete="new-password" />
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            <x-input-error :messages="$errors->get('password')" class="mt-2" /> --}}
         </div>
         <!-- Confirm Password -->
         <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirme a senha')" />
+            <x-mary-input label="Confirme a senha" placeholder="******" wire:model="password_confirmation"
+                type="password" class="!outline-none" />
+            {{-- <x-input-label for="password_confirmation" :value="__('Confirme a senha')" />
             <x-text-input wire:model="password_confirmation" id="password_confirmation"
                 class="px-3 py-2 border-[1px]focus:border-pink-500 focus:outline focus:outline-pink-50 block w-full mt-1"
                 type="password" name="password_confirmation" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" /> --}}
         </div>
 
         <div class="flex items-center justify-between mt-4">
             <a class="text-sm text-gray-600 underline rounded-md hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                href="{{ route('login') }}" wire:navigate>
+                href="{{ route('teacher.login') }}" wire:navigate>
                 {{ __('Já possue uma conta?') }}
             </a>
-            <x-primary-button class="ms-4">
-                {{ __('Registrar') }}
-            </x-primary-button>
+            <button class="btn btn-sm bg-pink-600 capitalize text-gray-50 tracking-wide">
+                registrar
+            </button>
         </div>
     </form>
 </div>

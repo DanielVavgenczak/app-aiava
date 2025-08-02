@@ -12,10 +12,10 @@ use Livewire\Form;
 
 class LoginForm extends Form
 {
-    #[Validate('required|string|email')]
+    #[Validate('required', message: 'O E-mail é obrigatorio!')]
     public string $email = '';
 
-    #[Validate('required|string')]
+    #[Validate('required', message: 'O Senha é obrigatorio!')]
     public string $password = '';
 
     #[Validate('boolean')]
@@ -29,15 +29,14 @@ class LoginForm extends Form
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
-
-        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
+        
+        if (! Auth::guard('teacher')->attempt($this->only(['email', 'password']), $this->remember)) {
             RateLimiter::hit($this->throttleKey());
-
+            
             throw ValidationException::withMessages([
                 'form.email' => trans('auth.failed'),
             ]);
         }
-
         RateLimiter::clear($this->throttleKey());
     }
 
