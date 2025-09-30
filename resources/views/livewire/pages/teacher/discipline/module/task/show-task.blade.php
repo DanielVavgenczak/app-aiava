@@ -93,9 +93,9 @@ new class extends Component {
     }
 }; ?>
 <x-mary-drawer wire:model="showTaskModule" class="w-11/12 mx-auto">
-    <x-mary-button icon="o-x-mark" class="btn btn-ghost" x-on:click="$wire.cancelMakeTask" />
+    <x-mary-button icon="o-x-mark" class="btn btn-ghost" wire:click="cancelMakeTask" />
     <header class="flex items-center justify-between p-5">
-        <h2 class="text-lg font-semibold text-gray-800">Atividade</h2>
+        <h2 class="text-[15px] font-medium text-gray-700">Atividade</h2>
         <div>
             @if ($activitTask)
                 <x-mary-button label="Deletar atividade" type="button"

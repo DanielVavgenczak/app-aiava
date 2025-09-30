@@ -43,14 +43,14 @@ new class extends Component {
             </div>
             <div id="create-confirm" wire:loading.remove>
                 <button class="bg-pink-600 btn btn-sm text-gray-50 hover:bg-pink-900" type="submit">
-                    cadastrar
+                    Cadastrar
                 </button>
             </div>
             <div wire:loading wire:target="store" class="flex flex-col justify-center w-full text-center">
                 <div class="mb-2">
                     <x-mary-loading class="text-pink-600 loading-dots" />
                 </div>
-                <span class="text-xs tracking-wider text-pink-600">Registrando</span>
+                <span class="text-xs tracking-wider text-pink-600">Cadastrando</span>
             </div>
         </div>
     </form>

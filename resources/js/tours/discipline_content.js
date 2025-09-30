@@ -61,7 +61,7 @@ export async function StartTourDisciplineCreateContent() {
         {
           element: `#lesson-title`,
           popover: {
-            description: "Escreva o Titulo da aula",
+            description: "Escreva o Título da aula",
             onNextClick: async (el) => {
               const title = el.querySelector(
                 `input.lesson-input-title`,
@@ -75,7 +75,7 @@ export async function StartTourDisciplineCreateContent() {
             onPopoverRender: (popover, { config, state }) => {
               const actions = AddButtonActions(
                 popover,
-                "voltar ao início",
+                "Voltar ao início",
               );
               actions.addEventListener("click", () => {
                 Livewire.dispatch("open-modal-module", {
@@ -253,7 +253,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                 {
                   element: `#browser-file-${dataId}`, // Seleciona o elemento com base no ID
                   popover: {
-                    description: `Clique no icone para adiconar um novo video`,
+                    description: `Clique no icone para adiconar um novo vídeo`,
                     side: "top",
                     align: "start",
                   },
@@ -327,7 +327,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                 {
                   element: `#temp-video-preview-${dataId}`, // Seleciona o elemento com base no ID
                   popover: {
-                    description: `Verificar se está ok, clique em 'Proximo' para continuar o upload`,
+                    description: `Verificar se está ok, clique em 'Próximo' para continuar o upload`,
                     side: "top",
                     align: "start",
                     onPopoverRender: (
@@ -357,7 +357,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                 {
                   element: `#temp-preview-actions-${dataId}`, // Seleciona o elemento com base no ID
                   popover: {
-                    description: `Clique em 'Enviar' para enviar o video`,
+                    description: `Clique em 'Enviar' para enviar o vídeo`,
                     side: "top",
                     align: "start",
                     onPopoverRender: (
@@ -484,7 +484,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                   {
                     element: `#block-open-new-block-${dataId}`,
                     popover: {
-                      description: `Vou clicar aqui para abrir a opção de adiconar um bloco`,
+                      description: `Vou clicar aqui para abrir a opção de adicionar um bloco`,
                       side: "right",
                       align: "center",
                       showButtons: [""],
@@ -501,7 +501,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                   {
                     element: `#browser-file-${dataId}`, // Seleciona o elemento com base no ID
                     popover: {
-                      description: `Clique no icone para adiconar um novo video`,
+                      description: `Clique no icone para adiconar um novo vídeo`,
                       side: "top",
                       align: "start",
                       // onPopoverRender: (popover, { config, state }) => {
@@ -583,7 +583,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                   {
                     element: `#temp-video-preview-${dataId}`, // Seleciona o elemento com base no ID
                     popover: {
-                      description: `Verificar se está ok, clique em 'Proximo' para continuar o upload`,
+                      description: `Verifique se está ok, clique em 'Próximo' para continuar o upload`,
                       side: "top",
                       align: "start",
                       onPopoverRender: (
@@ -593,7 +593,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                         const actions =
                           AddButtonActions(
                             popover,
-                            "Voltar ao inicio",
+                            "Voltar ao início",
                           );
                         actions.addEventListener(
                           "click",
@@ -613,7 +613,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                   {
                     element: `#temp-preview-actions-${dataId}`, // Seleciona o elemento com base no ID
                     popover: {
-                      description: `Clique em 'Enviar' para enviar o video`,
+                      description: `Clique em 'Enviar' para enviar o vídeo`,
                       side: "top",
                       align: "start",
                       onPopoverRender: (
@@ -623,7 +623,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                         const actions =
                           AddButtonActions(
                             popover,
-                            "Voltar ao inicio",
+                            "Voltar ao início",
                           );
                         actions.addEventListener(
                           "click",
@@ -657,16 +657,9 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                   {
                     element: `#progress-bar-container-${dataId}`, // Seleciona o elemento com base no ID
                     popover: {
-                      description: "Aguarde enquanto o video e enviado",
+                      description: "Aguarde enquanto o vídeo e enviado",
                       side: "top",
                       align: "start",
-                      // onPopoverRender: (popover, { config, state }) => {
-                      //     const actions =  AddButtonActions(popover, "voltar  ao inicio")
-                      //     actions.addEventListener('click', async () => {
-                      //         //Livewire.dispatch('to-close')
-                      //         await driverObj.destroy();
-                      //         store.openMai = true;
-                      //     })
                     },
                     onHighlighted: async (el) => {
                       await new Promise((resolve) =>
@@ -874,7 +867,7 @@ export function StartTourCreateActivitTask() {
                     element: `#create-question-associate-module-${disciplieID}`,
                     popover: {
                       description:
-                        "Selecione a disciplina que deseja vincular essa Atividade ou 'Voltar ao inicio'",
+                        "Selecione a disciplina que deseja vincular essa Atividade ou 'Voltar ao início'",
                       onPopoverRender: (
                         popover,
                         { config, state },
@@ -882,7 +875,7 @@ export function StartTourCreateActivitTask() {
                         const actions =
                           AddButtonActions(
                             popover,
-                            "Voltar ao inicio",
+                            "Voltar ao início",
                           );
                         actions.addEventListener(
                           "click",

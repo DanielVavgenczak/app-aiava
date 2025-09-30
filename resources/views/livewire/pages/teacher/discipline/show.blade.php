@@ -359,12 +359,12 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
 
         <livewire:pages.teacher.discipline.module.task.show-task 
-          :key="'task-module-' . $discipline->id ?? ''" />
+          wire:key="'task-module-' .{{ $discipline->id ?? ''}}" />
         <livewire:pages.teacher.discipline.module.modals.create 
           :disciplineId="$discipline->id" 
-          :key="'create-module-' . $discipline->id ?? ''" />
+          wire:key="'create-module-' . {{ $discipline->id ?? ''}}" />
             <livewire:pages.teacher.discipline.module.modals.create-task 
           :lessons="$discipline->modules" 
           :disciplineId="$discipline->id" 
-          :key="'new-task-' . $discipline->id ?? ''" /> 
+          wire:key="'new-task-' . {{ $discipline->id ?? ''}}" /> 
     </div>

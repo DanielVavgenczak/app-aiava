@@ -46,11 +46,11 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#discipline-save`,
                 popover: {
-                    description: `Clique em 'Cadastrar' para salvar ou 'Cancelar' para cancelar o registro.`,
+                    description: `Clique em 'Cadastrar' para salvar ou 'Cancelar' para cancelar o cadastro.`,
                     onPopoverRender: (popover, { config, state }) => {
                         const actions = AddButtonActions(
                             popover,
-                            "voltar ao inicio",
+                            "Voltar ao início",
                         );
                         actions.addEventListener("click", async() => {
                             Livewire.dispatch("close-create");
@@ -141,7 +141,7 @@ export async function StartTourEditDiscipline() {
                     popover: {
                         description: `Selecione a disciplina que deseja editar`,
                         onPopoverRender: (popover, { config, state }) => {
-                            const actions = AddButtonActions(popover, "Voltar ao inicio");
+                            const actions = AddButtonActions(popover, "Voltar ao início");
                             actions.addEventListener('click', async () => {
                                 driverObj.destroy();
                                 const removeIndex = document.querySelectorAll("div.content-discipline");
@@ -247,7 +247,7 @@ export async function StartTourEditDiscipline() {
                                             side: "top",
                                             align: "start",
                                             onPopoverRender: (popover, { config, state }) => {
-                                                const actions =  AddButtonActions(popover, "voltar  ao inicio")
+                                                const actions =  AddButtonActions(popover, "Voltar ao início")
                                                 actions.addEventListener('click', async () => {
                                                     Livewire.dispatch('to-close')
                                                     await driverObj.destroy();

@@ -48,13 +48,13 @@ new class extends Component {
                 type="text" 
                 class="input w-full !outline-none lesson-input-title focus:border-gray-400" 
                 wire:model="title" 
-                placeholder="Titulo da aula"/>                
+                placeholder="Título da aula"/>                
             </div>
             <div class="flex items-center justify-end gap-4 mt-5" id="lesson-actions-buttons">
                 <button type="button" wire:click="cancel" id="module-input-cancel"
                     class="btn btn-sm bg-ghost">Cancelar</button>
                 <button type="submit" spinner id="module-input-create"
-                    class="btn btn-sm text-gray-50 bg-pink-600">registrar
+                    class="btn btn-sm text-gray-50 bg-pink-600">Registrar
                 </button>
             </div>
         </form>
