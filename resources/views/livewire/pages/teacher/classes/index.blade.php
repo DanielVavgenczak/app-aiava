@@ -23,7 +23,6 @@
              </button>
              <!-- modal to register class and alunos -->
              <livewire:pages.teacher.classes.modal.create />
-
          </div>
          <div class="flex flex-col gap-2 relative top-2.5">
              @if (count($classes) > 0)

@@ -39,19 +39,22 @@ new class extends Component {
         $this->reset('title', 'open');
     }
 }; ?>
-<x-mary-modal wire:model="open" title="Nova aula" subtitle="Adicione uma nova aula"
+<x-mary-modal wire:model="open" title="Nova aula" subtitle="Crie uma nova aula"
     data-tour="new-lesson-{{ $disciplineId }}">
     <div>
         <form wire:submit.prevent="save">
             <div class="my-3" id="lesson-title">
-                <x-mary-input label="Titulo" placeholder="Titulo da aula" for="title" :value="__('Titulo')"
-                    wire:model="title" class="!outline-none lesson-input-title" />
+              <input 
+                type="text" 
+                class="input w-full !outline-none lesson-input-title focus:border-gray-400" 
+                wire:model="title" 
+                placeholder="Titulo da aula"/>                
             </div>
             <div class="flex items-center justify-end gap-4 mt-5" id="lesson-actions-buttons">
                 <button type="button" wire:click="cancel" id="module-input-cancel"
-                    class="btn btn-md bg-ghost">Cancelar</button>
+                    class="btn btn-sm bg-ghost">Cancelar</button>
                 <button type="submit" spinner id="module-input-create"
-                    class="btn btn-md text-gray-50 bg-pink-600">Cadastrar
+                    class="btn btn-sm text-gray-50 bg-pink-600">registrar
                 </button>
             </div>
         </form>

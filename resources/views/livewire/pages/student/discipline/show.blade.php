@@ -23,7 +23,12 @@ new #[Layout('layouts.student-panel')] class extends Component {
                 $query->orderBy('created_at', 'ASC');
             },
             'activitTasks' => function ($query) {
-                $query->orderBy('created_at', 'ASC');
+                $query->with([
+                    'tasks' => function ($query) {
+                        $query->orderBy('created_at', 'ASC');
+                    },
+                ]);
+                // $query->orderBy('created_at', 'ASC');
             },
         ])
             ->where('discipline_id', $id)
@@ -85,16 +90,17 @@ new #[Layout('layouts.student-panel')] class extends Component {
                     </x-mary-collapse>
                     @if ($module->activitTasks->count() > 0)
                         @foreach ($module->activitTasks as $activitTask)
-                            <div class="p-4 hover:bg-gray-100 cursor-pointer">
+                            <div class="p-4 hover:bg-gray-100">
                                 <button
                                     class="ml-4
                                 text-blue-400 font-semibold text-xs uppercase tracking-wider cursor-pointer"
-                                    x-on:click="$dispatch('student-open-task', {task_id:'{{ $activitTask->id }}'})">
+                                    x-on:click="$dispatch('student-event-open-task', {id:'{{ $activitTask->id }}'})">
+                                    <x-mary-icon name="o-document-text" class="w-4 h-4" />
                                     Atividade
                                 </button>
                             </div>
-                            <livewire:pages.student.discipline.lesson.show-task-lesson :key="'student-task' . $module->id" />
                         @endforeach
+                        <livewire:pages.student.discipline.lesson.show-task-lesson :key="'student-task' . $module->id" />
                     @endif
                 @endforeach
             </div>

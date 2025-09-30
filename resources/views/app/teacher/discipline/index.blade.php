@@ -7,8 +7,8 @@
     </div>
     <div class="p-5 bg-white">
         <div class="mb-5">
-            <h2 class="text-lg font-semibold tracking-wide text-gray-600">Escolhar uma disciplina</h2>
-            <p class="text-sm text-gray-500">Selecione uma disciplina para ver seus conteudos</p>
+            <h2 class="text-lg font-semibold tracking-wide text-gray-600">Selecione uma disciplina</h2>
+            <p class="text-sm text-gray-500">Selecione uma disciplina para ver os conteúdos</p>
         </div>
         <div>
             <livewire:pages.teacher.discipline.index lazy />

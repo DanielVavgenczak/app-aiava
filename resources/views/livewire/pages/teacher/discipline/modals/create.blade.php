@@ -32,7 +32,7 @@ new class extends Component {
 <x-mary-modal wire:model="open" title="Nova disciplina" subtitle="Registre uma nova disciplina">
     <form wire:submit.prevent="store">
         <div id="discipline-input-title" wire:loading.remove>
-            <x-mary-input wire:model="form.title" label="Titulo" placeholder="Nome da disciplina"
+            <x-mary-input wire:model="form.title" label="Título" placeholder="Nome da disciplina"
                 class="title !outline-none" autocomplete="title" />
         </div>
         <div class="flex items-center justify-end gap-2 my-3" id="discipline-save">

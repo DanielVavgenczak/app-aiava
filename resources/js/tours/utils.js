@@ -28,7 +28,6 @@ export function AddButtonActions(popover, title, callback) {
         border-radius: 7px;
         border: 1px solid #ccc;
         color: #2d2d2d;
-        text-transform: capitalize;
         font-weight: 400;
         text-shadow: none;
     `;

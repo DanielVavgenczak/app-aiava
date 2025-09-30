@@ -1,10 +1,14 @@
 import './bootstrap';
+import { driver } from 'driver.js';
+import Alpine from 'alpinejs';
+import { focus } from '@alpinejs/focus';
+import 'driver.js/dist/driver.css';
 import './tours/tour';
 import './upload-chunck';
 import './menu/index';
 import './menu/active';
 import './expanded_preview';
-import { driver } from 'driver.js';
-import 'driver.js/dist/driver.css';
-
+import './libs/expand_text';
+import './libs/mask';
 window.drivertour = driver;
+Alpine.plugin(focus);

@@ -17,7 +17,7 @@ new class extends Component {
             x-on:click="selectFile()" data-url="{{ route('teacher.media.upload', ['module_id' => $module_id]) }}"
             class="flex flex-col items-center justify-center gap-4 px-5 py-5 transition-all duration-300 bg-white cursor-pointer rounded-xl hover:bg-indigo-50 hover:border-pink-400">
             <x-mary-icon name="o-video-camera" class="w-10 h-10 text-gray-600" />
-            <span class="text-sm font-medium tracking-wide text-gray-500">Clique para adicionar o vídeo</span>
+            <span class="text-sm font-medium tracking-wide text-gray-500">Clique para adicionar o video</span>
             <span class="text-xs text-gray-500">Formatos suportados: MP4, AVI, MOV (máx. 2GB, até 12 minutos)</span>
         </div>
 
@@ -27,13 +27,14 @@ new class extends Component {
             <video id="temp-video-preview-{{ $module_id }}" controls
                 class="w-3/4 rounded-lg shadow-md w-max-2xl"></video>
             <div class="flex gap-4" id="temp-preview-actions-{{ $module_id }}">
-                <button x-on:click="uploadStart()" id="lesson-send-video-block-content-{{ $module_id }}"
-                    class="px-6 py-2 text-white transition duration-200 bg-indigo-500 rounded-lg hover:bg-indigo-600">
-                    Enviar
-                </button>
+              
                 <button x-on:click="cancelSelection()"
                     class="px-6 py-2 text-gray-700 transition duration-200 bg-gray-300 rounded-lg hover:bg-gray-400">
                     Cancelar
+                </button>
+                <button x-on:click="uploadStart()" id="lesson-send-video-block-content-{{ $module_id }}"
+                    class="px-6 py-2 text-white transition duration-200 bg-pink-700 rounded-lg hover:bg-pink-800">
+                    Enviar
                 </button>
             </div>
         </div>

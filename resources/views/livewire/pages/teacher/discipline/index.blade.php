@@ -84,10 +84,10 @@ new class extends Component {
         @else
             <span></span>
         @endif
-        <button class="btn btn-md bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center"
+        <button class="btn btn-sm bg-pink-700 text-gray-50 discipline-new flex gap-1.5 items-center"
             id="discipline-create" x-on:click="$dispatch('create-content-modal',{open:true})"
             mary:key="create-button-{{ Str::uuid7() }}">
-            <x-mary-icon name="o-plus" class="w-5 h-5" /> <span class="">Disciplina</span>
+            <x-mary-icon name="o-plus" class="w-4 h-4" /> Disciplina
         </button>
     </div>
     @if ($disciplines->count() > 0)
@@ -142,14 +142,13 @@ new class extends Component {
         <!-- Centralizando a div -->
         <div
             class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
-            <div class="flex flex-col">
-                <div class="flex justify-end">
-                    <x-mary-button icon="o-x-mark"
-                        class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
-                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                <div class="flex items-center justify-between">
+                  <h2 class="text-sm font-medium tracking-wider text-gray-700">Você tem as seguintes opções</h2>
+                    <x-mary-button 
+                      icon="o-x-mark"
+                      class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                      x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
-                <h2 class="text-sm font-normal tracking-wider text-gray-700">Você tem as seguintes opções:</h2>
-            </div>
             <div class="flex items-center gap-3 p-4 bg-gray-100">
                 <x-mary-button
                     class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
@@ -157,7 +156,7 @@ new class extends Component {
                 @if ($disciplines->count() > 0)
                     <x-mary-button
                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                        label="Pesquisar disciplina" @click="$store.tourguide.start('StartTourSearchDiscipline')" />
+                        label="Pesquisar disciplina" x-on:click="$store.tourguide.start('StartTourSearchDiscipline')" />
                     <x-mary-button
                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Gerenciar conteudo"

@@ -9,7 +9,6 @@ new class extends Component {
 
     #[Computed]
     public $video_url = '';
-
     #[On('stundent-lesson-streaming-block')]
     public function streamingLesson($lesson_id)
     {

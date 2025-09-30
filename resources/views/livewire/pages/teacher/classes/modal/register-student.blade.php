@@ -37,8 +37,8 @@ new class extends Component {
         $this->studentName = '';
         $this->studentEmail = '';
         $this->studentPhone = '';
-        sleep(2);
     }
+
     /**
      * Remove student in list
      * **/
@@ -57,7 +57,7 @@ new class extends Component {
                     Student::create([
                         'full_name' => $student['name'],
                         'email' => $student['email'],
-                        'phone' => $student['phone'] ? $student['phone'] : null,
+                        'phone' => $student['phone'] ?? null,
                         'classe_id' => $this->classe->id,
                         'teacher_id' => Auth::guard('teacher')->user()->id,
                         'discipline_id' => $this->classe->discipline_id,
@@ -90,12 +90,12 @@ new class extends Component {
             $validateData = $this->validateOnly($field);
             $validate[key($validateData)] = current($validateData);
         }
-        return $validate;
+
+        return $validate;   
     }
 }; ?>
 
-<x-mary-modal wire:model="open" title="Nova aluno" subtitle="Registrar novo aluno" box-class="w-11/12  max-w-6xl">
-
+<x-mary-modal wire:model="open" title="Nova aluno" subtitle="Registrar um novo Aluno" box-class="w-11/12  max-w-6xl">
     <form wire:submit.prevent="storeStudent" wire:loading.class="flex flex-col justify-center items-center">
         <div class="mb-3 grid grid-cols-12 gap-2 items-baseline" wire:target="storeStudent" wire:loading,remove
             id="student-form">
@@ -109,14 +109,14 @@ new class extends Component {
             </div>
             <div class="col-span-3" id="student-input-phone">
                 <x-mary-input label="Telefone  (opcional)" class="text-gray-700" wire:model="studentPhone"
-                    class="w-full !outline-none" wire:keydown.enter="addStudent" />
+                    class="w-full !outline-none"   x-mask="(99) 99999-9999"
+                    placeholder="(41) 99999-9999"    wire:keydown.enter="addStudent" />
             </div>
             <div class="col-span-1" id="student-input-add">
                 <x-mary-button icon="o-plus" label="adicionar" type="button" class="btn btn-sm btn-primary capitalize"
                     wire:click.prevent="addStudent" spinner />
             </div>
         </div>
-
         @if (count($students) > 0)
             <div id="student-input-list">
                 <ul>

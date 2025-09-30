@@ -11,7 +11,7 @@ new #[Layout('layouts.app')] class extends Component {
     public $discipline;
     public $blockSelected = null;
     public $allLessons = [];
-    public string $search = '';
+    public string $search_lesson = '';
     public bool $showTaskModule = false;
     public string $disciplineID = '';
 
@@ -96,16 +96,18 @@ new #[Layout('layouts.app')] class extends Component {
         $this->dispatch('open-new-block-to-module', true);
     }
 
+    /** Open modal new task */
     public function openModalTask()
     {
-        $this->openFormNewLesson = true;
         $this->dispatch('open-create-task');
+        $this->openFormNewLesson = true;
     }
 
     #[On('close-create-task')]
     public function seeModalTask()
     {
         $this->openFormNewLesson = false;
+        $this->js("console.log('talves tenhamos que pegar o valor da variavel')");
     }
     #[On('task-created-success')]
     public function taskAddSuccess($message)
@@ -123,7 +125,6 @@ new #[Layout('layouts.app')] class extends Component {
     #[On('module-event')]
     public function update($type, $msg)
     {
-        //$this->js("console.log('Executado com sucesso " . $msg . "')");
         match ($type) {
             'update', 'create', 'uploaded' => $this->handleEventWithToast($type, $msg),
             'delete' => $this->handleEventWithToast($type, $msg),
@@ -137,7 +138,6 @@ new #[Layout('layouts.app')] class extends Component {
     {
         if ($type !== 'delete') {
             $this->toast(type: 'success', title: "{$msg}", icon: 'o-check', css: 'alert-success');
-            $this->js("console.log('Executado apo o negocio " . $msg . "')");
             return;
         }
         $this->toast(type: 'error', title: "{$msg}", icon: 'o-trash', css: 'alert-error');
@@ -168,17 +168,16 @@ new #[Layout('layouts.app')] class extends Component {
     // }
 }; ?>
 <div>
+  
     {{-- TODO: criar um componente para receber o link de voltar  --}}
     <div class="py-4">
         <a href="{{ route('teacher.discipline') }}" wire:navigate>
             <x-mary-icon name="o-arrow-left" class="w-4 text-gray-500" />
             <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">voltar</span>
         </a>
-    </div>
-    <livewire:pages.teacher.discipline.module.modals.create :disciplineId="$discipline->id" :key="'create-module-' . $discipline->id" />
-    <livewire:pages.teacher.discipline.module.task.modal-create :lessons="$discipline->modules" :disciplineId="$discipline->id" :key="'new-task-' . $discipline->id" />
+    </div>    
     <!-- modal new module -->
-    <div x-data="{ openCollapseId: null }" class="p-5 bg-white" data-tour="$discipline->id">
+    <div x-data="{ openCollapseId: null }" class="p-5 bg-white" data-tour="{{ $discipline->id }}">
         <div class="h-screen">
             <div class="flex items-center justify-between mt-4 mb-10" x-data>
                 <div class="flex flex-col gap-4">
@@ -190,22 +189,22 @@ new #[Layout('layouts.app')] class extends Component {
                     </div>
                     @if ($discipline->modules->count() > 0)
                         <div id="content-input-search">
-                            <x-mary-input placeholder="Pesquisar aula" wire:model.live="search" class="!outline-none" />
+                          <input class="input !outline-none" placeholder="Pesquisar aula" wire:model.live="search_lesson" />
                         </div>
                     @endif
                 </div>
                 <div>
                     @if ($discipline->modules->count() > 0)
-                        <button class="bg-pink-600 btn btn-md text-gray-50 open-new-task " id="content-task-create"
+                        <button class="bg-pink-600 btn btn-sm text-gray-50 open-new-task " id="content-task-create"
                             wire:click="openModalTask">
                             <x-mary-icon name="o-document-duplicate" class="w-5 h-5" /> Atividade / Avaliação
                         </button>
                     @endif
-                    <button class="bg-pink-600 btn-md btn text-gray-50 open-new-lesson" id="content-lesson-create"
+                    <button class="bg-pink-600  btn btn-sm text-gray-50 open-new-lesson" id="content-lesson-create"
                         x-on:click="$dispatch('open-module-create',{open: true})"
                         data-tour="new-lesson-{{ $discipline->id }}">
                         <x-mary-icon name="o-plus" />
-                        <span class="capitalize">Aula</span>
+                        Aula
                     </button>
                 </div>
             </div>
@@ -262,11 +261,6 @@ new #[Layout('layouts.app')] class extends Component {
                                                     <span
                                                         class="text-sm font-semibold tracking-wide text-gray-600">{{ $lesson->title }}</span>
                                                 </div>
-                                                <div class="flex">
-                                                    {{-- <x-mary-icon name="o-clock" class="w-4 h-4 mr-2 text-gray-400" />
-                                                    <span
-                                                        class="text-xs font-medium text-gray-400 uppercase">10min</span> --}}
-                                                </div>
                                             </div>
                                         </div>
                                     @empty
@@ -307,34 +301,25 @@ new #[Layout('layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="w-full h-screen">
-
                     <livewire:pages.teacher.discipline.module.block.video-content :key="'video-block-' . Str::random(10)" />
-                    {{-- @if ($blockSelected && $blockSelected->path_file)
-
-                    @else
-                        <div class="flex flex-col items-center justify-center h-full gap-4 bg-gray-100 rounded-lg">
-                            <x-mary-icon name="o-video-camera" class="w-16 h-16 text-gray-400"
-                                wire:key="no-video-placeholder" />
-                            <p class="text-sm text-gray-500">Selecione um bloco</p>
-                        </div>
-                    @endif --}}
                 </div>
             </div>
         </div>
-        <!-- drawer task module -->
-        <livewire:pages.teacher.discipline.module.task.show-task :key="'task-module-' . $discipline->id ?? ''" />
-
+      
+          
         <!-- Modal options tour -->
-        <div x-data class="fixed inset-0 z-40 bg-gray-900/50" x-show="$store.tourguide.openMai">
+        <div x-data class="fixed inset-0 z-50 bg-gray-900/50" x-show="$store.tourguide.openMai">
             <div
                 class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
-                <x-mary-button icon="o-x-mark" class="btn-square"
-                    x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 <div class="flex items-center justify-between">
-                    <h2 class="text-[18px] tracking-wide font-normal text-gray-700">Aqui você pode adicionar novas
-                        aulas e
-                        blocos?{{ $openFormNewLesson }}
+                  <h2 class="text-[14px] tracking-wide font-medium text-gray-700">
+                    Aqui você pode adicionar novas aulas e blocos?
                     </h2>
+                    <button 
+                      class="btn btn-sm btn-ghost"
+                      x-on:click="$store.tourguide.cancelOptionsTourPage()">
+                      <x-mary-icon name="o-x-mark" class="w-4 text-gray-700"/>
+                    </button>                  
                 </div>
                 <!-- options show !-->
                 @if (!$openFormNewLesson)
@@ -358,17 +343,28 @@ new #[Layout('layouts.app')] class extends Component {
                                 x-on:click="$store.tourguide.startCreateTaskLesson()" />
                             <x-mary-button
                                 class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                label="Vamos editar uma aula" x-on:click="$store.tourguide.startEditLesson()" />
+                                label="Vamos editar uma aula" 
+                                x-on:click="$store.tourguide.startEditLesson()" />
                         @endif
                     </div>
                 @else
+                   <!-- options create task -->
                     <x-mary-button
                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Vamos criar uma atividade"
                         x-on:click="$store.tourguide.start('StartTourCreateActivitTask')" />
                 @endif
-
             </div>
             <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
         </div>
+
+        <livewire:pages.teacher.discipline.module.task.show-task 
+          :key="'task-module-' . $discipline->id ?? ''" />
+        <livewire:pages.teacher.discipline.module.modals.create 
+          :disciplineId="$discipline->id" 
+          :key="'create-module-' . $discipline->id ?? ''" />
+            <livewire:pages.teacher.discipline.module.modals.create-task 
+          :lessons="$discipline->modules" 
+          :disciplineId="$discipline->id" 
+          :key="'new-task-' . $discipline->id ?? ''" /> 
     </div>

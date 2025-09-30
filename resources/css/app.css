@@ -7,7 +7,7 @@
         light --default
 
 }
-
+@plugin 'tailwind-scrollbar';
 @source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
 
 @custom-variant dark (&:where(.dark, .dark *));

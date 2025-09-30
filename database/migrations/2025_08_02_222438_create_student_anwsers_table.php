@@ -12,7 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('student_anwsers', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('task_id')->constrained('tasks')->onDelete('cascade');
+            $table->foreignUuid('student_id')->constrained('students')->onDelete('cascade');
+            $table->foreignUuid('activit_task_id')->nullable()->constrained('activit_tasks')->onDelete('cascade');
+            $table->text('answer_text')->nullable();
+            $table->foreignUuid('answer_option_id')->nullable()->constrained('task_options')->onDelete('cascade');
+            $table->boolean('is_correct')->default(false);
+            $table->integer('order')->default(0)->nullable();
             $table->timestamps();
         });
     }

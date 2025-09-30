@@ -111,6 +111,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         validateVideoDuration(file) {
+
             const video = document.getElementById(`temp-video-${moduleId}`);
             video.src = URL.createObjectURL(file);
 

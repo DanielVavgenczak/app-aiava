@@ -3,6 +3,7 @@
 use Livewire\Volt\Component;
 use Livewire\Attributes\{On};
 use App\Models\Teacher\ActivitTask;
+
 new class extends Component {
     public bool $openDelete = false;
     public ActivitTask $activittask;
@@ -31,7 +32,7 @@ new class extends Component {
     Tem certeza que deseja deletar essa atividade ?
     {{ $activittask->id }}
     <x-slot:actions>
-        <x-mary-button label="Cancel" @click="$openDelete = false" />
+        <x-mary-button label="Cancel" x-on:click="$openDelete = false" />
         <x-mary-button label="Sim" class="btn-error" wire:click="delete" spinner />
     </x-slot:actions>
 </x-mary-modal>

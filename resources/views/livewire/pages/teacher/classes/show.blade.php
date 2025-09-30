@@ -9,7 +9,7 @@
      <div class="p-5 bg-white" data-tour="$classe->id">
          <div class="mb-5 flex justify-between items-center">
              <h2 class="text-lg font-semibold text-gray-600"> Turma:{{ $classe->name }}</h2>
-             <button class="btn btn-sm bg-pink-600 text-gray-50" type="button" id="student-register"
+             <button class="btn btn-md bg-pink-600 text-gray-50" type="button" id="student-register"
                  wire:click.prevent="dispatch('open-form-register-student',{open:true, name:'{{ $classe->name }}'})">
                  <x-mary-icon name="o-user-plus" />
                  <span class="capitalize">aluno</span>

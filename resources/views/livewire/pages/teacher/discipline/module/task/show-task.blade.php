@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Volt\Component;
-use Livewire\Attributes\{On};
+use Livewire\Attributes\{On, Computed};
 use App\Models\Teacher\{ActivitTask};
 use Mary\Traits\Toast;
 
@@ -9,7 +9,15 @@ new class extends Component {
     use Toast;
     public bool $showTaskModule = false;
     public ?ActivitTask $activitTask = null;
+    public Task $task;
     public string $taskId = '';
+
+    #[Computed]
+    public function countAnswers()
+    {
+        $this->js("console.log('task id',$this->taskId)");
+        return $this->activitTask->studentAnwsers->count();
+    }
 
     /** Edit **/
     public ?int $editingQuestionIndex = null;
@@ -23,7 +31,7 @@ new class extends Component {
         $this->showTaskModule = true;
         $this->activitTask = ActivitTask::with([
             'tasks' => function ($query) {
-                $query->with(['options'])->orderBy('created_at');
+                $query->with(['studentAnwsers', 'options'])->orderBy('created_at');
             },
         ])->find((string) $activit_id);
     }
@@ -61,7 +69,6 @@ new class extends Component {
         $option->update([
             'text' => $this->editingOptionText,
         ]);
-        sleep(2);
         $this->cancelEditing();
         $this->success('Sucesso ao editar opção');
     }
@@ -76,114 +83,140 @@ new class extends Component {
 
     public function cancelMakeTask()
     {
+      $this->js('chamando aqui');
         $this->showTaskModule = false;
     }
     public function closeToskDelete()
     {
+
         $this->showTaskModule = false;
     }
 }; ?>
-<x-mary-drawer wire:model="showTaskModule" class="w-full" with-close-button close-on-escape>
-    <x-mary-button icon="o-x-mark" class="btn btn-ghost" wire:click="cancelMakeTask" />
+<x-mary-drawer wire:model="showTaskModule" class="w-11/12 mx-auto">
+    <x-mary-button icon="o-x-mark" class="btn btn-ghost" x-on:click="$wire.cancelMakeTask" />
     <header class="flex items-center justify-between p-5">
         <h2 class="text-lg font-semibold text-gray-800">Atividade</h2>
         <div>
-            <x-mary-button label="Analisar entregas" icon="o-eye" class="btn-outline border-pink-600 text-pink-600" />
             @if ($activitTask)
                 <x-mary-button label="Deletar atividade" type="button"
                     x-on:click="$dispatch('open-modal-delete', {id:'{{ $activitTask->id }}'})" icon="o-trash"
                     class="btn-outline border-pink-600 text-pink-600" />
-                <livewire:pages.teacher.discipline.module.task.delete-task :activittask="$activitTask" />
+                <livewire:pages.teacher.discipline.module.task.delete-task :activittask="$activitTask" wire:key="activity-{{$activitTask->id}}" />
             @endif
         </div>
     </header>
-    <div class="p-5 mx-auto">
-        @if ($activitTask && $activitTask->tasks()->count() > 0)
-            @foreach ($activitTask->tasks as $index => $task)
-                <div wire:key="task-{{ $index }}" class="p-4 bg-white ">
-                    <!-- Edição do Título -->
-                    @if ($editingQuestionIndex === $index && $editingOptionIndex === null)
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="font-bold text-gray-700">{{ $index + 1 }}.</span>
-                            <textarea wire:model="editingQuestionTitle"
-                                class="flex-1 min-h-[150px] font-normal  tracking-wide text-[15px] bg-gray-50 p-3 border-[1px] rounded-lg focus:ring-1 focus:border-pink-500 focus:outline focus:outline-pink-500"
-                                wire:keydown.enter="saveQuestionEdit" autofocus></textarea>
-                            <div class="flex gap-1">
-                                <x-mary-button wire:click="saveQuestionEdit" icon="o-pencil-square"
-                                    class="btn-outline border-blue-600 text-indigo-600" spinner />
+    <div class="w-10/12 p-5 mx-auto">
+        <div>
+            @if ($activitTask && $activitTask->tasks()->count() > 0)
+                @foreach ($activitTask->tasks as $index => $task)
+                    <div wire:key="task-{{ $index }}" class="p-4 bg-white ">
+                        <!-- Edição do Título -->
+                        @if ($editingQuestionIndex === $index && $editingOptionIndex === null)
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="font-bold text-gray-700"> {{ $index + 1 }}.</span>
+                                <textarea wire:model="editingQuestionTitle"
+                                    class="flex-1 min-h-[150px] font-normal tracking-wide text-[15px] bg-gray-50 p-3 border-[1px] rounded-lg "
+                                    wire:keydown.enter="saveQuestionEdit" autofocus></textarea>
+                                <div class="flex gap-1">
+                                    <x-mary-button wire:click="saveQuestionEdit" icon="o-pencil-square"
+                                        class="btn-outline border-blue-600 text-indigo-600" spinner />
 
-                                <x-mary-button wire:click="cancelEditing" icon="o-x-mark"
-                                    class="btn-outline border-red-600 text-red-600" spinner />
+                                    <x-mary-button wire:click="cancelEditing" icon="o-x-mark"
+                                        class="btn-outline border-red-600 text-red-600" spinner />
 
-                            </div>
-                        </div>
-                    @else
-                        <div class="flex items-start justify-between">
-                            <div class="flex items-center ">
-                                <div class="text-gray-800 whitespace-pre-line cursor-pointer "
-                                    wire:click="startEditingQuestion({{ $index }})">
-                                    <span>{{ $index + 1 }}</span> .{{ $task['question'] }}
                                 </div>
                             </div>
-                            <button wire:click="removeQuestion({{ $index }})" type="button"
-                                class="ml-2 text-gray-400 hover:text-red-500">
-                                <x-mary-icon name="o-trash" class="w-4 h-4 text-red-500" />
-                            </button>
-                        </div>
-                    @endif
+                        @else
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center ">
+                                    <div class="text-gray-800 whitespace-pre-line cursor-pointer ">
+                                        <span> {{ $index + 1 }}</span> .{{ $task['question'] }}
+                                    </div>
+                                </div>
+                                <div>   
+                                  <div>
+                                      @if($task['value'])         
+                                      <span>Nota:{{$task['value']}}</span>
+                                      @endif
+                                    </div>                      
+                                      <x-mary-button label="Editar questão"
+                                          wire:click="startEditingQuestion({{ $index }})" icon="o-pencil-square"
+                                          class="btn-sm " spinner />
+                                      @if ($task->type !== 'multiple_choice')
+                                          <x-mary-button class="btn-sm" label="Entregas"
+                                              badge="{{ $task->studentAnwsers->count() }}"
+                                              badge-classes="bg-gray-500 text-white"
+                                              x-on:click="$dispatch('event-teacher-show-student-answer',{task_id: '{{ $task->id }}'})" />
+                                      @endif
 
-                    <!-- Conteúdo baseado no tipo -->
-                    @if ($task['type'] === 'multiple_choice')
-                        <!-- Edição de Opções -->
-                        <div class="mt-3 ml-6 space-y-2">
-                            @foreach ($task['options'] as $optIndex => $option)
-                                @if ($editingQuestionIndex === $index && $editingOptionIndex === $optIndex)
-                                    <div class="items-center gap-2 flex">
-                                        <span class="w-5 text-gray-500">{{ chr(65 + $optIndex) }}.</span>
-                                        <x-text-input wire:model="editingOptionText"
-                                            class="px-3 py-2 text-[15px] flex-1 focus:border-pink-500 focus:outline focus:outline-pink-500"
-                                            wire:keydown.enter="saveOptionEdit" autofocus />
-                                        <div class="flex gap-1">
-                                            <x-mary-button wire:click="saveOptionEdit" icon="o-pencil"
-                                                class="btn btn-xs btn-outline border-blue-600 text-blue-600 hover:text-blue-800"
-                                                spinner />
-                                            <x-mary-button wire:click="cancelEditing" icon="o-x-mark"
-                                                class="btn btn-xs btn-outline border-red-600 text-red-600 hover:text-red-800"
-                                                spinner />
+                                      <button wire:click="removeQuestion({{ $index }})" type="button"
+                                          class="btn btn-sm">
+                                          <x-mary-icon name="o-trash" class="w-4 h-4 text-gray-500" />
+                                          <span class="">Remover questão</span>
+                                      </button>
+
+                                </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Conteúdo baseado no tipo     -->
+                        @if ($task['type'] === 'multiple_choice')
+                            <!-- Edição de Opções -->
+                            <div class="mt-3 ml-6 space-y-2">
+                                @foreach ($task['options'] as $optIndex => $option)
+                                    @if ($editingQuestionIndex === $index && $editingOptionIndex === $optIndex)
+                                        <div class="items-center gap-2 flex">
+                                            <span class="w-5 text-gray-500">{{ chr(65 + $optIndex) }}.</span>
+                                            <x-text-input wire:model="editingOptionText"
+                                                class="px-3 py-2 text-[15px] flex-1 focus:border-red-500 focus:outline focus:outline-red-500"
+                                                wire:keydown.enter="saveOptionEdit" autofocus />
+                                            <div class="flex gap-1">
+                                                {{-- <div>
+                                                 <span>Nota: {{}}</span>
+                                                </div> --}}
+                                                <x-mary-button wire:click="saveOptionEdit" icon="o-pencil"
+                                                    class="btn btn-xs btn-outline border-blue-600 text-blue-600 hover:text-blue-800"
+                                                    spinner />
+                                                <x-mary-button wire:click="cancelEditing" icon="o-x-mark"
+                                                    class="btn btn-xs btn-outline border-red-600 text-red-600 hover:text-red-800"
+                                                    spinner />
+                                            </div>
                                         </div>
-                                    </div>
-                                @else
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-5 text-gray-500 lowercase">{{ chr(65 + $optIndex) }}.</span>
-                                        <input type="radio" name="correct_option_{{ $index }}"
-                                            wire:change="updateCorrectOption({{ $index }}, {{ $optIndex }})"
-                                            @checked($option['correct']) class="text-indigo-600 border-gray-300">
-                                        <span @class([
-                                            'flex-1 cursor-pointer',
-                                            'font-semibold text-indigo-700' => $option['is_correct'],
-                                        ])
-                                            wire:click="startEditingOption({{ $index }}, {{ $optIndex }})">
-                                            {{ $option['text'] }}
-                                        </span>
-                                        @if ($option['correct'])
-                                            <x-mary-icon name="o-check-circle" class="w-4 h-4 text-green-500" />
-                                        @endif
-                                    </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    @else
-                        <!-- Área dissertativa (não editável no preview) -->
-                        <div class="mt-3">
-                            <textarea class="rounded-sm border-gray-200 w-full min-h-[80px] bg-white" placeholder="Resposta do aluno" disabled></textarea>
-                        </div>
-                    @endif
-                </div>
-            @endforeach
-        @endif
-        <x-slot:actions>
-            <x-mary-button label="Cancel" wire:click="showTaskModule = false" />
-            <x-mary-button label="Confirm" class="btn-primary" icon="o-check" />
-        </x-slot:actions>
+                                    @else
+                                        <div class="flex items-center gap-2">
+                                            <span class="flex items-center w-10 text-gray-500 uppercase">
+                                                @if ($option['correct'])
+                                                    <x-mary-icon name="o-check-circle"
+                                                        class="relative  text-green-700" />
+                                                @endif
+                                                {{ chr(65 + $optIndex) }}.
+                                            </span>
+                                            <input type="radio" name="correct_option_{{ $index }}"
+                                                wire:change="updateCorrectOption({{ $index }}, {{ $optIndex }})"
+                                                @checked($option['correct']) class="text-indigo-600 border-gray-300">
+                                            <span @class([
+                                                'flex-1 cursor-pointer',
+                                                'font-semibold text-indigo-700' => $option['is_correct'],
+                                            ])
+                                                wire:click="startEditingOption({{ $index }}, {{ $optIndex }})">
+                                                {{ $option['text'] }}
+                                            </span>
+
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @else
+                            <!-- Área dissertativa (não editável no preview) -->
+                            <div class="mt-3">
+                                <textarea class="rounded-sm border-gray-200 w-full min-h-[80px] bg-white" placeholder="Resposta do aluno" disabled></textarea>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            @endif
+        </div>
+        <livewire:pages.teacher.discipline.module.task.student-anwsers />
     </div>
 </x-mary-drawer>

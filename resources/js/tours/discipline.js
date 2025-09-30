@@ -29,11 +29,11 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#discipline-input-title`,
                 popover: {
-                    description: "Adicione o titulo da disciplina",
+                    description: "Adicione o título da disciplina",
                     onPopoverRender: (popover, { config, state }) => {
                         const actions = AddButtonActions(
                             popover,
-                            "voltar ao inicio",
+                            "Voltar ao início",
                         );
                         actions.addEventListener("click", async () => {
                             Livewire.dispatch("close-create");

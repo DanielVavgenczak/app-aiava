@@ -139,8 +139,8 @@ new class extends Component {
         </div>
     @else
         <div class="flex flex-col items-center justify-center p-10">
-            <x-mary-icon name="o-video-camera-slash" class="w-12 h-12 text-gray-400" />
-            <p class="mt-2 text-gray-500">Nenhum bloco selecionado</p>
+            <x-mary-icon name="o-video-camera-slash" class="w-8 h-8 text-gray-400" />
+            <p class="text-sm tracking-wide font-mediummt-2 text-gray-500">Nenhum bloco selecionado</p>
         </div>
     @endif
 </div>

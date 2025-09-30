@@ -1,6 +1,7 @@
 import { StartTourDisciplineCreateContent } from "./discipline_content";
 
 document.addEventListener("alpine:init", () => {
+    console.log("Tour iniciado");
     Alpine.store("tourguide", {
         openMai: false,
         continueTour: false,
@@ -9,14 +10,14 @@ document.addEventListener("alpine:init", () => {
             {
                 exact:true,
                 isDynamic: false,
-                path: "/app/teacher",
+                path: "/teacher",
                 tourModule: () => import("./home"),
                 tours: ["HomeTour"],
             },
             {
                 exact:true,
                 isDynamic: false,
-                path: "/app/teacher/discipline",
+                path: "/teacher/discipline",
                 tourModule: () => import("./discipline"),
                 tours: [
                     "StartTourCreateDiscipline",
@@ -29,7 +30,7 @@ document.addEventListener("alpine:init", () => {
             {
                 exact: false,
                 isDynamic: true,
-                path: "/app/teacher/discipline",
+                path: "/teacher/discipline",
                 tourModule: () => import("./discipline_content"),
                 tours: [
                     "StartTourDisciplineCreateContent",
@@ -40,7 +41,7 @@ document.addEventListener("alpine:init", () => {
              {
                 exact: true,
                 isDynamic: false,
-                path: "/app/teacher/classes",
+                path: "/teacher/classes",
                 tourModule: () => import("./classe_list"),
                 tours: [
                     "StartTourClasseCreate",
@@ -52,7 +53,7 @@ document.addEventListener("alpine:init", () => {
              {
                 exact: false,
                 isDynamic: true,
-                path: "/app/teacher/classes",
+                path: "/teacher/classes",
                 tourModule: () => import("./classe_content"),
                 tours: [
                     "StartTourStudentRegister",
@@ -63,23 +64,7 @@ document.addEventListener("alpine:init", () => {
                 ],
             }
         ],
-        // listeners:[],
-        // init(){
-        //     const currentPageTest = window.location.pathname;
-        //     console.log("Página atual:", currentPageTest);
-        //       this.listeners.push(
-        //             Livewire.on('continue-created-content', async () => {
-        //                 console.log("Continuar tour de criação de conteúdo");
-        //                 await StartTourDisciplineCreateContent();
-        //             })
-        //         );
-
-        // },
-        //  destroy() {
-        //     this.listeners.forEach((listener) => {
-        //         listener();
-        //     });
-        // },
+       
         cancelOptionsTourPage() {
             this.openMai = false;
         },
@@ -87,12 +72,13 @@ document.addEventListener("alpine:init", () => {
             this.loading = true;
             const currentPath = window.location.pathname.trim();
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+           
             for (const page of this.pages) {
-                if (page.exact && currentPath === page.path) {
+              if (page.exact && currentPath === page.path) {
                     this.openMai = true;
                     try {
                         const tourModule = await page.tourModule();
-                        return { module: tourModule, tours: page.tours };
+                        return { module: tourModule, tours: page.tours};
                     } catch (error) {
                         console.error("Erro ao carregar tour:", error);
                         return null;

@@ -29,7 +29,7 @@ new class extends Component {
         $this->title = '';
     }
 }; ?>
-<x-mary-modal wire:model="open" title="Adicione conteudo a aula" subtitle="Escolha a ferramenta que desejar"
+<x-mary-modal wire:model="open" title="Adicione conteúdo à aula" subtitle="Escolha a ferramenta que desejar"
     box-class="w-full h-screen max-w-6xl verflow-y-visible" :key="'upload-content-' . $module_id">
     <div class="px-2 py-4">
         <x-mary-tabs wire:model="selectedTab" label-class="font-normal text-gray-600 ">
