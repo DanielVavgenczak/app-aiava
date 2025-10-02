@@ -5,7 +5,7 @@ export async function ContinueUploadBlock(modules, dataId) {
     {
       element: `#accordion-module-${dataId}`,
       popover: {
-        description: `Vamos abrir as nessa unica aula`,
+        description: `Vou abrir nessa aula`,
         side: "bottom",
         align: "start",
         showButtons: [""],
@@ -39,7 +39,6 @@ export async function ContinueUploadBlock(modules, dataId) {
         showButtons: [""],
       },
       onHighlighted: async (el) => {
-        console.log("Terceiro processo executando here");
         await new Promise((resolve) => setTimeout(resolve, 3500));
         await el.click();
         await updateOnedDriverObj.moveNext();

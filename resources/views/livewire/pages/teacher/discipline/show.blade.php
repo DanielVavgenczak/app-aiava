@@ -313,7 +313,7 @@ new #[Layout('layouts.app')] class extends Component {
                 class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
                 <div class="flex items-center justify-between">
                   <h2 class="text-[14px] tracking-wide font-medium text-gray-700">
-                    Aqui você pode adicionar novas aulas e blocos?
+                    Aqui você pode adicionar novas aulas e blocos
                     </h2>
                     <button 
                       class="btn btn-sm btn-ghost"
@@ -326,12 +326,12 @@ new #[Layout('layouts.app')] class extends Component {
                     <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
                         <x-mary-button
                             class="font- text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                            label="Criar nova aula?"
+                            label="Criar nova aula"
                             x-on:click="$store.tourguide.start('StartTourDisciplineCreateContent')" />
                         @if ($discipline->modules->count() > 0)
                             <x-mary-button
                                 class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                label="Adicionar um bloco?"
+                                label="Adicionar um bloco"
                                 x-on:click="$store.tourguide.start('StartTourDisciplineCreateContentUploadBlock')" />
                             <x-mary-button
                                 class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"

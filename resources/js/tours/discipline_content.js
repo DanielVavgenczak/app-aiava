@@ -179,7 +179,6 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
             let moduleSelected = false;
             if (!modules || modules.length === 0) return;
             if (dataId != '') {
-              console.log("modules para ir fazer o tour", modules.length, dataId);
               // passamos o dataId 
               let getModules = modules
               await driverObj.destroy();
@@ -193,7 +192,6 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                 setTimeout(resolve, 1000),
               );
               dataId = modules[0].getAttribute("data-tour");
-              console.log("caiu aqui gente", dataId)
               await driverObj.destroy();
               await new Promise((resolve) =>
                 setTimeout(resolve, 1000),
@@ -202,7 +200,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                 {
                   element: `#accordion-module-${dataId}`,
                   popover: {
-                    description: `Vamos abrir as nessa unica aula`,
+                    description: `Vou abrir nessa aula`,
                     side: "bottom",
                     align: "start",
                     showButtons: [""],
