@@ -9,12 +9,15 @@ new class extends Component {
     use WithFileUploads, Toast;
     public $user;
     public $open = false;
+
     #[Validate('image|max:51200')]
     public $avatar;
+    public $image = '';
 
     public function mount()
     {
         $this->user = Auth::guard('teacher')->user();
+        $this->image = $this->user->profile?->avatar;
     }
 
     #[On('open-modal-update-profile')]
@@ -44,10 +47,11 @@ new class extends Component {
                         'avatar' => $path,
                     ],
                 );
-                $this->dispatch('upload-image');
                 $this->avatar = null;
-            }
-            $this->open = false;
+              }
+              $this->success('Imagem de perfil atualizada com sucesso!');
+              $this->open = false;
+              return $this->redirect(route('teacher.profile'), navigate: true);
         } catch (\Exception $err) {
             if (!empty($err->getMessage())) {
                 $this->error($err->getMessage());
@@ -70,7 +74,7 @@ new class extends Component {
             <div class="my-4">
                 <div>
                     <x-mary-file wire:model="avatar" accept="image/png, image/jpeg, image/jpg">
-                        <img src="{{ Auth::guard('teacher')->user()->getAvatarUrlAttribute() }}" class="h-32" />
+                        <img src="{{ asset('storage/'.$image) }}" alt="" class="h-32" />
                     </x-mary-file>
                 </div>
             </div>

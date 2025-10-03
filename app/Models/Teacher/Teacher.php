@@ -38,11 +38,7 @@ class Teacher extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-    ]; // Adicione este método
-    // public function sessions()
-    // {
-    //     return $this->morphMany(Session::class, 'user');
-    // }
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -85,12 +81,22 @@ class Teacher extends Authenticatable
      */
     public function getAvatarUrlAttribute()
     {
-        if (!$this->profile?->avatar) {
+        // Verificação mais robusta
+        if (empty($this->profile?->avatar)) {
             return asset('images/user-noavatar.png');
         }
 
-        return Storage::exists($this->profile->avatar)
-            ? Storage::url($this->profile->avatar)
-            : asset('images/user-noavatar.png');
+        // Se avatar já é uma URL completa, retorna diretamente
+        if (filter_var($this->profile->avatar, FILTER_VALIDATE_URL)) {
+            return $this->profile->avatar;
+        }
+
+        // Se for caminho relativo, verifica no storage
+        if (Storage::exists($this->profile->avatar)) {
+            return Storage::url($this->profile->avatar);
+        }
+
+        // Fallback
+        return asset('images/user-noavatar.png');
     }
 }

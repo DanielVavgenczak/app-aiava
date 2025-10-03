@@ -44,7 +44,8 @@
                 @else
                     <img src="{{ asset('storage/' . Auth::guard('teacher')->user()->profile->avatar) }}"
                         :class="$store.expandedSidebar.expanded ? 'w-20 h-20' : 'w-12 h-12'"
-                        class="transition-all duration-300 ease-in-out border-2 border-gray-200 rounded-full dark:border-slate-700" />
+                        class="transition-all duration-300 ease-in-out border-2 border-gray-200 rounded-full dark:border-slate-700"
+                        width="80" height="80" style="width: 80px; height: 80px; object-fit:cover;" loading="lazy" />
             @endif
             <h4 class="font-medium text-gray-600 capitalize dark:text-gray-200">
                 {{ Auth::guard('teacher')->user()->first_name }}</h4>

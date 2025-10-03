@@ -41,8 +41,9 @@ new class extends Component {
     }
 
     #[On('discipline-event')]
-    public function refresh($type, $msg)
+    public function update($type, $msg)
     {
+      $this->js("console.log('discipline-event chamado')");
         match ($type) {
             'update', 'create' => $this->handleEventWithToast($type, $msg),
             'delete' => $this->handleEventWithToast($type, $msg),
@@ -57,7 +58,7 @@ new class extends Component {
             $this->loadDisciplines();
             return;
         }
-        $this->error($msg, timeout: 4000, position: 'toast-bottom toast-end');
+        $this->error($msg, timeout: 4000, position: 'toast-top toast-end');
         return;
     }
 

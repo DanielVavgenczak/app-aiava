@@ -22,7 +22,9 @@ new class extends Component {
 
     public function store()
     {
-        $this->form->disciplineStore();
+        $result = $this->form->disciplineStore();
+
+        if(!$result) return;
         $this->open = false;
         $this->dispatch('discipline-event', type: 'create', msg: 'Disciplina criada com sucesso!');
         $this->dispatch('send-id-discipline', discipline_id: $this->form->getDisciplineId());
@@ -32,8 +34,14 @@ new class extends Component {
 <x-mary-modal wire:model="open" title="Nova disciplina" subtitle="Registre uma nova disciplina">
     <form wire:submit.prevent="store">
         <div id="discipline-input-title" wire:loading.remove>
-            <x-mary-input wire:model="form.title" label="Título" placeholder="Nome da disciplina"
-                class="title !outline-none" autocomplete="title" />
+            <div class="flex flex-col gap-1">
+              <input wire:model="form.title" id="title_discipline" placeholder="Título da disciplina"
+              class="input title !outline-none focus:border-gray-400 w-full" autocomplete="title" />
+            </div>
+
+            @error('form.title')
+                <span class="text-xs text-red-600">{{ $message }}</span>
+            @enderror
         </div>
         <div class="flex items-center justify-end gap-2 my-3" id="discipline-save">
             <div class="flex items-center gap-2" id="create-cancel" wire:loading.remove>
