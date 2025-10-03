@@ -27,7 +27,7 @@ class DisciplineForm extends Form
                 'max:255',
                 function ($attribute, $value, $fail) use ($teacher_id) {
                     $clearValue = Str::lower(trim($value));
-                    if (Discipline::teacherHasDiscipline($teacher_id, $value)) {
+                    if (Discipline::teacherHasDiscipline($teacher_id, $clearValue)) {
                         $fail('Você já possui uma disciplina com esse título!');
                     }
                 },
@@ -48,7 +48,7 @@ class DisciplineForm extends Form
    }
    public function getDisciplineId()
    {
-    return $this->disciplineId ?? null;
+      return $this->disciplineId ?? null;
    }
     public function resetForm()
     {

@@ -1,6 +1,6 @@
 import { StartTourDisciplineCreateContent } from "./discipline_content";
 
-document.addEventListener("alpine:init", () => {
+document.addEventListener("livewire:init", () => {
     console.log("Tour iniciado");
     Alpine.store("tourguide", {
         openMai: false,

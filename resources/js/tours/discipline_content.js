@@ -2,6 +2,7 @@
 import { ContinueUploadBlock } from "./discipline/lesson";
 import { AddButtonActions, configDriver } from "./utils";
 Livewire.on("continue-created-content", async (event) => {
+  console.log("Evento recebido:", event);
   try {
     if (!event?.continue) {
       console.warn("Evento ignorado: continue = false");
@@ -67,7 +68,7 @@ export async function StartTourDisciplineCreateContent() {
                 `input.lesson-input-title`,
               )
               if (title.value.trim() === "") {
-                alert("por favor preencha o campo de titulo");
+                alert("por favor preencha o campo título");
                 return;
               }
               await driverObj.moveNext();
@@ -126,7 +127,7 @@ export async function StartTourDisciplineCreateContent() {
               });
               store.openMai = false;
               resolve(true);
-              let lesson_id = document.querySelector
+              //let lesson_id = document.querySelector
 
               await driverObj.destroy();
               await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -242,7 +243,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
                   },
                   onHighlighted: async (el) => {
                     await new Promise((resolve) =>
-                      setTimeout(resolve, 3500),
+                      setTimeout(resolve, 2000),
                     );
                     await el.click();
                     await driverObj.moveNext();

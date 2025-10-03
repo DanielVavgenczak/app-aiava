@@ -41,9 +41,9 @@ new class extends Component {
     }
 
     #[On('discipline-event')]
-    public function update($type, $msg)
+    public function refresh($type, $msg)
     {
-      $this->js("console.log('discipline-event chamado')");
+        $this->js("console.log('Com tour chamado')");
         match ($type) {
             'update', 'create' => $this->handleEventWithToast($type, $msg),
             'delete' => $this->handleEventWithToast($type, $msg),

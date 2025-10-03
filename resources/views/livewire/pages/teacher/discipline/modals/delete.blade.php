@@ -65,7 +65,7 @@ new class extends Component {
 }; ?>
 
 <x-mary-modal wire:model="open">
-    <div class="flex flex-col items-center gap-3 p-5 mb-9" id="discipline-delete-text-{{ $id ?? '' }}"
+    <div class="flex flex-col items-center gap-2 p-5" id="discipline-delete-text-{{ $id ?? '' }}"
         wire:loading.remove>
         <div class="p-5 bg-red-100 rounded-full">
             <x-mary-icon name="o-trash" class="w-6 h-6 text-red-700" />
@@ -81,7 +81,7 @@ new class extends Component {
         <p class="text-xs tracking-wider text-pink-600">Deletando</p>
     </div>
 
-    <div id="discipline-delete-actions-{{ $id ?? '' }}" class="flex justify-end w-full" wire:loading.remove>
+    <div id="discipline-delete-actions-{{ $id ?? '' }}" class="flex justify-center w-full" wire:loading.remove>
         <button type="button" id="discipline-delete-cancel-{{ $id ?? '' }}" x-on:click="$wire.open = false"
             class="capitalize btn btn-sm btn-ghost">
             cancelar

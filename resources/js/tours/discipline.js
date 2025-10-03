@@ -46,49 +46,76 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#discipline-save`,
                 popover: {
-                    description: `Clique em 'Cadastrar' para salvar ou 'Cancelar' para cancelar o cadastro.`,
-                    onPopoverRender: (popover, { config, state }) => {
-                        const actions = AddButtonActions(
-                            popover,
-                            "Voltar ao início",
-                        );
-                        actions.addEventListener("click", async() => {
-                            Livewire.dispatch("close-create");
-                            await driverObj.destroy();
-                            store.openMai = true;
-                        });
-                    },
+                    description: `Clique em 'Registrar' para salvar ou 'Cancelar' para cancelar o registro.`,
+                    //showButtons: ['']
+                    // onPopoverRender: (popover, { config, state }) => {
+                    //     const actions = AddButtonActions(
+                    //         popover,
+                    //         "Voltar ao início",
+                    //     );
+                    //     actions.addEventListener("click", async() => {
+                    //         Livewire.dispatch("close-create");
+                    //         await driverObj.destroy();
+                    //         store.openMai = true;
+                    //     });
+                    // },
                 },
                 onHighlighted: async (el) => {
+                    await new Promise((resolve) => setTimeout(resolve, 500));
                     const btnCancel = el.querySelector("#create-cancel");
                     const btnCreate = el.querySelector("#create-confirm");
                     let disciplineIdToManager = null;
-                    const toCloseActions = async () => {
-                        Livewire.dispatch("close-create");
-                        await driverObj.destroy();
-                        store.openMai = true;
-                    };
                     if (!btnCancel || !btnCreate) {
                         return;
                     }
-                    btnCancel.addEventListener("click", toCloseActions);
+                    btnCancel.addEventListener("click", async () =>{
+                        await Livewire.dispatch("discipline-close-modal-create");
+                        await driverObj.destroy();
+                        store.openMai = true;
+                    });
+
                     /**
                      * Esse codigo aqui é apenas para o video do de apresentção
                      * depois devemos rever as funcionalidades
                      */
-                    btnCreate.addEventListener("click", async () =>{
-                        await new Promise((resolve) => setTimeout(resolve, 1000));
-                        await Livewire.dispatch("close-create");
+                    await btnCreate.addEventListener("click", async () =>{
+                        await new Promise((resolve) => setTimeout(resolve, 500));
+                        const errorTitle = document.querySelector("#title_discipline_error");
+                        await new Promise((resolve) => setTimeout(resolve, 100));                      
+                        /** Resolução temporaria até recriarmos */
+                        if(errorTitle && errorTitle.textContent.trim() !== ""){
+                            alert("Erro: Você ja possue uma disciplina com esse titulo.");
+                            return;
+                        }
+                        await new Promise((resolve) => setTimeout(resolve, 500));
+                        /** para fechar o model  */
+                        Livewire.dispatch("discipline-close-modal-create");                       
+                        await driverObj.destroy();
                         store.openMai = false;
-                        Livewire.on('send-id-discipline', async (event) => {
-                            disciplineIdToManager = event.discipline_id
-                            await driverObj.destroy();
-                            await new Promise((resolve) => setTimeout(resolve, 2000))
-                            const continueStepe = [
+                        
+                        await new Promise((resolve) => setTimeout(resolve, 500));
+                        console.log("vai continuar");
+
+                        await new Promise((resolve) => setTimeout(resolve, 2000));
+                        
+                        const disciplinesAfterCount = document.querySelectorAll("div.discipline-card");
+                        const lastRegisted = disciplinesAfterCount[0];
+                        if(!lastRegisted) return;
+                        const dataId = lastRegisted.getAttribute("data-tour");
+                        console.log("Data id da ultima disciplina", dataId);
+                        //b1480804-d382-4493-a2ad-797540e1b1af
+                        // b1480804-d382-4493-a2ad-797540e1b1af
+                        console.log("Quantidade de disciplinas", disciplinesAfterCount.length);
+
+                     
+                        // Cria uma Promise que resolve quando o evento for recebido
+                        disciplineIdToManager = dataId;
+                     
+                        const continueStepe = [
                                 {
                                     element: `#discipline-${disciplineIdToManager}`,
                                     popover: {
-                                        description: `Agora vamos adiconar conteudo a esse disciplina`,
+                                        description: `Agora vamos adicionar conteúdo a essa disciplina`,
                                         side: "bottom",
                                         align: "start",
                                         showButtons:['']
@@ -101,7 +128,7 @@ export async function StartTourCreateDiscipline() {
                                 {
                                     element: `#discipline-manager-content-${disciplineIdToManager}`,
                                     popover: {
-                                        description: `Vou clicar aqui para gerenciar a disciplina`,
+                                        description: `Vou clicar aqui para acessar página da disciplina`,
                                         side: "bottom",
                                         align: "start",
                                         showButtons:['']
@@ -120,7 +147,14 @@ export async function StartTourCreateDiscipline() {
                                 steps: continueStepe,
                             });
                             await updatedDriverObj.drive();
-                        });
+                            /** Mapeamos em qual disciplina vai adicionar o conteudo apos o cadastro */
+                            Livewire.on('send-id-discipline', async (event) => {
+                                disciplineIdToManager = event.discipline_id
+                                console.log("Id da disciplina", disciplineIdToManager);
+                                //await driverObj.destroy();
+                                await new Promise((resolve) => setTimeout(resolve, 2000))
+                                
+                            });
                     });
                 },
             },
