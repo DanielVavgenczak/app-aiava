@@ -3,7 +3,15 @@
 use Livewire\Volt\Component;
 
 new class extends Component {
-    //
+    
+  
+  public function logout()
+  {
+        $this->js("console.log('logout student')");
+        Auth::guard('student')->logout();
+        session()->flush();
+        return $this->redirect(route('student.login'), navigate: true);
+  }
 }; ?>
 
 <header x-data
@@ -22,9 +30,9 @@ new class extends Component {
         </x-mary-button>
         <x-mary-dropdown label="{{ Auth::guard('student')->user()->firstName() }}"
             class="capitalize border-0 btn-ghost hover:bg-transparent hover:text-pink-600">
-            <x-mary-menu-item title="Perfil" wire:click.stop="delete2" link="#" spinner="delete2"
+            <x-mary-menu-item title="Perfil"  link="#" spinner="delete2"
                 icon="o-user" />
-            <x-mary-menu-item title="Sair" wire:click.stop="logout" spinner="logout" icon="o-arrow-uturn-left" />
+            <x-mary-menu-item title="Sair" wire:click="logout" spinner="logout" icon="o-arrow-uturn-left" />
         </x-mary-dropdown>
     </div>
     <livewire:pages.teacher.components.notifications />

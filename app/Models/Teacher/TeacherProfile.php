@@ -11,7 +11,7 @@ class TeacherProfile extends Model
     use HasFactory, UuidTrait;
     public $incrementing = false;
     protected $keyType = "uuid";
-    protected $fillable = ['user_id', 'avatar', 'cover', 'avatar_path', 'cover_path'];
+    protected $fillable = ['teacher_id', 'avatar', 'cover', 'avatar_path', 'cover_path'];
 
     public function teacher()
     {

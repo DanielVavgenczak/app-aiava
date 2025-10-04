@@ -17,7 +17,7 @@ new class extends Component {
     public function mount()
     {
         $this->user = Auth::guard('teacher')->user();
-        $this->image = $this->user->profile?->avatar;
+        $this->image = 'storage/' . $this->user->profile?->avatar  ?: 'images/user-noavatar.png';
     }
 
     #[On('open-modal-update-profile')]
@@ -70,11 +70,12 @@ new class extends Component {
         <h2 class="text-lg font-semibold text-gray-600">Editar perfil</h2>
     </div>
     <div class="flex justify-center">
+        
         <form wire:submit="uploadImage">
             <div class="my-4">
                 <div>
                     <x-mary-file wire:model="avatar" accept="image/png, image/jpeg, image/jpg">
-                        <img src="{{ asset('storage/'.$image) }}" alt="" class="h-32" />
+                        <img src="{{ asset($image) }}" alt="" class="h-32" />
                     </x-mary-file>
                 </div>
             </div>

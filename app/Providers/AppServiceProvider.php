@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Teacher\Teacher;
+use App\Observers\TeacherObserver;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use App\Http\Middleware\IsTeacher;
@@ -23,9 +25,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
        // LivewireDoctor::initCustomAsset();
-        Livewire::addPersistentMiddleware([
-            IsTeacher::class,
-            IsStudent::class
+       Livewire::addPersistentMiddleware([
+         IsTeacher::class,
+         IsStudent::class
         ]);
+        Teacher::observe(TeacherObserver::class);
     }
 }
