@@ -14,7 +14,7 @@ new #[Layout('layouts.app')] class extends Component {
     public string $search_lesson = '';
     public bool $showTaskModule = false;
     public string $disciplineID = '';
-
+    public bool $openedTaskShow = false;
     #[Url]
     public ?string $highlight = null;
     public function mount(string $id)
@@ -160,6 +160,23 @@ new #[Layout('layouts.app')] class extends Component {
             ->first();
     }
 
+
+    /** Opentask show **/
+    public function openTaskShow($task_id)
+    {
+        $this->openedTaskShow = true;
+        $this->dispatch('task-show', activit_id:$task_id);
+    }
+
+    #[On('close-task-show')]
+    public function closeTaskShow()
+    {
+        $this->openedTaskShow = false;
+        $this->js("console.log('fechando o task show modal')");
+    }
+
+
+
     // #[On('task-deleted')]
     // public function refreshShowContent()
     // {
@@ -275,7 +292,7 @@ new #[Layout('layouts.app')] class extends Component {
                             @if ($module->activitTasks->count() > 0)
                                 @foreach ($module->activitTasks as $activit)
                                     <div class="flex gap-3 px-10 py-2 cursor-pointer bg-pink-50 hover:bg-gray-300"
-                                        x-on:click="$dispatch('task-module', {activit_id:'{{ $activit->id }}'})">
+                                        x-on:click="$wire.openTaskShow('{{ $activit->id }}')">
                                         <div class="flex items-center gap-3 ">
                                             <div class="p-2 rounded-sm">
                                                 <x-mary-icon name="o-document-duplicate"
@@ -286,6 +303,7 @@ new #[Layout('layouts.app')] class extends Component {
                                             </span>
                                         </div>
                                     </div>
+                                   
                                 @endforeach
                                 <!-- drawer task module -->
                             @endif
@@ -304,67 +322,71 @@ new #[Layout('layouts.app')] class extends Component {
                     <livewire:pages.teacher.discipline.module.block.video-content :key="'video-block-' . Str::random(10)" />
                 </div>
             </div>
+          <livewire:pages.teacher.discipline.module.task.show-task 
+            wire:key="'task-module-' .{{ $discipline->id ?? ''}}" />
+          <livewire:pages.teacher.discipline.module.modals.create 
+            :disciplineId="$discipline->id" 
+            wire:key="'create-module-' . {{ $discipline->id ?? ''}}" />
+              <livewire:pages.teacher.discipline.module.modals.create-task 
+            :lessons="$discipline->modules" 
+            :disciplineId="$discipline->id" 
+            wire:key="'new-task-' . {{ $discipline->id ?? ''}}" /> 
         </div>
-      
-          
-        <!-- Modal options tour -->
-        <div x-data class="fixed inset-0 z-50 bg-gray-900/50" x-show="$store.tourguide.openMai">
-            <div
-                class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
-                <div class="flex items-center justify-between">
-                  <h2 class="text-[14px] tracking-wide font-medium text-gray-700">
-                    Aqui você pode adicionar novas aulas e blocos
-                    </h2>
-                    <button 
-                      class="btn btn-sm btn-ghost"
-                      x-on:click="$store.tourguide.cancelOptionsTourPage()">
-                      <x-mary-icon name="o-x-mark" class="w-4 text-gray-700"/>
-                    </button>                  
-                </div>
-                <!-- options show !-->
-                @if (!$openFormNewLesson)
-                    <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
-                        <x-mary-button
-                            class="font- text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                            label="Criar nova aula"
-                            x-on:click="$store.tourguide.start('StartTourDisciplineCreateContent')" />
-                        @if ($discipline->modules->count() > 0)
-                            <x-mary-button
-                                class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                label="Adicionar um bloco"
-                                x-on:click="$store.tourguide.start('StartTourDisciplineCreateContentUploadBlock')" />
-                            <x-mary-button
-                                class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                label="Vamos deletar uma aula"
-                                x-on:click="$store.tourguide.startTourDeleteModule()" />
-                            <x-mary-button
-                                class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                label="Vamos criar uma tarefa"
-                                x-on:click="$store.tourguide.startCreateTaskLesson()" />
-                            <x-mary-button
-                                class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                label="Vamos editar uma aula" 
-                                x-on:click="$store.tourguide.startEditLesson()" />
-                        @endif
-                    </div>
-                @else
-                   <!-- options create task -->
-                    <x-mary-button
-                        class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                        label="Vamos criar uma atividade"
-                        x-on:click="$store.tourguide.start('StartTourCreateActivitTask')" />
-                @endif
-            </div>
-            <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
-        </div>
+        
 
-        <livewire:pages.teacher.discipline.module.task.show-task 
-          wire:key="'task-module-' .{{ $discipline->id ?? ''}}" />
-        <livewire:pages.teacher.discipline.module.modals.create 
-          :disciplineId="$discipline->id" 
-          wire:key="'create-module-' . {{ $discipline->id ?? ''}}" />
-            <livewire:pages.teacher.discipline.module.modals.create-task 
-          :lessons="$discipline->modules" 
-          :disciplineId="$discipline->id" 
-          wire:key="'new-task-' . {{ $discipline->id ?? ''}}" /> 
+        
+        @if(!$openedTaskShow)       
+
+        <!-- Modal options tour -->
+          <div x-data class="fixed inset-0 z-50 bg-gray-900/50" x-show="$store.tourguide.openMai">
+              <div
+                  class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+                  <div class="flex items-center justify-between">
+                    <h2 class="text-[14px] tracking-wide font-medium text-gray-700">
+                      Aqui você pode adicionar novas aulas e blocos
+                      </h2>
+                      <button 
+                        class="btn btn-sm btn-ghost"
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()">
+                        <x-mary-icon name="o-x-mark" class="w-4 text-gray-700"/>
+                      </button>                  
+                  </div>
+                  <!-- options show !-->
+                  @if (!$openFormNewLesson)
+                      <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
+                          <x-mary-button
+                              class="font- text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                              label="Criar nova aula"
+                              x-on:click="$store.tourguide.start('StartTourDisciplineCreateContent')" />
+                          @if ($discipline->modules->count() > 0)
+                              <x-mary-button
+                                  class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                  label="Adicionar um bloco"
+                                  x-on:click="$store.tourguide.start('StartTourDisciplineCreateContentUploadBlock')" />
+                              <x-mary-button
+                                  class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                  label="Vamos deletar uma aula"
+                                  x-on:click="$store.tourguide.startTourDeleteModule()" />
+                              <x-mary-button
+                                  class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                  label="Vamos criar uma tarefa"
+                                  x-on:click="$store.tourguide.startCreateTaskLesson()" />
+                              <x-mary-button
+                                  class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                  label="Vamos editar uma aula" 
+                                  x-on:click="$store.tourguide.startEditLesson()" />
+                          @endif
+                      </div>
+                  @else
+                    <!-- options create task -->
+                      <x-mary-button
+                          class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                          label="Vamos criar uma atividade"
+                          x-on:click="$store.tourguide.start('StartTourCreateActivitTask')" />
+                  @endif
+              </div>
+              <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
+          </div>
+        @endif
+      
     </div>

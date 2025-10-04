@@ -95,21 +95,21 @@ new class extends Component {
     }
 }; ?>
 
-<x-mary-modal wire:model="open" title="Nova aluno" subtitle="Registrar um novo Aluno" box-class="w-11/12  max-w-6xl">
+<x-mary-modal wire:model="open" title="Aluno" subtitle="Registrar um novo Aluno" box-class="w-11/12  max-w-6xl">
     <form wire:submit.prevent="storeStudent" wire:loading.class="flex flex-col justify-center items-center">
         <div class="mb-3 grid grid-cols-12 gap-2 items-baseline" wire:target="storeStudent" wire:loading,remove
             id="student-form">
             <div class="col-span-4" id="student-input-full_name">
-                <x-mary-input label="Nome do aluno" wire:model="studentName" class="w-full !outline-none"
+                <x-mary-input label="Nome do aluno" wire:model="studentName" class="w-full !outline-none focus:border-gray-300"
                     wire:keydown.enter="addStudent" />
             </div>
             <div class="col-span-4" id="student-input-email">
                 <x-mary-input label="E-mail do aluno" class="text-gray-700" wire:model="studentEmail"
-                    class="w-full !outline-none" wire:keydown.enter="addStudent" />
+                    class="w-full !outline-none focus:border-gray-300" wire:keydown.enter="addStudent" />
             </div>
             <div class="col-span-3" id="student-input-phone">
                 <x-mary-input label="Telefone  (opcional)" class="text-gray-700" wire:model="studentPhone"
-                    class="w-full !outline-none"   x-mask="(99) 99999-9999"
+                    class="w-full !outline-none focus:border-gray-300"   x-mask="(99) 99999-9999"
                     placeholder="(41) 99999-9999"    wire:keydown.enter="addStudent" />
             </div>
             <div class="col-span-1" id="student-input-add">

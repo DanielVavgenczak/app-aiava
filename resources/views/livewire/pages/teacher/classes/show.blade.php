@@ -6,17 +6,17 @@
          </a>
      </div>
 
-     <div class="p-5 bg-white" data-tour="$classe->id">
+     <div class="p-5 bg-white" data-tour="{{ $classe->id }}">
          <div class="mb-5 flex justify-between items-center">
-             <h2 class="text-lg font-semibold text-gray-600"> Turma:{{ $classe->name }}</h2>
-             <button class="btn btn-md bg-pink-600 text-gray-50" type="button" id="student-register"
+             <h2 class="text-lg font-medium text-gray-600"> Turma:{{ $classe->name }}</h2>
+             <button class="btn btn-sm bg-pink-700 text-gray-50" type="button" id="student-register"
                  wire:click.prevent="dispatch('open-form-register-student',{open:true, name:'{{ $classe->name }}'})">
                  <x-mary-icon name="o-user-plus" />
                  <span class="capitalize">aluno</span>
              </button>
          </div>
          <livewire:pages.teacher.classes.modal.register-student :classe="$classe" />
-         <span>Alunos: {{ count($students) }}</span>
+         <span class="text-sm text-gray-700">Alunos: {{ count($students) }}</span>
          @if (count($students) > 0)
              <div
                  class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden dark:bg-slate-800 dark:border-slate-700">
@@ -116,7 +116,7 @@
                  </div>
              @else
                  <div class="flex flex-col justify-center items-center gap-2" id="student-no-result">
-                     <p>Nenhum aluno resgistrado a essa turma</p>
+                     <p class="text-gray-600 text-sm tracking-wider">Nenhum aluno resgistrado a essa turma</p>
                      @if (!empty($search))
                          <button class="pointer hover:text-pink-800 text-pink-600 text-sm tracking-wide" type="submit"
                              wire:click="resetSearch">voltar a listagem

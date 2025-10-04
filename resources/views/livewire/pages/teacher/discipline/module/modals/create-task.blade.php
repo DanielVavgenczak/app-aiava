@@ -478,14 +478,14 @@ new class extends Component {
                   'start' => $this->startDate,
                   'end' => $this->endDate,
                   'is_avaliative' => $this->isAvaliative ? true : false,
-                  'total_value' => $this->formatarNota($this->valueOfActivity),
+                  'total_value' => $this->isAvaliative ? $this->formatarNota($this->valueOfActivity) : null
               ]);
                 foreach ($this->questions as $question) {
                     $task = $activit->tasks()->create([
                         'question' => $question['title'],
                         'type' =>  $question['type'] == 'radio' ? 'multiple_choice' : 'dissertative',
                         'order' => $question['order'],
-                        'value' => $this->formatarNota($question['value_of_question']),
+                        'value' => $this->isAvaliative ? $this->formatarNota($question['value_of_question']) : null,
                     ]);
                     // Quando criar uma nova opção
                     $lastOrder = $task->options()->max('order');
@@ -507,8 +507,8 @@ new class extends Component {
             $this->questions = [];
         } catch (\Exception $e) {
             dd('deu erro aqui dentro do salve meu', $e->getMessage());  
-           //$this->js("console.log('deu erro em salver essa parada' + {$e->getMessage()})");
-            //$this->addError('save', 'Erro ao salvar tarefa: ' . $e->getMessage());
+            $this->js("console.log('deu erro em salver essa parada' + {$e->getMessage()})");
+            $this->addError('save', 'Erro ao salvar tarefa: ' . $e->getMessage());
         }
     }
   

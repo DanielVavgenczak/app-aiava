@@ -25,15 +25,17 @@ new class extends Component {
     public string $editingQuestionTitle = '';
     public string $editingOptionText = '';
 
-    #[On('task-module')]
+    #[On('task-show')]
     public function open($activit_id)
     {
+        $this->js("console.log('vamos ver abrindo o feio')");
         $this->showTaskModule = true;
         $this->activitTask = ActivitTask::with([
             'tasks' => function ($query) {
                 $query->with(['studentAnwsers', 'options'])->orderBy('created_at');
             },
         ])->find((string) $activit_id);
+        $this->js("console.log('infos carregados')");
     }
 
     public function startEditingQuestion(int $index)
@@ -83,65 +85,94 @@ new class extends Component {
 
     public function cancelMakeTask()
     {
-      $this->js('chamando aqui');
         $this->showTaskModule = false;
+        $this->dispatch('close-task-show');
     }
+
     public function closeToskDelete()
     {
 
         $this->showTaskModule = false;
     }
+
+    public function removeQuestion(int $index)
+    {
+        $this->js('console.log("removendo a questão")');
+        // $taskToRemove = $this->activitTask->tasks[$index];
+        // $taskToRemove->delete();
+        // $this->activitTask = ActivitTask::with([
+        //     'tasks' => function ($query) {
+        //         $query->with(['studentAnwsers', 'options'])->orderBy('created_at');
+        //     },
+        // ])->find((string) $this->activitTask->id);
+        // $this->success('Questão removida com sucesso');
+        // $this->cancelEditing();
+    }
 }; ?>
-<x-mary-drawer wire:model="showTaskModule" class="w-11/12 mx-auto">
-    <x-mary-button icon="o-x-mark" class="btn btn-ghost" wire:click="cancelMakeTask" />
-    <header class="flex items-center justify-between p-5">
+<x-mary-drawer wire:model="showTaskModule" class="w-10/12 mx-auto z-50">
+    <x-mary-button icon="o-x-mark" class="btn btn-ghost right-0" x-on:click="$wire.cancelMakeTask" />
+    <header class="flex items-center justify-between p-3">
         <h2 class="text-[15px] font-medium text-gray-700">Atividade</h2>
-        <div>
-            @if ($activitTask)
-                <x-mary-button label="Deletar atividade" type="button"
-                    x-on:click="$dispatch('open-modal-delete', {id:'{{ $activitTask->id }}'})" icon="o-trash"
-                    class="btn-outline border-pink-600 text-pink-600" />
-                <livewire:pages.teacher.discipline.module.task.delete-task :activittask="$activitTask" wire:key="activity-{{$activitTask->id}}" />
+        <div class="flex items-center gap-4">
+          @if(isset($activitTask->total_value))
+          <div>
+            <span>Total: {{$activitTask->total_value}}</span>
+          </div>
+          @else
+            <div>
+              <span>Não avaliativa</span>
+            </div>
+          @endif
+           @if ($activitTask)
+                <button 
+                   type="button"
+                   x-on:click="$dispatch('open-modal-delete', {id:'{{ $activitTask->id }}'})"
+                   class="btn btn-sm bg-pink-700 text-white">
+                  <x-mary-icon name="o-trash" class="w-6 h-6 mr-1" /> Deletar atividade
+                </button>
+                <livewire:pages.teacher.discipline.module.task.delete-task 
+                  :activittask="$activitTask" 
+                  wire:key="activity-{{$activitTask->id}}" />
             @endif
         </div>
     </header>
-    <div class="w-10/12 p-5 mx-auto">
+    <div class="w-11/12 p-3 mx-auto ">
         <div>
             @if ($activitTask && $activitTask->tasks()->count() > 0)
                 @foreach ($activitTask->tasks as $index => $task)
-                    <div wire:key="task-{{ $index }}" class="p-4 bg-white ">
+                    <div wire:key="task-{{ $index }}" class=" bg-white ">
                         <!-- Edição do Título -->
                         @if ($editingQuestionIndex === $index && $editingOptionIndex === null)
                             <div class="flex items-center gap-2 mb-3">
-                                <span class="font-bold text-gray-700"> {{ $index + 1 }}.</span>
+                                <span class="font-bold text-gray-700"> {{ $task['order'] }}.</span>
                                 <textarea wire:model="editingQuestionTitle"
-                                    class="flex-1 min-h-[150px] font-normal tracking-wide text-[15px] bg-gray-50 p-3 border-[1px] rounded-lg "
+                                    class="textarea !outline-none focus:border-gray-400 "
                                     wire:keydown.enter="saveQuestionEdit" autofocus></textarea>
                                 <div class="flex gap-1">
                                     <x-mary-button wire:click="saveQuestionEdit" icon="o-pencil-square"
-                                        class="btn-outline border-blue-600 text-indigo-600" spinner />
+                                        class="btn btn-sm bg-gray-200  text-gray-600" spinner />
 
                                     <x-mary-button wire:click="cancelEditing" icon="o-x-mark"
-                                        class="btn-outline border-red-600 text-red-600" spinner />
+                                        class="btn btn-sm bg-gray-200  text-gray-600" spinner />
 
                                 </div>
                             </div>
                         @else
-                            <div class="flex items-start justify-between">
+                            <div class="flex items-center justify-between">
                                 <div class="flex items-center ">
-                                    <div class="text-gray-800 whitespace-pre-line cursor-pointer ">
-                                        <span> {{ $index + 1 }}</span> .{{ $task['question'] }}
+                                    <div class="text-gray-800 whitespace-pre-line cursor-pointer">
+                                        <span> {{ $task['order'] }}</span> .{{ $task['question'] }}
                                     </div>
                                 </div>
-                                <div>   
-                                  <div>
-                                      @if($task['value'])         
+                                <div class="flex items-center gap-2">   
+                                  @if(isset($task['value']))         
+                                    <div class="text-sm text-gray-600">
                                       <span>Nota:{{$task['value']}}</span>
-                                      @endif
                                     </div>                      
-                                      <x-mary-button label="Editar questão"
+                                    @endif
+                                      <x-mary-button label="Editar"
                                           wire:click="startEditingQuestion({{ $index }})" icon="o-pencil-square"
-                                          class="btn-sm " spinner />
+                                          class="btn-sm btn" spinner />
                                       @if ($task->type !== 'multiple_choice')
                                           <x-mary-button class="btn-sm" label="Entregas"
                                               badge="{{ $task->studentAnwsers->count() }}"
@@ -152,10 +183,9 @@ new class extends Component {
                                       <button wire:click="removeQuestion({{ $index }})" type="button"
                                           class="btn btn-sm">
                                           <x-mary-icon name="o-trash" class="w-4 h-4 text-gray-500" />
-                                          <span class="">Remover questão</span>
+                                          Remover
                                       </button>
 
-                                </div>
                                 </div>
                             </div>
                         @endif
@@ -210,13 +240,13 @@ new class extends Component {
                         @else
                             <!-- Área dissertativa (não editável no preview) -->
                             <div class="mt-3">
-                                <textarea class="rounded-sm border-gray-200 w-full min-h-[80px] bg-white" placeholder="Resposta do aluno" disabled></textarea>
+                                
                             </div>
                         @endif
                     </div>
                 @endforeach
             @endif
         </div>
-        <livewire:pages.teacher.discipline.module.task.student-anwsers />
+        {{-- <livewire:pages.teacher.discipline.module.task.student-anwsers /> --}}
     </div>
 </x-mary-drawer>
