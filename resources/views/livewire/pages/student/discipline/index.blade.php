@@ -28,7 +28,7 @@ new #[Layout('layouts.student-panel')] class extends Component {
             //     $q->orderBy('created_at', 'ASC'); // Ordem crescente
             // },
         ])
-            ->where('teacher_id', Auth::guard('student')->user()->teacher_id)
+            ->where('id', Auth::guard('student')->user()->discipline_id)
             ->first(); // Especificar colunas
 
         return $this->discipline;

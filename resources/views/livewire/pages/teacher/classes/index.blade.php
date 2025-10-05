@@ -15,6 +15,7 @@
                      wire:model.change="disciplineId" placeholder="Minhas disciplinas" :options="$disciplines"
                      option-label="title" option-value="id" placeholder-value="" class="w-full !outline-none" />
              </div>
+             @if(count($disciplines) > 0)
              <button class="btn btn-md bg-pink-600 text-gray-50 discipline-new flex gap-1.5 items-center"
                  wire:target="disciplineId" wire:loading.attr="disabled" id="classe-create"
                  x-on:click="$dispatch('open-form-class-create',{open:true, disciplineId: '{{ $this->disciplineId }}'})"
@@ -23,6 +24,7 @@
              </button>
              <!-- modal to register class and alunos -->
              <livewire:pages.teacher.classes.modal.create />
+             @endif
          </div>
          <div class="flex flex-col gap-2 relative top-2.5">
              @if (count($classes) > 0)
