@@ -33,6 +33,7 @@ new class extends Component {
             'email' => $this->studentEmail,
             'phone' => $this->studentPhone,
         ];
+
         $this->students[] = $students;
         $this->studentName = '';
         $this->studentEmail = '';
@@ -54,10 +55,11 @@ new class extends Component {
         try {
             DB::transaction(function () {
                 foreach ($this->students as $student) {
+                    $phone = !empty(trim($student['phone'] ?? '')) ? $student['phone'] : null;
                     Student::create([
                         'full_name' => $student['name'],
                         'email' => $student['email'],
-                        'phone' => $student['phone'] ?? null,
+                        'phone' => $phone,
                         'classe_id' => $this->classe->id,
                         'teacher_id' => Auth::guard('teacher')->user()->id,
                         'discipline_id' => $this->classe->discipline_id,
@@ -66,14 +68,33 @@ new class extends Component {
                 }
             });
             $this->reset('studentName', 'studentEmail', 'studentPhone', 'students');
+            $this->open = false;
             $this->dispatch('event-student', type: 'created');
-            $this->open = false;
         } catch (\Exception $e) {
-            dd('Error', $e->getMessage());
-            $this->open = false;
-            if (!empty($e->getMessage())) {
-                $this->error('Erro interno no sistema', 'Error interno no sistema para essa funcionalidade por favor tente novamente mais tarde', position: 'toast-top toast-end', timeout: 8000);
-            }
+           // dd('Error', $e->getMessage());
+            $this->open = false;        
+            if (str_contains($e->getMessage(), 'students_phone_non_null_unique')) {
+                  $this->error(
+                      'Telefone já cadastrado', 
+                      'Este número de telefone já está em uso por outro aluno.', 
+                      position: 'toast-top toast-end', 
+                      timeout: 8000
+                  );
+              } else if (str_contains($e->getMessage(), 'students_teacher_id_email_unique')) {
+                  $this->error(
+                      'Email já cadastrado',
+                      'Este email já está em uso para um dos seus alunos.',
+                      position: 'toast-top toast-end',
+                      timeout: 8000
+                  );
+              } else {
+                  $this->error(
+                      'Erro ao cadastrar aluno',
+                      'Ocorreu um erro inesperado. Tente novamente.',
+                      position: 'toast-top toast-end', 
+                      timeout: 8000
+                  );
+              }
         }
     }
 
@@ -100,17 +121,25 @@ new class extends Component {
         <div class="mb-3 grid grid-cols-12 gap-2 items-baseline" wire:target="storeStudent" wire:loading,remove
             id="student-form">
             <div class="col-span-4" id="student-input-full_name">
-                <x-mary-input label="Nome do aluno" wire:model="studentName" class="w-full !outline-none focus:border-gray-300"
-                    wire:keydown.enter="addStudent" />
+                <input 
+                class="input !outline-none focus:border-gray-300" 
+                placeholder="Nome do aluno" 
+                wire:model="studentName"/>
+               
             </div>
             <div class="col-span-4" id="student-input-email">
-                <x-mary-input label="E-mail do aluno" class="text-gray-700" wire:model="studentEmail"
-                    class="w-full !outline-none focus:border-gray-300" wire:keydown.enter="addStudent" />
+               <input 
+                class="input !outline-none focus:border-gray-300" 
+                placeholder="E-mail do aluno" 
+                wire:model="studentEmail"/>
             </div>
             <div class="col-span-3" id="student-input-phone">
-                <x-mary-input label="Telefone  (opcional)" class="text-gray-700" wire:model="studentPhone"
-                    class="w-full !outline-none focus:border-gray-300"   x-mask="(99) 99999-9999"
-                    placeholder="(41) 99999-9999"    wire:keydown.enter="addStudent" />
+                <input 
+                class="input !outline-none focus:border-gray-300" 
+                placeholder="(41) 99999-9999  *opcional"
+                x-mask="(99) 99999-9999"
+                wire:model="studentPhone"/>
+             
             </div>
             <div class="col-span-1" id="student-input-add">
                 <x-mary-button icon="o-plus" label="adicionar" type="button" class="btn btn-sm btn-primary capitalize"

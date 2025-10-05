@@ -8,7 +8,7 @@
 
      <div class="p-5 bg-white" data-tour="{{ $classe->id }}">
          <div class="mb-5 flex justify-between items-center">
-             <h2 class="text-lg font-medium text-gray-600"> Turma:{{ $classe->name }}</h2>
+             <h2 class="text-lg text-gray-600 font-medium"> <span class="font-bold mr-1">Turma:</span>{{ $classe->name }}</h2>
              <button class="btn btn-sm bg-pink-700 text-gray-50" type="button" id="student-register"
                  wire:click.prevent="dispatch('open-form-register-student',{open:true, name:'{{ $classe->name }}'})">
                  <x-mary-icon name="o-user-plus" />
@@ -78,7 +78,7 @@
                                      <td class="p-3 whitespace-nowrap">
                                          <div class="text-sm text-gray-900 dark:text-gray-200">{{ $student->email }}
                                          </div>
-                                         <div class="text-sm text-blue-600 dark:text-blue-400">
+                                         <div class="text-sm text-gray-600 dark:text-gray-400">
                                              {{ $student->phone ?? 'Sem telefone' }}</div>
                                      </td>
 
@@ -86,20 +86,20 @@
                                          <div class="flex justify-end gap-2">
                                              <button id="student-access-{{ $student->id }}"
                                                  x-on:click="$dispatch('show-student-details', { id: '{{ $student->id }}' })"
-                                                 class="btn btn-sm" title="Ver detalhes">
-                                                 <x-mary-icon name="o-eye" class="w-5 h-5" />
+                                                 class="btn btn-sm text-gray-600" title="Ver detalhes">
+                                                 <x-mary-icon name="o-eye" class="w-4 h-4" />
                                              </button>
 
                                              <button type="button" id="student-btn-edit-{{ $student->id }}"
                                                  x-on:click="$dispatch('edit-student', { id: '{{ $student->id }}' })"
-                                                 class="btn btn-sm" title="Editar">
-                                                 <x-mary-icon name="o-pencil-square" class="w-5 h-5" />
+                                                 class="btn btn-sm text-gray-600" title="Editar">
+                                                 <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                              </button>
 
                                              <button type="button" id="student-btn-delete-{{ $student->id }}"
                                                  x-on:click="$dispatch('delete-student', {id:'{{ $student->id }}'})"
-                                                 class="btn btn-sm " title="Remover">
-                                                 <x-mary-icon name="o-trash" class="w-5 h-5" />
+                                                 class="btn btn-sm text-gray-600" title="Remover">
+                                                 <x-mary-icon name="o-trash" class="w-4 h-4" />
                                              </button>
                                          </div>
                                      </td>

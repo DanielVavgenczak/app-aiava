@@ -50,7 +50,7 @@ class Show extends Component
             })->orderBy('full_name', 'asc')->get();
         }
         return Student::where('classe_id', $this->classe->id)
-            ->orderBy('full_name', 'asc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
     }
@@ -61,17 +61,22 @@ class Show extends Component
     {
         match($type) {
             'updated', => $this->handlerAfterActionWithToast($type, 'Aluno editado com sucesso!'), //$this->success('Aluno atualizado com sucesso', timeout: 4000),
-            'created' => $this->handlerAfterActionWithToast($type, 'Aluno criado com sucesso!'), //$this->success('Aluno registrado com sucesso', timeout: 4000),
+            'created' => $this->handlerAfterActionWithToast($type, 'Aluno registrado com sucesso!'), //$this->success('Aluno registrado com sucesso', timeout: 4000),
             'delete' => $this->handlerAfterActionWithToast($type, 'Aluno deletado com sucesso!'), //$this->error('Aluno deletado com sucesso', timeout: 4000),
             default => null,
         };
     }
 
+    public function resetSearch()
+    {
+      $this->search = '';
+      $this->students = $this->loadStudents();
+    }
     protected function handlerAfterActionWithToast(string $type, string $message)
     {
+        $this->students = $this->loadStudents();
         if($type !== 'delete') {
             $this->success($message, timeout: 5000);
-            $this->loadStudents();
             return;
         }
         $this->error($message, timeout: 4000);
