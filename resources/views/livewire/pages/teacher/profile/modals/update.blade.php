@@ -17,6 +17,7 @@ new class extends Component {
     public function mount()
     {
         $this->user = Auth::guard('teacher')->user();
+        \Log::debug('verificando oque vem: '.$this->user->profile->avatar);
         $this->image = 'storage/' . $this->user->profile?->avatar  ?: 'images/user-noavatar.png';
     }
 

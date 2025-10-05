@@ -55,6 +55,7 @@ new class extends Component {
                 <button class="bg-pink-600 btn btn-sm text-gray-50 hover:bg-pink-900" type="submit">
                     Registrar
                 </button>
+                <div id="{{ $diciplineIdToManager }}"></div>
             </div>
             <div wire:loading wire:target="store" class="flex flex-col justify-center w-full text-center">
               <span class="text-xs tracking-wider text-pink-600">Registrando</span>
