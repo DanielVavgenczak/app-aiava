@@ -1,7 +1,7 @@
 <div class="">
+    <div class="py-4"></div>
     <div class="p-5">
         <div class="w-full">
-            <h2>Em breve</h2>
             <p>Em breve uma pagina home para o professor, com uma agenda personalizada</p>
         </div>
         <!-- tour home -->
@@ -20,8 +20,7 @@
                 <!-- dont have button to actions -->
                 <div class="p-4 bg-gray-100">
                   <p class="text-sm tracking-wide text-gray-600">
-                    Em breve teremos mais opções de personalização para a home do professor. <br />
-                    incluindo uma agenda personalizada.
+                    Em breve
                   </p>
                   </div>
             </div>
