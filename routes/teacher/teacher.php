@@ -6,19 +6,18 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 
-
 Route::prefix("teacher")->middleware('isTeacher')->group(function () {
 
     Route::view('/', 'app.teacher.home.index')
         ->name('teacher.index');
 
-    Route::view('/profile', 'app.teacher.profile.index')
+    Volt::route('/profile', 'pages.teacher.profile.index')
         ->name('teacher.profile');
 
     Route::view('/discipline', 'app.teacher.discipline.index')
         ->name('teacher.discipline');
 
-    Volt::route("discipline/{id}", componentName: "pages.teacher.discipline.show")
+    Volt::route("discipline/{id}", "pages.teacher.discipline.show")
         ->name(name: 'teacher.discipline.show');
 
     Route::view('/messages', 'app.teacher.messages.index')
