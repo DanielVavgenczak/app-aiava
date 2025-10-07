@@ -13,8 +13,10 @@ new class extends Component {
     }
 }; ?>
 <x-mary-drawer wire:model="showDrawerNotifications" class="w-11/12 lg:w-1/3" right>
-    <div>
-        Listagem das notifications
+  <button>
+    <x-mary-icon name="o-x-mark"  @click="$wire.showDrawerNotifications = false"/>
+  </button>
+    <div class="p-5 bg-gray-200 text-sm font-normal tracker-wider">
+        Em breve listagem de notificações
     </div>
-    <x-mary-button label="Close" @click="$wire.showDrawerNotifications = false" />
 </x-mary-drawer>

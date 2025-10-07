@@ -7,7 +7,7 @@
     <div class="flex items-center">
         <x-mary-button icon="o-bell" class="indicator border-0 btn-ghost hover:bg-transparent hover:text-pink-600"
             x-on:click="$dispatch('open-notifications-drawer')">
-            <x-mary-badge value="1" class="badge-secondary badge-sm indicator-item top-1 right-3" />
+            {{-- <x-mary-badge value="1" class="badge-secondary badge-sm indicator-item top-1 right-3" /> --}}
         </x-mary-button>
         <x-mary-button class="relative border-0 btn-ghost hover:bg-transparent hover:text-pink-600">
             <x-mary-theme-toggle />
