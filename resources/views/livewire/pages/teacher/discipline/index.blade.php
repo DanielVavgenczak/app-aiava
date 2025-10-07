@@ -134,8 +134,7 @@ new class extends Component {
                     "{{ $search }}"</p>
                 <button class="btn btn-sm btn-ghost" type="button" wire:click="resetSearch">voltar a lista</button>
             @else
-                <p class="text-sm font-medium tracking-wider text-gray-600">Você não possue nenhuma disciplina
-                    cadastrada</p>
+                <p class="text-sm font-medium tracking-wider text-gray-600">Não á disciplina cadastrada.</p>
             @endif
         </div>
     @endif

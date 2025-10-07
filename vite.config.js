@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 
-const host = "app.ailumnus.local";
+///const host = "app.ailumnus.local";
 export default defineConfig({
     plugins: [
         tailwindcss(),
@@ -15,12 +15,12 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    server: {
-        host,
-        hmr: { host },
-        headers: {
-        	'Access-Control-Allow-Origin': '*',
-        },
-    },
+    // server: {
+    //     host,
+    //     hmr: { host },
+    //     headers: {
+    //     	'Access-Control-Allow-Origin': '*',
+    //     },
+    // },
 
 });
