@@ -5,23 +5,22 @@ use App\Models\{Lesson};
 use Livewire\Attributes\On;
 
 new class extends Component {
-    public $selectedTab = 'material-tab';
     public $lesson;
+    public $selectedTab = 'material-tab';
     public bool $sureDeleteBlock = false;
     public string $video_url = '';
+    
+    // shows messages 
+    public bool $showEndBlock = false;
+    public bool $hasNext = false;
+    public bool $hasPrevius = false;
 
-    // public function mount()
-    // {
-    //     $this->lesson = $lesson;
-    //     // if ($this->lesson) {
-    //     //     //$this->loadBlock();
-    //     // }
-    // }
     protected function loadBlock()
     {
         $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
         $this->dispatch('vide-load', url: $this->video_url);
     }
+
     #[On('next-video-content')]
     public function nextVideo()
     {
@@ -29,12 +28,70 @@ new class extends Component {
             $this->dispatch('next-video-content', id: $this->lesson->id);
         }
     }
-    #[On('select-video-block')]
+
+    #[On('load-video-block')]
     public function loadVideoLesson($lesson_id)
     {
-        //dd($lesson_id);
-        $this->lesson = Lesson::where('id', $lesson_id)->first();
+        $this->lesson = Lesson::with('module')->find($lesson_id);
+        if($this->lesson){
+          $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
+
+          $this->updateNavigationStates();
+        }
+        $this->showEndBlock = false;
     }
+
+    // 👇 MÉTODO PARA ATUALIZAR OS ESTADOS
+    protected function updateNavigationStates()
+    {
+        if (!$this->lesson) {
+            $this->hasPrevious = false;
+            $this->hasNext = false;
+            return;
+        }
+
+        // Verifica se existe lição ANTERIOR
+        $this->hasPrevious = Lesson::where('module_id', $this->lesson->module_id)
+            ->where('created_at', '<', $this->lesson->created_at)
+            ->exists();
+
+        // Verifica se existe lição PRÓXIMA  
+        $this->hasNext = Lesson::where('module_id', $this->lesson->module_id)
+            ->where('created_at', '>', $this->lesson->created_at)
+            ->exists();
+    }
+
+    public function navigate($direction)
+    {
+         if (!$this->lesson) return;
+          
+         $operator = $direction === 'next' ? '>' : '<';
+         $order = $direction === 'next' ? 'asc' : 'desc';
+
+         $adjacentLesson = Lesson::where('module_id', $this->lesson->module_id)
+              ->where('created_at', $operator, $this->lesson->created_at)
+              ->orderBy('created_at', $order)
+              ->first();
+
+          if ($adjacentLesson) {
+              $this->loadVideoLesson($adjacentLesson->id);
+              $this->dispatch('lesson-navigate-selected', lesson_id: $adjacentLesson->id);
+              $this->showEndBlock = false;
+              //$this->dispatch('hide-end-message');
+          } else {
+              if($direction === 'next') {
+                $this->showEndBlock = true;
+              $this->dispatch('hide-end-message-afeter-delay', direction:$direction);
+              }
+              //session()->flash('info', "Não há {$direction} vídeo");
+          }
+    }
+      #[On('hide-end-message-afeter-delay')]
+        public function hideEndMessage()
+        {
+            sleep(3);
+            $this->showEndMessage = false;
+        }
 
     public function deleteBlock()
     {
@@ -102,12 +159,43 @@ new class extends Component {
         <div>
             <livewire:pages.teacher.discipline.module.block.video :lesson_id="$lesson->id" :key="'video-block-' . $lesson->id" />
         </div>
-
+           @if($showEndBlock)
+            <div class="mx-5 mb-3 p-4 bg-pink-50 border border-pink-200 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <x-mary-icon name="o-flag" class="w-5 h-5 text-pink-700 flex-shrink-0" />
+                    <div class="flex-1">
+                        <p class="text-pink-800 font-medium text-sm"> Você concluiu esta aula!</p>
+                    </div>
+                    <button wire:click="$set('showEndBlock', false)" class="text-pink-700 hover:text-pink-800 flex-shrink-0">
+                        <x-mary-icon name="o-x-mark" class="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+            @endif
         <!-- Navegação -->
         <div class="flex items-center justify-between p-5">
-            <x-mary-button label="Anterior" icon="o-chevron-left"
-                x-on:click="$dispatch('previous-video-content', { id: '{{ $lesson->id }}' })" />
-            <x-mary-button label="Próximo" icon-right="o-chevron-right" x-on:click="$wire.nextVideo()" />
+        <button  
+                type="button"
+                class="btn btn-sm btn-ghost text-gray-600" 
+                wire:click="navigate('previous')">
+                <x-mary-icon name="o-chevron-left" />
+                  Anterior
+                </button>          
+            @if($hasNext)
+                <button  
+                  type="button"
+                  class="btn btn-sm btn-ghost text-gray-600" 
+                  wire:click="navigate('next')">
+                  Próximo
+                  <x-mary-icon name="o-chevron-right" />
+                </button>
+            @else 
+              <!--- Verificar se possue atividade -->
+               <div class="px-4 py-2 text-gray-500 text-sm flex flex-col items-center">
+                <span>Último bloco</span>
+                <p>Selecione a próxima aula</p>
+               </div>
+            @endif
         </div>
 
         <!-- Conteúdo -->

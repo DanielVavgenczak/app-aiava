@@ -115,7 +115,7 @@ new class extends Component {
                         @else
                             <div class="mt-3">
                                 <x-mary-textarea wire:model="dissertativeAnswers.{{ $task->id }}"
-                                    class="!outline-none" placeholder="Descreva sua resposta" rows="3" />
+                                    class="!outline-none" placeholder="Escreva sua resposta" rows="3" />
                             </div>
                         @endif
                     </div>

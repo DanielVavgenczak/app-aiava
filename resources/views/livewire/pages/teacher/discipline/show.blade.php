@@ -10,6 +10,7 @@ new #[Layout('layouts.app')] class extends Component {
     public bool $openFormNewLesson = false;
     public $discipline;
     public $blockSelected = null;
+    public $selectedBlock = null;
     public $allLessons = [];
     public string $search_lesson = '';
     public bool $showTaskModule = false;
@@ -39,58 +40,20 @@ new #[Layout('layouts.app')] class extends Component {
         $this->toast(type: 'success', title: 'Bloco adicionado com sucesso', icon: 'o-check', css: 'alert-success');
         $this->js("console.log('upload event exec')");
     }
-    #[On('next-video-content')]
-    public function next($id)
+
+    #[On('lesson-navigate')]
+    public function loadVideoLesson($lesson_id)
     {
-        $currentLesson = $this->discipline->modules->flatMap->lessons->firstWhere('id', $id);
-        $currentIndex = array_search($currentLesson, $this->allLessons);
-        $nextIndex = $currentIndex + 1;
-        if ($nextIndex < count($this->allLessons)) {
-            $this->blockSelected = $this->allLessons[$nextIndex];
-            $this->dispatch('load-video-lesson', $this->blockSelected->id);
-        }
+      $this->selectedBlock = $this->discipline->modules->flatMap->lessons->firstWhere('id', $lesson_id);
+      $this->highlight = $lesson_id;
+      // Scroll automático para o bloco
+      $this->dispatch('scroll-to-lesson', lesson_id: $lesson_id);
+       \Log::info("Highlight atualizado para: {$lesson_id}");
     }
 
-    #[On('previous-video-content')]
-    public function previous($id)
-    {
-        $currentLesson = $this->discipline->modules->flatMap->lessons->firstWhere('id', $id);
-        $currentIndex = array_search($currentLesson, $this->allLessons);
-        $previousIndex = $currentIndex - 1;
+   
 
-        if ($previousIndex >= 0) {
-            $this->blockSelected = $this->allLessons[$previousIndex];
-            $this->dispatch('load-video-lesson', $this->blockSelected->id);
-        }
-    }
-
-    public function nextLesson()
-    {
-        if (!$this->blockSelected) {
-            $this->blockSelected = $this->allLessons[0] ?? null;
-        } else {
-            $currentIndex = array_search($this->blockSelected, $this->allLessons);
-            $nextIndex = $currentIndex + 1;
-            if ($nextIndex < count($this->allLessons)) {
-                $this->blockSelected = $this->allLessons[$nextIndex];
-                $this->dispatch('load-video-lesson', $this->blockSelected->id);
-            }
-        }
-    }
-
-    public function previousLesson()
-    {
-        if (!$this->blockSelected) {
-            $this->blockSelected = $this->allLessons[0] ?? null;
-        } else {
-            $currentIndex = array_search($this->blockSelected, $this->allLessons);
-            $previousIndex = $currentIndex - 1;
-            if ($previousIndex >= 0) {
-                $this->blockSelected = $this->allLessons[$previousIndex];
-                $this->dispatch('load-video-lesson', $this->blockSelected->id);
-            }
-        }
-    }
+   
     public function openModalNewLesson()
     {
         $this->dispatch('open-new-block-to-module', true);
@@ -230,7 +193,9 @@ new #[Layout('layouts.app')] class extends Component {
                     @if ($discipline->modules->count() > 0)
                         @foreach ($discipline->modules as $module)
                             <div class="w-full bg-white border-[1px] border-gray-100 px-3 py-2 accordion module-card"
-                                wire:key="module-{{ $module->id }}" x-data="{ isExpanded: false }" x-show="true"
+                                wire:key="module-{{ $module->id }}"
+                                x-data="{ isExpanded: false }" 
+                                x-show="true"
                                 id="accordion-{{ $module->id }}" data-tour="{{ $module->id }}">
                                 <div class="flex items-center" id="accordion-module-{{ $module->id }}">
                                     <x-mary-dropdown class="" wire:key="module-options-{{ $module->id }}">
@@ -261,22 +226,48 @@ new #[Layout('layouts.app')] class extends Component {
                                 <div class="flex flex-col gap-3 p-4 bg-gray-100"
                                     x-show="openCollapseId === '{{ $module->id }}'" x-collapse>
                                     <button id="block-open-new-block-{{ $module->id }}"
-                                        class="btn text-white tracking-wider uppercase text-[12px] bg-pink-600 tour-open-new-block-to-click cursor-pointer"
+                                        class="btn text-white tracking-wider uppercase text-[12px] bg-pink-700 tour-open-new-block-to-click cursor-pointer"
                                         x-on:click="$dispatch('open-new-block-to-module', { open: true })">
                                         <x-mary-icon name="o-plus" /> bloco
                                     </button>
                                     <livewire:pages.teacher.discipline.module.block.index :module_id="$module->id"
                                         :title="$module->title" :key="'block-index-' . $module->id" />
-
-                                    @forelse ($module->lessons as $lesson)
+                                    <ul x-data="{ activeLesson: null }" class="lesson-list">
+                                      @foreach ($module->lessons as $lesson)
+                                          <li class="">
+                                              <button
+                                                  x-on:click="
+                                                  activeLesson = activeLesson === '{{ $lesson->id }}' ? null : '{{ $lesson->id }}';
+                                                  $dispatch('load-video-block', {lesson_id:'{{ $lesson->id }}'});
+                                                  "
+                                                  x-bind:class="{
+                                                      'bg-pink-100 text-pink-700 border-l-4 border-pink-700': activeLesson === '{{ $lesson->id }}',
+                                                      'hover:bg-gray-200 text-gray-600': activeLesson !== '{{ $lesson->id }}'
+                                                  }"
+                                                  class="transition-colors cursor-pointer w-full flex items-center gap-2 py-4 px-3 text-left font-normal tracking-wider  text-sm">
+                                                  <x-mary-icon name="o-play" class="w-4 h-4" />
+                                                  {{ $lesson->title }}
+                                              </button>
+                                          </li>
+                                      @endforeach
+                                  </ul>
+                                    {{-- @forelse ($module->lessons as $lesson)
                                         <div class="flex flex-col gap-2 px-2 py-3 cursor-pointer hover:bg-gray-300"
                                             :key="'lesson-'. $lesson->id "
-                                            x-on:click="$dispatch('select-video-block', { lesson_id: '{{ $lesson->id }}' })">
+                                            x-on:click="
+                                            $dispatch('select-video-block', { lesson_id: '{{ $lesson->id }}' })">
                                             <div class="flex flex-col gap-3">
                                                 <div class="flex items-center gap-3">
-                                                    <x-mary-icon name="o-play" class="w-4 h-4 mr-2 text-pink-400" />
+                                                    <x-mary-icon name="o-play" class="w-4 h-4 mr-2 {{ $highlight == $lesson->id ? 'text-pink-600' : 'text-pink-400' }}" />
                                                     <span
-                                                        class="text-sm font-semibold tracking-wide text-gray-600">{{ $lesson->title }}</span>
+                                                        class="text-sm font-semibold tracking-wide 
+                                                          {{ $highlight == $lesson->id ? 'text-pink-700' : 'text-gray-600' }}">
+                                                          {{ $lesson->title }}
+                                                          <!-- Badge "Atual" -->
+                                                        @if($highlight == $lesson->id)
+                                                            <span class="ml-2 text-xs text-pink-600 font-normal">(Assistindo)</span>
+                                                        @endif      
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -286,7 +277,7 @@ new #[Layout('layouts.app')] class extends Component {
                                                 class="text-[12px] tracking-wide font-medium text-gray-600 uppercase">nenhum
                                                 bloco</span>
                                         </div>
-                                    @endforelse
+                                    @endforelse --}}
                                 </div>
                             </div>
                             @if ($module->activitTasks->count() > 0)
@@ -390,3 +381,20 @@ new #[Layout('layouts.app')] class extends Component {
         @endif
       
     </div>
+  @script
+<script>
+document.addEventListener("livewire:initialized", () => {
+    // Scroll automático para o bloco atual
+    Livewire.on('lesson-navigate-selected', (event) => {
+        document.querySelectorAll(".lesson-list").forEach(element => {
+            const alpine = Alpine.$data(element);
+            if (alpine && alpine.activeLesson !== undefined) {
+                alpine.activeLesson = event.lesson_id;
+            }
+        });
+    })
+});
+    
+</script>
+@endscript
+
