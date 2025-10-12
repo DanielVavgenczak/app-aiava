@@ -356,16 +356,16 @@ new #[Layout('layouts.app')] class extends Component {
                                   x-on:click="$store.tourguide.start('StartTourDisciplineCreateContentUploadBlock')" />
                               <x-mary-button
                                   class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                  label="Vamos deletar uma aula"
+                                  label="Deletar uma aula"
                                   x-on:click="$store.tourguide.startTourDeleteModule()" />
                               <x-mary-button
                                   class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                  label="Vamos criar uma tarefa"
+                                  label="Criar uma tarefa"
                                   x-on:click="$store.tourguide.startCreateTaskLesson()" />
-                              <x-mary-button
+                              {{-- <x-mary-button
                                   class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                                  label="Vamos editar uma aula" 
-                                  x-on:click="$store.tourguide.startEditLesson()" />
+                                  label="Editar uma aula" 
+                                  x-on:click="$store.tourguide.startEditLesson()" /> --}}
                           @endif
                       </div>
                   @else

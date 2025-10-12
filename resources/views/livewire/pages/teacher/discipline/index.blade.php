@@ -15,7 +15,6 @@ new class extends Component {
 
     public function with()
     {
-        $this->js("console.log('foi chamando')");
         return $this->disciplines = $this->loadDisciplines();
     }
     public function mount()
@@ -154,7 +153,7 @@ new class extends Component {
                     class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                     label="Criar disciplina" x-on:click="$store.tourguide.start('StartTourCreateDiscipline')" />
                 @if ($disciplines->count() > 0)
-                    <x-mary-button
+                    {{-- <x-mary-button
                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Pesquisar disciplina" x-on:click="$store.tourguide.start('StartTourSearchDiscipline')" />
                     <x-mary-button
@@ -163,7 +162,7 @@ new class extends Component {
                         @click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
                     <x-mary-button
                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                        label="Editar: Titulo" @click="$store.tourguide.start('StartTourEditDiscipline')" />
+                        label="Editar: Titulo" @click="$store.tourguide.start('StartTourEditDiscipline')" /> --}}
                     <x-mary-button
                         class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                         label="Deletar disciplina" @click="$store.tourguide.start('StartTourDeleteDiscipline')" />
