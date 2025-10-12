@@ -15,19 +15,19 @@ new class extends Component {
     public bool $hasNext = false;
     public bool $hasPrevius = false;
 
-    protected function loadBlock()
-    {
-        $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
-        $this->dispatch('vide-load', url: $this->video_url);
-    }
+    // protected function loadBlock()
+    // {
+    //     $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
+    //     $this->dispatch('vide-load', url: $this->video_url);
+    // }
 
     #[On('next-video-content')]
-    public function nextVideo()
-    {
-        if (!$this->lesson) {
-            $this->dispatch('next-video-content', id: $this->lesson->id);
-        }
-    }
+    // public function nextVideo()
+    // {
+    //     if (!$this->lesson) {
+    //         $this->dispatch('next-video-content', id: $this->lesson->id);
+    //     }
+    // }
 
     #[On('load-video-block')]
     public function loadVideoLesson($lesson_id)

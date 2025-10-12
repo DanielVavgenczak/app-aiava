@@ -61,7 +61,7 @@ new #[Layout('layouts.student-panel')] class extends Component {
                         </x-slot:heading>
                         @if (count($module->lessons) > 0)
                             <x-slot:content>
-                                <ul x-data="{ activeLesson: null }">
+                                <ul x-data="{ activeLesson: null }" class="lesson-student-list">
                                     @foreach ($module->lessons as $lesson)
                                         <li class="">
                                             <button
@@ -71,8 +71,8 @@ new #[Layout('layouts.student-panel')] class extends Component {
                                                 {lesson_id:'{{ $lesson->id }}'});
                                                 "
                                                 x-bind:class="{
-                                                    'bg-blue-100 text-blue-400': activeLesson === '{{ $lesson->id }}',
-                                                    'hover:bg-gray-100 text-gray-600': activeLesson !== '{{ $lesson->id }}'
+                                                    'bg-blue-200 text-blue-700  border-l-4 border-blue-700': activeLesson === '{{ $lesson->id }}',
+                                                    'hover:bg-gray-100 text-gray-700': activeLesson !== '{{ $lesson->id }}'
                                                 }"
                                                 class="transition-colors btn-active cursor-pointer w-full flex items-center gap-2 py-4 px-3 hover:bg-gray-100 text-gray-600 font-normal tracking-wider">
                                                 <x-mary-icon name="o-play" class="w-4 h-4" />
@@ -93,7 +93,7 @@ new #[Layout('layouts.student-panel')] class extends Component {
                             <div class="p-4 hover:bg-gray-100">
                                 <button
                                     class="ml-4
-                                text-blue-400 font-semibold text-xs uppercase tracking-wider cursor-pointer"
+                                    text-blue-400 font-semibold text-xs uppercase tracking-wider cursor-pointer"
                                     x-on:click="$dispatch('student-event-open-task', {id:'{{ $activitTask->id }}'})">
                                     <x-mary-icon name="o-document-text" class="w-4 h-4" />
                                     Atividade
@@ -109,3 +109,30 @@ new #[Layout('layouts.student-panel')] class extends Component {
             </div>
         </div>
     </div>
+    @script
+    <script>
+
+    // Atualiza o highlight na listagem do aluno
+    Livewire.on('update-student-lesson-highlight', (event) => {
+        // Atualiza todos os Alpine.js com activeLesson
+        document.querySelectorAll('.lesson-student-list').forEach(element => {
+            const alpine = Alpine.$data(element);
+            if (alpine && alpine.activeLesson !== undefined) {
+                alpine.activeLesson = event.lesson_id;
+            }
+        });
+    });
+
+    // Player de vídeo
+    document.addEventListener('livewire:initialized', () => {
+        const player = document.getElementById('videoPlayer');
+
+        Livewire.on('video-load', event => {
+            let video = document.getElementById("videoPlayer");
+            if (video) {
+                video.src = event.url;
+            }
+        });
+    });
+</script>
+@endscript

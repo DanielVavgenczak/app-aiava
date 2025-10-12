@@ -6,6 +6,9 @@ use App\Models\Lesson;
 new class extends Component {
     public Lesson $lesson;
     public $show = false;
+    public bool $hasPrevious = false;
+    public bool $hasNext = false;
+    public $showEndMessage = false;
 
     #[Computed]
     public $video_url = '';
@@ -14,7 +17,50 @@ new class extends Component {
     public function streamingLesson($lesson_id)
     {
         $this->lesson = Lesson::where('id', $lesson_id)->first();
+        if(!$this->lesson) return;
         $this->show = true;
+        $this->updateNavigationStates();
+        $this->showEndMessage = false;
+    }
+
+    public function navigate($direction)
+    {
+       if (!$this->lesson) return;
+
+        $operator = $direction === 'next' ? '>' : '<';
+        $order = $direction === 'next' ? 'asc' : 'desc';
+
+        $adjacentLesson = Lesson::where('module_id', $this->lesson->module_id)
+            ->where('created_at', $operator, $this->lesson->created_at)
+            ->orderBy('created_at', $order)
+            ->first();
+
+        if ($adjacentLesson) {
+            $this->streamingLesson($adjacentLesson->id);
+            $this->dispatch('update-student-lesson-highlight', lesson_id: $adjacentLesson->id);
+        } else {
+            // Mostra mensagem apenas no último bloco
+            if ($direction === 'next') {
+                $this->showEndMessage = true;
+            }
+        }
+    }
+
+     protected function updateNavigationStates()
+    {
+        if (!$this->lesson) {
+            $this->hasPrevious = false;
+            $this->hasNext = false;
+            return;
+        }
+
+        $this->hasPrevious = Lesson::where('module_id', $this->lesson->module_id)
+            ->where('created_at', '<', $this->lesson->created_at)
+            ->exists();
+
+        $this->hasNext = Lesson::where('module_id', $this->lesson->module_id)
+            ->where('created_at', '>', $this->lesson->created_at)
+            ->exists();
     }
 
     public function initVideo()
@@ -52,9 +98,56 @@ new class extends Component {
                 </video>
             </div>
         </div>
+        <!-- 👇 MENSAGEM DE FIM DOS BLOCOS -->
+        @if($showEndMessage)
+        <div class="mx-5 mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div class="flex items-center gap-3">
+                <x-mary-icon name="o-trophy" class="w-5 h-5 text-green-600 flex-shrink-0" />
+                <div class="flex-1">
+                    <p class="text-green-800 font-medium text-sm">Você concluiu esta aula!</p>
+                    <p class="text-green-600 text-xs mt-1">Todos os blocos foram assistidos nessa aula.</p>
+                </div>
+                <button wire:click="$set('showEndMessage', false)" class="text-green-600 hover:text-green-800 flex-shrink-0">
+                    <x-mary-icon name="o-x-mark" class="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+        @endif
+        <div class="w-full p-5 flex justify-between items-center">
+            <!-- Botão Anterior -->
+            @if($hasPrevious)
+                <button 
+                    type="button"
+                    class="btn btn-sm text-gray-600" 
+                    wire:click="navigate('previous')">
+                    <x-mary-icon name="o-chevron-left" /> Anterior
+                </button>
+            @else
+                <button 
+                    type="button"
+                    class="btn btn-sm text-gray-600  cursor-not-allowed" 
+                    disabled>
+                    <x-mary-icon name="o-chevron-left" /> Anterior
+                </button>
+            @endif
 
+            <!-- Botão Próximo -->
+            @if($hasNext)
+                <button
+                    type="button"
+                    class="btn btn-sm text-gray-600" 
+                    wire:click="navigate('next')">
+                    Próximo <x-mary-icon name="o-chevron-right" />
+                </button>
+            @else
+                <div class="px-4 py-2 text-gray-500 text-sm bg-gray-100 rounded-lg">
+                    Última aula ✓
+                </div>
+            @endif
+        </div>
         <!-- Informações da Aula -->
         <div class="p-4 border-t border-gray-100">
+            
             <div class="flex justify-between items-start">
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">{{ $lesson->title }}</h2>
@@ -69,7 +162,7 @@ new class extends Component {
                     @endif
                 </div>
                 <div class="flex space-x-2">
-                    <button class="p-2 text-gray-500 hover:text-pink-600 transition-colors">
+                    {{-- <button class="p-2 text-gray-500 hover:text-pink-600 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -80,7 +173,7 @@ new class extends Component {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                         </svg>
-                    </button>
+                    </button> --}}
                 </div>
             </div>
 
@@ -89,9 +182,21 @@ new class extends Component {
             <div class="mt-4 pt-4 border-t border-gray-100">
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
-                        <img class="h-8 w-8 rounded-full"
+                            @if (!$lesson->teacher->profile?->avatar)
+                            <livewire:pages.teacher.components.avatar
+                                initiais="{{ $lesson->teacher->initialLetterToAvatar() }}" class="w-20 h-20">
+                            @else
+                                <img src="{{ asset('storage/' .$lesson->teacher->profile->avatar) }}"
+                                    :class="$store.expandedSidebar.expanded ? 'w-20 h-20' : 'w-12 h-12'"
+                                    class="transition-all duration-300 ease-in-out border-2 border-gray-200 rounded-full dark:border-slate-700"
+                                    width="80" height="80" style="width: 80px; height: 80px; object-fit:cover;" loading="lazy" />
+                        @endif
+
+
+
+                        {{-- <img class="h-8 w-8 rounded-full"
                             src="{{ asset('storage/' . $lesson->teacher->profile->avatar ?? '') ?? asset('images/no-avatar.png') }}"
-                            alt="">
+                            alt=""> --}}
                     </div>
                     <div class="flex flex-col gap-1">
                         <h4>Professor</h4>
