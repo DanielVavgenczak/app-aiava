@@ -1,6 +1,6 @@
-
-import { ContinueUploadBlock } from "./discipline/lesson";
 import { AddButtonActions, configDriver } from "./utils";
+import { ContinueUploadBlock } from "./discipline/lesson";
+
 Livewire.on("continue-created-content", async (event) => {
   console.log("Evento recebido:", event);
   try {
@@ -49,7 +49,7 @@ export async function StartTourDisciplineCreateContent() {
           },
           onHighlighted: async (el) => {
             await new Promise((resolve) =>
-              setTimeout(resolve, 3000),
+              setTimeout(resolve, 1000),
             );
             disciplineID = el.getAttribute("data-tour");
             el.click();
@@ -117,24 +117,27 @@ export async function StartTourDisciplineCreateContent() {
             };
             const btnCancel = el.querySelector(`#module-input-cancel`);
             const btnCreate = el.querySelector(`#module-input-create`);
-            if (!btnCreate && !btnCancel) {
-              return;
-            }
-            btnCancel.addEventListener("click", toCloseActions);
-            btnCreate.addEventListener("click", async () => {
+           
+            await  btnCancel.addEventListener("click", toCloseActions);
+            await btnCreate.addEventListener("click", async () => {
+               await new Promise((resolve) => setTimeout(resolve, 1000));    
+                
+              const errorTitle = document.querySelector("#title_module_error");
+                await new Promise((resolve) => setTimeout(resolve, 500));    
+                if(errorTitle && errorTitle.textContent.trim() !== ""){
+                
+                    alert("Aviso: Você ja possue uma aula com esse nome.");
+                      console.log('deu error aqui')
+                      return;
+                }
               Livewire.dispatch("to-teste-register", {
                 open: false,
               });
               store.openMai = false;
               resolve(true);
-              //let lesson_id = document.querySelector
-
               await driverObj.destroy();
-              await new Promise((resolve) => setTimeout(resolve, 3000));
-              //console.log("O Id da discipline aqu")
-              // Isolate find data-tour lesson 
+              await new Promise((resolve) => setTimeout(resolve, 1000));
               await StartTourDisciplineCreateContentUploadBlock();
-
             });
           },
         },
@@ -149,546 +152,74 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
   store.openMai = false;
   return new Promise(async (resolve) => {
     const modules = document.querySelectorAll("div.module-card");
-    let moduleText;
-    if (!lesson_id) {
-      moduleText =
-        modules.length > 1
-          ? `Em qual aula deseja adicionar um bloco?`
-          : `Como voce so tem uma aula vamos direto ao upload dos blocos`;
-    }
     const lastLessonRegisted = modules[modules.length - 1].getAttribute("data-tour");
-    moduleText = `Vamos adicionar um bloco a sua aula criada`
+    let moduleText = `Vamos adicionar um bloco à aula criada`
+    await new Promise((resolve) => setTimeout(resolve, 1000)); 
+    await ContinueUploadBlock(null, lastLessonRegisted);
+    return;
+  });
+}
 
+export async function StartTourDisciplineUploadBlockToLessonSelected() {
+  let store = Alpine.store("tourguide");
+  store.openMai = false;
+  let running = false;
+  return new Promise(async (resolve) => {
+    const modulesCard = document.querySelectorAll("div.module-card");    
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    if(modulesCard.length === 1) {
+       const uniqueModule = modulesCard[0].getAttribute('data-tour');
+       await ContinueUploadBlock(null, uniqueModule);
+       return;
+    }
+    
     const driverObj = drivertour({
       ...configDriver,
       steps: [
         {
           element: `#module-list-all`,
           popover: {
-            description: moduleText,
+            description: `Selecione a aula onde deseja adicionar um bloco`,
             showButtons: [""],
           },
           onHighlighted: async (el) => {
-            await new Promise((resolve) =>
-              setTimeout(resolve, 1000),
-            );
-            let dataId;
-            if (!lastLessonRegisted) {
-              dataId = el.getAttribute("data-tour");
-            }
-            dataId = lastLessonRegisted;
-            let moduleSelected = false;
-            if (!modules || modules.length === 0) return;
-            if (dataId != '') {
-              // passamos o dataId 
-              let getModules = modules
-              await driverObj.destroy();
-              await new Promise((resolve) => setTimeout(resolve, 3000));
-              await ContinueUploadBlock(modules, dataId)
-              // 
-              return;
-            }
-            if (modules.length === 1) {
-              await new Promise((resolve) =>
-                setTimeout(resolve, 1000),
-              );
-              dataId = modules[0].getAttribute("data-tour");
-              await driverObj.destroy();
-              await new Promise((resolve) =>
-                setTimeout(resolve, 1000),
-              );
-              const secondStep = [
-                {
-                  element: `#accordion-module-${dataId}`,
-                  popover: {
-                    description: `Vou abrir nessa aula`,
-                    side: "bottom",
-                    align: "start",
-                    showButtons: [""],
-                  },
-                  onHighlighted: async (el) => {
-                    await new Promise((resolve) =>
-                      setTimeout(resolve, 3000),
-                    );
-                    await driverObj.moveNext();
-                  },
-                },
-                {
-                  element: `#open-accordion-block-${dataId}`, // Seleciona o elemento com base no ID
-                  popover: {
-                    description: `Vou clicar e abrir para listar os blocos`,
-                    side: "bottom",
-                    align: "start",
-                    showButtons: [""],
-                  },
-                  onHighlighted: async (el) => {
-                    await new Promise((resolve) =>
-                      setTimeout(resolve, 3000),
-                    );
-                    const btnOpenAccordion =
-                      document.querySelector(
-                        `#open-accordion-block-${dataId}`,
-                      );
-                    await btnOpenAccordion.click();
-                    await driverObj.moveNext();
-                  },
-                },
-                {
-                  element: `#block-open-new-block-${dataId}`,
-                  popover: {
-                    description: `Vou clicar aqui para abrir a opção de adiconar um bloco`,
-                    side: "right",
-                    align: "center",
-                    showButtons: [""],
-                  },
-                  onHighlighted: async (el) => {
-                    await new Promise((resolve) =>
-                      setTimeout(resolve, 2000),
-                    );
-                    await el.click();
-                    await driverObj.moveNext();
-                  },
-                },
-                {
-                  element: `#browser-file-${dataId}`, // Seleciona o elemento com base no ID
-                  popover: {
-                    description: `Clique no icone para adiconar um novo vídeo`,
-                    side: "top",
-                    align: "start",
-                  },
-                  onHighlighted: async (el) => {
-                    //await new Promise((resolve) => setTimeout(resolve, 3000));
-                    const videoElement =
-                      document.querySelector(
-                        `#temp-video-preview-${dataId}`,
-                      );
-                    if (!videoElement) {
-                      console.error(
-                        "Elemento de vídeo não encontrado",
-                      );
-                      return;
+            await new Promise((resolve) => setTimeout(resolve, 1000));                        
+            let moduleSelected = false;            
+            if(modulesCard.length > 1) {         
+              modulesCard.forEach(module => {
+                module.style.zIndex = "200000000"
+                module.addEventListener('click', async (event) => {
+                  if (moduleSelected) return;
+                  
+                  event.preventDefault();
+                  moduleSelected = true;
+                  running = true;
+                  // Remove z-index das disciplinas não selecionadas
+                  modulesCard.forEach((otherModule) => {
+                    if (module !== otherModule) {
+                      otherModule.style.zIndex = "0";
                     }
-
-                    // Verifica se já tem src definido
-                    if (
-                      videoElement.src &&
-                      videoElement.src !== ""
-                    ) {
-                      console.log(
-                        "Vídeo já selecionado - avançando",
-                      );
-                      await driverObj.moveNext();
-                      return;
-                    }
-
-                    // Cria um observador para detectar quando o src for alterado
-                    const observer =
-                      new MutationObserver(
-                        async (mutations) => {
-                          for (const mutation of mutations) {
-                            if (
-                              mutation.type ===
-                              "attributes" &&
-                              mutation.attributeName ===
-                              "src"
-                            ) {
-                              if (
-                                videoElement.src &&
-                                videoElement.src !==
-                                ""
-                              ) {
-                                console.log(
-                                  "Vídeo selecionado detectado - avançando",
-                                );
-                                observer.disconnect(); // Para de observar
-                                await driverObj.moveNext();
-                              }
-                            }
-                          }
-                        },
-                      );
-
-                    // Configura o observador
-                    observer.observe(videoElement, {
-                      attributes: true, // Observa mudanças em atributos
-                      attributeFilter: ["src"], // Apenas para o atributo src
-                    });
-
-                    // Timeout de segurança (opcional)
-                    setTimeout(() => {
-                      observer.disconnect();
-                      console.log(
-                        "Timeout - observador removido",
-                      );
-                    }, 30000); // 30 segundos
-                  },
-                },
-                {
-                  element: `#temp-video-preview-${dataId}`, // Seleciona o elemento com base no ID
-                  popover: {
-                    description: `Verificar se está ok, clique em 'Próximo' para continuar o upload`,
-                    side: "top",
-                    align: "start",
-                    onPopoverRender: (
-                      popover,
-                      { config, state },
-                    ) => {
-                      const actions =
-                        AddButtonActions(
-                          popover,
-                          "Voltar ao inicio",
-                        );
-                      actions.addEventListener(
-                        "click",
-                        async () => {
-                          //Livewire.dispatch('to-close')
-                          await driverObj.destroy();
-                          store.openMai = true;
-                        },
-                      );
-                    },
-                  },
-                  onNextClick: async () => {
-                    console.log("click para p roi");
-                  },
-
-                },
-                {
-                  element: `#temp-preview-actions-${dataId}`, // Seleciona o elemento com base no ID
-                  popover: {
-                    description: `Clique em 'Enviar' para enviar o vídeo`,
-                    side: "top",
-                    align: "start",
-                    onPopoverRender: (
-                      popover,
-                      { config, state },
-                    ) => {
-                      const actions =
-                        AddButtonActions(
-                          popover,
-                          "Voltar ao inicio",
-                        );
-                      actions.addEventListener(
-                        "click",
-                        async () => {
-                          //Livewire.dispatch('to-close')
-                          await driverObj.destroy();
-                          store.openMai = true;
-                        },
-                      );
-                    },
-                  },
-                  onHighlighted: async (el) => {
-                    //await new Promise((resolve) => setTimeout(resolve, 3000));
-                    const btnSendVideoBlock =
-                      el.querySelector(
-                        `#lesson-send-video-block-content-${dataId}`,
-                      );
-                    if (!btnSendVideoBlock) {
-                      console.log("fudeo");
-                      return;
-                    }
-                    btnSendVideoBlock.addEventListener(
-                      "click",
-                      async () => {
-                        await driverObj.moveNext();
-                      },
-                    );
-                    //console.log('Bateu para terminar')
-                  },
-                },
-                {
-                  element: `#progress-bar-container-${dataId}`, // Seleciona o elemento com base no ID
-                  popover: {
-                    description: "Aguarde enquanto o video e enviado",
-                    side: "top",
-                    align: "start",
-                  },
-                  onHighlighted: async (el) => {
-                    await new Promise((resolve) =>
-                      setTimeout(resolve, 1000),
-                    );
-                    //console.log('Bateu para terminar')
-                    resolve(true);
-                    await driverObj.destroy();
-                    console.log("travamos here");
-                  },
-                },
-              ];
-
-              // Cria um novo tour com os passos atualizados
-              const updateOnedDriverObj = drivertour({
-                ...configDriver,
-                steps: secondStep,
+                  });
+                  
+                  const moduleId = module.getAttribute('data-tour');
+                  await driverObj.destroy()
+                  await ContinueUploadBlock(null, moduleId);
+                  resolve();
+                });       
               });
-
-              await updateOnedDriverObj.drive();
-              return;
-
-
-            }
-            /** Refazer */
-            modules.forEach((module) => {
-              module.style.zIndex = "200000000";
-
-              module.addEventListener("click", async (event) => {
-                if (moduleSelected) return;
-                event.preventDefault();
-                moduleSelected = true;
-                // Remove z-index das disciplinas não selecionadas
-                modules.forEach((otherModule) => {
-                  if (module !== otherModule) {
-                    otherModule.style.zIndex = "0";
-                  }
-                });
-                dataId = module.getAttribute("data-tour");
-                await driverObj.destroy();
-                // Cria um novo tour com os passos atualizados
-                const secondStep = [
-                  {
-                    element: `#accordion-module-${dataId}`,
-                    popover: {
-                      description: `Vamos abrir as opções na aula selecionada`,
-                      side: "bottom",
-                      align: "start",
-                      showButtons: [""],
-                    },
-                    onHighlighted: async (el) => {
-                      await new Promise((resolve) =>
-                        setTimeout(resolve, 3000),
-                      );
-                      await driverObj.moveNext();
-                    },
-                  },
-                  {
-                    element: `#open-accordion-block-${dataId}`, // Seleciona o elemento com base no ID
-                    popover: {
-                      description: `Vou clicar e abrir para listar os blocos`,
-                      side: "bottom",
-                      align: "start",
-                      showButtons: [""],
-                    },
-                    onHighlighted: async (el) => {
-                      await new Promise((resolve) =>
-                        setTimeout(resolve, 3000),
-                      );
-                      const btnOpenAccordion =
-                        document.querySelector(
-                          `#open-accordion-block-${dataId}`,
-                        );
-                      await btnOpenAccordion.click();
-                      await driverObj.moveNext();
-                    },
-                  },
-                  {
-                    element: `#block-open-new-block-${dataId}`,
-                    popover: {
-                      description: `Vou clicar aqui para abrir a opção de adicionar um bloco`,
-                      side: "right",
-                      align: "center",
-                      showButtons: [""],
-                    },
-                    onHighlighted: async (el) => {
-                      await new Promise((resolve) =>
-                        setTimeout(resolve, 3500),
-                      );
-                      await el.click();
-                      // el.click(); // Simula o clique no botão de edição
-                      await driverObj.moveNext();
-                    },
-                  },
-                  {
-                    element: `#browser-file-${dataId}`, // Seleciona o elemento com base no ID
-                    popover: {
-                      description: `Clique no icone para adiconar um novo vídeo`,
-                      side: "top",
-                      align: "start",
-                      // onPopoverRender: (popover, { config, state }) => {
-                      //     const actions =  AddButtonActions(popover, "voltar ao inicio")
-                      //     actions.addEventListener('click', async () => {
-                      //         Livewire.dispatch('to-close')
-                      //         await driverObj.destroy();
-                      //         store.openMai = true;
-                      //     })
-                      // }
-                    },
-                    onHighlighted: async (el) => {
-                      //await new Promise((resolve) => setTimeout(resolve, 3000));
-                      const videoElement =
-                        document.querySelector(
-                          `#temp-video-preview-${dataId}`,
-                        );
-                      if (!videoElement) {
-                        console.error(
-                          "Elemento de vídeo não encontrado",
-                        );
-                        return;
-                      }
-
-                      // Verifica se já tem src definido
-                      if (
-                        videoElement.src &&
-                        videoElement.src !== ""
-                      ) {
-                        console.log(
-                          "Vídeo já selecionado - avançando",
-                        );
-                        await driverObj.moveNext();
-                        return;
-                      }
-
-                      // Cria um observador para detectar quando o src for alterado
-                      const observer =
-                        new MutationObserver(
-                          async (mutations) => {
-                            for (const mutation of mutations) {
-                              if (
-                                mutation.type ===
-                                "attributes" &&
-                                mutation.attributeName ===
-                                "src"
-                              ) {
-                                if (
-                                  videoElement.src &&
-                                  videoElement.src !==
-                                  ""
-                                ) {
-                                  console.log(
-                                    "Vídeo selecionado detectado - avançando",
-                                  );
-                                  observer.disconnect(); // Para de observar
-                                  await driverObj.moveNext();
-                                }
-                              }
-                            }
-                          },
-                        );
-
-                      // Configura o observador
-                      observer.observe(videoElement, {
-                        attributes: true, // Observa mudanças em atributos
-                        attributeFilter: ["src"], // Apenas para o atributo src
-                      });
-
-                      // Timeout de segurança (opcional)
-                      setTimeout(() => {
-                        observer.disconnect();
-                        console.log(
-                          "Timeout - observador removido",
-                        );
-                      }, 30000); // 30 segundos
-                    },
-                  },
-                  {
-                    element: `#temp-video-preview-${dataId}`, // Seleciona o elemento com base no ID
-                    popover: {
-                      description: `Verifique se está ok, clique em 'Próximo' para continuar o upload`,
-                      side: "top",
-                      align: "start",
-                      onPopoverRender: (
-                        popover,
-                        { config, state },
-                      ) => {
-                        const actions =
-                          AddButtonActions(
-                            popover,
-                            "Voltar ao início",
-                          );
-                        actions.addEventListener(
-                          "click",
-                          async () => {
-                            //Livewire.dispatch('to-close')
-                            await driverObj.destroy();
-                            store.openMai = true;
-                          },
-                        );
-                      },
-                    },
-                    onNextClick: async () => {
-                      console.log("click para p roi");
-                    },
-
-                  },
-                  {
-                    element: `#temp-preview-actions-${dataId}`, // Seleciona o elemento com base no ID
-                    popover: {
-                      description: `Clique em 'Enviar' para enviar o vídeo`,
-                      side: "top",
-                      align: "start",
-                      onPopoverRender: (
-                        popover,
-                        { config, state },
-                      ) => {
-                        const actions =
-                          AddButtonActions(
-                            popover,
-                            "Voltar ao início",
-                          );
-                        actions.addEventListener(
-                          "click",
-                          async () => {
-                            //Livewire.dispatch('to-close')
-                            await driverObj.destroy();
-                            store.openMai = true;
-                          },
-                        );
-                      },
-                    },
-                    onHighlighted: async (el) => {
-                      //await new Promise((resolve) => setTimeout(resolve, 3000));
-                      const btnSendVideoBlock =
-                        el.querySelector(
-                          `#lesson-send-video-block-content-${dataId}`,
-                        );
-                      if (!btnSendVideoBlock) {
-                        console.log("fudeo");
-                        return;
-                      }
-                      btnSendVideoBlock.addEventListener(
-                        "click",
-                        async () => {
-                          await driverObj.moveNext();
-                        },
-                      );
-                      //console.log('Bateu para terminar')
-                    },
-                  },
-                  {
-                    element: `#progress-bar-container-${dataId}`, // Seleciona o elemento com base no ID
-                    popover: {
-                      description: "Aguarde enquanto o vídeo e enviado",
-                      side: "top",
-                      align: "start",
-                    },
-                    onHighlighted: async (el) => {
-                      await new Promise((resolve) =>
-                        setTimeout(resolve, 1000),
-                      );
-                      //console.log('Bateu para terminar')
-                      resolve(true);
-                      await driverObj.destroy();
-                      console.log("travamos here");
-                    },
-                  },
-                ];
-
-                // Cria um novo tour com os passos atualizados
-                const updatedDriverObj = drivertour({
-                  ...configDriver,
-                  steps: secondStep,
-                });
-
-                // Inicia o novo tour
-                await updatedDriverObj.drive();
-              });
-            });
+             }
           },
-        },
+        }
       ],
     });
+    
     await driverObj.drive();
+    resolve();
   });
 }
+
+
+
 
 export function StartTourCreateActivitTask() {
   let store = Alpine.store("tourguide");

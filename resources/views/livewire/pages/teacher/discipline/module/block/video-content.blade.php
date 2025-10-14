@@ -117,7 +117,7 @@ new class extends Component {
     }
 }; ?>
 
-<div class="flex flex-col w-full bg-gray-100">
+<div class="flex flex-col w-full">
     <!-- Modal de confirmação -->
     <x-mary-modal wire:model="sureDeleteBlock" class="backdrop-blur">
         <div class="flex flex-col items-center w-full gap-2 mb-4 justify-center">
@@ -142,10 +142,10 @@ new class extends Component {
 
     <!-- Botões de ação -->
     <div class="flex justify-end w-full gap-3 px-3 py-3">
-        <button class="btn btn-sm bg-ghost" disabled>
+        {{-- <button class="btn btn-sm bg-ghost" disabled>
             <x-mary-icon name="o-arrow-path" />
             Atualizar
-        </button>
+        </button> --}}
         @if ($lesson)
             <button x-on:click="$wire.sureDeleteBlock = true" class="btn btn-sm bg-pink-600 text-gray-50">
                 <x-mary-icon name="o-trash" class="w-5 h-5" />

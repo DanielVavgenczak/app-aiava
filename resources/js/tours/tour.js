@@ -35,6 +35,7 @@ document.addEventListener("alpine:init", () => {
                 tours: [
                     "StartTourDisciplineCreateContent",
                     "StartTourDisciplineCreateContentUploadBlock",
+                    "StartTourDisciplineUploadBlockToLessonSelected",
                     "StartTourCreateActivitTask"
                 ],
             },

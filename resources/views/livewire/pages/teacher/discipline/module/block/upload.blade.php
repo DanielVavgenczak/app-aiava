@@ -63,8 +63,8 @@ new class extends Component {
         <!-- Mensagem de Sucesso -->
         <div id="success-message-{{ $module_id }}" style="display: none"
             class="flex items-center gap-3 p-4 border border-green-200 rounded-lg bg-green-50">
-            <x-mary-alert icon="o-check-circle" class="alert-success">
-                Upload concluído com sucesso!
+            <x-mary-alert icon="o-check-circle" class="alert-success w-full">
+                Bloco adicionado com sucesso!
             </x-mary-alert>
         </div>
 

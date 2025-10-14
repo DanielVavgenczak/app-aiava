@@ -24,6 +24,15 @@ new class extends Component {
         $validate = $this->validate([
             'title' => 'required|string|min:3',
         ]);
+
+         $exists = Module::where('discipline_id', $this->disciplineId)
+                ->whereNormalizedTitle($this->title)
+                ->exists();
+        
+        if ($exists) {
+            $this->addError('title', 'Já existe uma aula com este nome nesta disciplina.');
+            return;
+        }
         $module = Module::create([
             'title' => $this->title,
             'discipline_id' => $this->disciplineId,
@@ -48,7 +57,12 @@ new class extends Component {
                 type="text" 
                 class="input w-full !outline-none lesson-input-title focus:border-gray-400" 
                 wire:model="title" 
-                placeholder="Título da aula"/>                
+                placeholder="Título da aula"/>              
+              @error('title')
+                <div id="title_module_error">
+                  <span class="text-xs text-pink-700">{{ $message }}</span>
+                </div>
+              @enderror 
             </div>
             <div class="flex items-center justify-end gap-4 mt-5" id="lesson-actions-buttons">
                 <button type="button" wire:click="cancel" id="module-input-cancel"

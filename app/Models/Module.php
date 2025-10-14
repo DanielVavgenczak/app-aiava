@@ -28,4 +28,15 @@ class Module extends Model
     {
         return $this->hasMany(ActivitTask::class);
     }
+
+    public function setTitleAttribute($value)
+    {
+        $this->attributes['title'] = trim($value);
+    }
+    
+    // 👇 SCOPE para buscar por título normalizado
+    public function scopeWhereNormalizedTitle($query, $title)
+    {
+        return $query->whereRaw('LOWER(TRIM(title)) = LOWER(TRIM(?))', [$title]);
+    }
 }

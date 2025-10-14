@@ -26,7 +26,6 @@ new class extends Component {
 
         if(!$result) return;
         $this->open = false;
-        $this->js("console.log('pegando o id', " . json_encode($this->form->getDisciplineId()) . ")");
         $this->dispatch('discipline-send-id-tour', discipline_id: $this->form->getDisciplineId());
         $this->dispatch('discipline-event', type: 'create', msg: 'Disciplina criada com sucesso!');
         $this->form->reset();

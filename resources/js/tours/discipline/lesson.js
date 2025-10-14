@@ -11,7 +11,7 @@ export async function ContinueUploadBlock(modules, dataId) {
         showButtons: [""],
       },
       onHighlighted: async (el) => {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await updateOnedDriverObj.moveNext();
       },
     },
@@ -24,7 +24,7 @@ export async function ContinueUploadBlock(modules, dataId) {
         showButtons: [""],
       },
       onHighlighted: async (el) => {
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         const btnOpenAccordion = document.querySelector(`#open-accordion-block-${dataId}`);
         await btnOpenAccordion.click();
         await updateOnedDriverObj.moveNext();
@@ -39,7 +39,7 @@ export async function ContinueUploadBlock(modules, dataId) {
         showButtons: [""],
       },
       onHighlighted: async (el) => {
-        await new Promise((resolve) => setTimeout(resolve, 3500));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await el.click();
         await updateOnedDriverObj.moveNext();
       },
@@ -99,16 +99,13 @@ export async function ContinueUploadBlock(modules, dataId) {
         // Timeout de segurança (opcional)
         setTimeout(() => {
           observer.disconnect();
-          console.log(
-            "Timeout - observador removido",
-          );
         }, 30000); // 30 segundos
       },
     },
     {
       element: `#temp-video-preview-${dataId}`, // Seleciona o elemento com base no ID
       popover: {
-        description: `Verifique se está ok, clique em 'Próximo' para continuar o upload`,
+        description: `Caso o video esteja correto, clique em "Próximo"`,
         side: "top",
         align: "start",
         onPopoverRender: (
@@ -141,24 +138,7 @@ export async function ContinueUploadBlock(modules, dataId) {
         description: `Clique em 'Enviar' para enviar o video`,
         side: "top",
         align: "start",
-        onPopoverRender: (
-          popover,
-          { config, state },
-        ) => {
-          const actions =
-            AddButtonActions(
-              popover,
-              "Voltar ao inicio",
-            );
-          actions.addEventListener(
-            "click",
-            async () => {
-              //Livewire.dispatch('to-close')
-              await updateOnedDriverObj.destroy();
-              store.openMai = true;
-            },
-          );
-        },
+        showButtons:[""]
       },
       onHighlighted: async (el) => {
         //await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -166,17 +146,13 @@ export async function ContinueUploadBlock(modules, dataId) {
           el.querySelector(
             `#lesson-send-video-block-content-${dataId}`,
           );
-        if (!btnSendVideoBlock) {
-          console.log("fudeo");
-          return;
-        }
+        if (!btnSendVideoBlock) return;
         btnSendVideoBlock.addEventListener(
           "click",
           async () => {
             await updateOnedDriverObj.moveNext();
           },
         );
-        //console.log('Bateu para terminar')
       },
     },
     {
@@ -185,15 +161,33 @@ export async function ContinueUploadBlock(modules, dataId) {
         description: "Aguarde enquanto o video e enviado",
         side: "top",
         align: "start",
+        showButtons:[""]
       },
       onHighlighted: async (el) => {
-        await new Promise((resolve) =>
-          setTimeout(resolve, 1000),
-        );
-        //console.log('Bateu para terminar')
-        resolve(true);
-        await updateOnedDriverObj.destroy();
-        console.log("travamos here");
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        let successMessage = document.getElementById(`success-message-${dataId}`);
+        await new Promise((resolve) => setTimeout(resolve, 2000));        
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              console.log('Mudança detectada:', mutation.type, mutation.attributeName);              
+              // Verifica o display atual independente do que mudou
+              if (successMessage.style.display !== 'none') {
+                if (updateOnedDriverObj) {
+                  updateOnedDriverObj.destroy();
+                }
+                observer.disconnect();
+                //resolve();
+              }
+            });
+          });
+
+          observer.observe(successMessage, {
+            attributes: true,
+            attributeFilter: ['style', 'class'], // 👈 Observa classe também
+            childList: true, // 👈 Observa conteúdo interno
+            subtree: true // 👈 Observa elementos filhos
+          });
+            
       },
     },
   ];
