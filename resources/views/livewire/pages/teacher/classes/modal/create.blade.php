@@ -93,15 +93,9 @@ new class extends Component {
     <form wire:submit.prevent="storeClasse" wire:loading.class="flex flex-col justify-center items-center">
         <div class="flex flex-col" wire:loading.remove>
             <div class="mb-4" id="classe-input-discipline">
-                @if (count($disciplines) > 1)
-                    <label class="block mb-1 text-sm font-medium text-gray-700">Disciplina</label>
+                   <label class="block mb-1 text-sm font-medium text-gray-700">Disciplina</label>
                     <x-mary-select wire:model="disciplineId" placeholder="Selecione a disciplina" :options="$disciplines"
                         option-label="title" option-value="id" placeholder-value="0" class="w-full !outline-none" />
-                @else
-                    <label class="block mb-1 text-sm font-medium text-gray-700">Disciplina selecionada</label>
-                    <x-mary-select wire:model="disciplineId" :options="$disciplines" option-label="title" option-value="id"
-                        placeholder-value="title" class="w-full !outline-none" x-on:disabled="true" disabled />
-                @endif
             </div>
             <div class="my-3" id="classe-input-name">
                 <x-mary-input wire:model="class_name" label="Titulo" placeholder="Nome da turma"

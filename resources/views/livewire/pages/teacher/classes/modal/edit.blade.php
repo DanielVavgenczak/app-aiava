@@ -55,7 +55,7 @@ new class extends Component {
     private function getDisciplines(string $id = '')
     {
         $this->disciplines = Discipline::with('students')
-            ->where('user_id', Auth::user()->id)
+            ->where('teacher_id', Auth::guard('teacher')->user()->id)
             ->get()
             ->toArray();
     }
@@ -86,10 +86,9 @@ new class extends Component {
     }
 }; ?>
 
-<x-mary-modal wire:model="open" title="Editar turma" subtitle="Edite informações da turma" box-class="w-11/12  max-w-6xl"
-    persistent>
-    <form wire:submit.prevent="updateClasse" wire:loading.class="flex flex-col justify-center items-center">
-        <div class="flex flex-col" wire:loading.remove id="classe-edit-form-{{ $classe->id ?? '' }}">
+<x-mary-modal wire:model="open" title="Editar turma" subtitle="Edite informações da turma">
+    <form wire:submit.prevent="updateClasse" wire:loading.class="flex flex-col justify-center items-center" id="classe-edit-form-{{ $classe->id ?? '' }}">
+        <div class="flex flex-col" wire:loading.remove >
             <div class="mb-4" id="classe-input-discipline-{{ $classe->id ?? '' }}">
                 <label class="block mb-1 text-sm font-medium text-gray-700">Disciplina selecionada</label>
                 <x-mary-select wire:model="disciplineId" :options="$disciplines" option-label="title" option-value="id"

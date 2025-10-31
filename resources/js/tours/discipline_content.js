@@ -124,11 +124,9 @@ export async function StartTourDisciplineCreateContent() {
                 
               const errorTitle = document.querySelector("#title_module_error");
                 await new Promise((resolve) => setTimeout(resolve, 500));    
-                if(errorTitle && errorTitle.textContent.trim() !== ""){
-                
+                if(errorTitle && errorTitle.textContent.trim() !== ""){                
                     alert("Aviso: Você ja possue uma aula com esse nome.");
-                      console.log('deu error aqui')
-                      return;
+                    return;
                 }
               Livewire.dispatch("to-teste-register", {
                 open: false,

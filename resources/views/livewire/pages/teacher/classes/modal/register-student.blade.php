@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Hash;
 new class extends Component {
     public bool $open = false;
 
-    #[Validate('required', message: 'Nome do estudante é obrigatório!')]
-    #[Validate('min:5', message: 'O nome do estudante deve ter no minimo 5 caracteres')]
+    #[Validate('required', message: 'Nome é obrigatório!')]
+    #[Validate('min:5', message: 'O nome deve ter no minimo 5 caracteres')]
     public string $studentName = '';
-    #[Validate('required', message: 'O e-mail do estudante é obrigatório!')]
-    #[Validate('email', message: 'O e-mail do estudante deve ser valido!')]
+    #[Validate('required', message: 'O e-mail é obrigatório!')]
+    #[Validate('email', message: 'O e-mail deve ser valido!')]
     public string $studentEmail = '';
     public string $studentPhone = '';
     public array $students = [];
@@ -27,17 +27,19 @@ new class extends Component {
 
     public function addStudent()
     {
-        $this->validateMultiple(['studentName', 'studentEmail']);
-        $students = [
-            'name' => $this->studentName,
-            'email' => $this->studentEmail,
-            'phone' => $this->studentPhone,
+        $validated = $this->validate([
+            'studentName' => 'required|string|min:3',
+            'studentEmail' => 'required|email',
+            'studentPhone' => 'nullable|string'
+        ]);
+          $students = [
+            'name' => $validated['studentName'],
+            'email' => $validated['studentEmail'],
+            'phone' => $validated['studentPhone'] ?? '',
         ];
 
         $this->students[] = $students;
-        $this->studentName = '';
-        $this->studentEmail = '';
-        $this->studentPhone = '';
+        $this->reset(['studentName', 'studentEmail', 'studentPhone']);
     }
 
     /**
@@ -104,46 +106,69 @@ new class extends Component {
         $this->reset('studentName', 'studentEmail', 'studentPhone', 'students');
         $this->open = false;
     }
-    protected function validateMultiple($fields)
-    {
-        $validate = [];
-        foreach ($fields as $field) {
-            $validateData = $this->validateOnly($field);
-            $validate[key($validateData)] = current($validateData);
-        }
-
-        return $validate;   
-    }
+    // protected function validateMultiple($fields)
+    // {
+    //     $validate = [];
+    //     foreach ($fields as $field) {
+    //       $validateData = $this->validateOnly($field);
+    //       $validate[key($validateData)] = current($validateData);
+    //       $this->js("console.log('Validation init:', " . json_encode($validate) . ");");
+    //     }
+    //     $this->js("console.log('Validation complete:', " . json_encode($validate) . ");");
+    //     return $validate;   
+    // }
 }; ?>
 
 <x-mary-modal wire:model="open" title="Aluno" subtitle="Registrar um novo Aluno" box-class="w-11/12  max-w-6xl">
     <form wire:submit.prevent="storeStudent" wire:loading.class="flex flex-col justify-center items-center">
-        <div class="mb-3 grid grid-cols-12 gap-2 items-baseline" wire:target="storeStudent" wire:loading,remove
+        <div class="mb-3 grid grid-cols-12 gap-2 items-end" wire:target="storeStudent" wire:loading,remove
             id="student-form">
             <div class="col-span-4" id="student-input-full_name">
-                <input 
-                class="input !outline-none focus:border-gray-300" 
-                placeholder="Nome do aluno" 
-                wire:model="studentName"/>
-               
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-bold text-gray-600" for="input-student-full_name">Nome do aluno</label>
+                  <input 
+                  class="input !outline-none focus:border-gray-300" 
+                  placeholder="Nome do aluno" 
+                  id="input-student-full_name"
+                  wire:model="studentName"/>
+                </div>
+                <div>
+                  @error("studentName")
+                  <span class="text-xs text-red-500">{{ $message }}</span>
+                  @enderror
+                </div>
             </div>
             <div class="col-span-4" id="student-input-email">
-               <input 
-                class="input !outline-none focus:border-gray-300" 
-                placeholder="E-mail do aluno" 
-                wire:model="studentEmail"/>
-            </div>
-            <div class="col-span-3" id="student-input-phone">
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-bold text-gray-600" for="input-student-input-email">E-mail do aluno</label>
                 <input 
                 class="input !outline-none focus:border-gray-300" 
-                placeholder="(41) 99999-9999  *opcional"
-                x-mask="(99) 99999-9999"
-                wire:model="studentPhone"/>
+                placeholder="E-mail do aluno"
+                id="input-student-input-email" 
+                wire:model="studentEmail"/>
+              </div>
+              @error("studentEmail")
+              <div id="student-email-error">
+                  <span class="text-xs text-red-500">{{ $message }}</span>
+              </div>
+              @enderror
+            </div>
+            <div class="col-span-3" id="student-input-phone">
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-bold text-gray-600" for="input-student-input-phone">Telefone do aluno (*opcional)</label>
+                  <input 
+                  class="input !outline-none focus:border-gray-300" 
+                  placeholder="(41) 99999-9999"
+                  x-mask="(99) 99999-9999"
+                  id="input-student-input-phone"
+                  wire:model="studentPhone"/>
+                </div>
              
             </div>
             <div class="col-span-1" id="student-input-add">
-                <x-mary-button icon="o-plus" label="adicionar" type="button" class="btn btn-sm btn-primary capitalize"
-                    wire:click.prevent="addStudent" spinner />
+                <button class="btn  bg-pink-700 text-gray-50" type="button" id="student-input-add-to-list">
+                  <x-mary-icon name="o-plus" class="w-5 h-5" wire:click="addStudent"/>
+                </button:>
             </div>
         </div>
         @if (count($students) > 0)

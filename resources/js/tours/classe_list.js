@@ -1,3 +1,4 @@
+import { ContinueCreateAcessClasseTour } from "./classe/createAndAccess";
 import { AddButtonActions, configDriver
  } from "./utils";
 
@@ -23,7 +24,7 @@ export async function StartTourClasseCreate() {
                             return;
                         }
                         btnClasseCreate.click();
-                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        await new Promise((resolve) => setTimeout(resolve, 2000));
                         await driverObj.moveNext();
                     },
                 },
@@ -34,7 +35,7 @@ export async function StartTourClasseCreate() {
                         onPopoverRender: (popover, { config, state }) => {
                             const actions = AddButtonActions(
                                 popover,
-                                "voltar ao inicio",
+                                "Voltar ao início",
                             );
                             actions.addEventListener("click", async() => {
                                 Livewire.dispatch("classe-create-cancel");
@@ -51,7 +52,7 @@ export async function StartTourClasseCreate() {
                         onPopoverRender: (popover, { config, state }) => {
                             const actions = AddButtonActions(
                                 popover,
-                                "voltar ao inicio",
+                                "Voltar ao início",
                             );
                             actions.addEventListener("click", () => {
                                 Livewire.dispatch("classe-create-cancel");
@@ -68,7 +69,7 @@ export async function StartTourClasseCreate() {
                         onPopoverRender: (popover, { config, state }) => {
                             const actions = AddButtonActions(
                                 popover,
-                                "voltar ao inicio",
+                                "Voltar ao início",
                             );
                             actions.addEventListener("click", async() => {
                                 Livewire.dispatch("classe-create-cancel");
@@ -91,7 +92,14 @@ export async function StartTourClasseCreate() {
 
                         save.addEventListener("click", async () => {
                             await driverObj.destroy();
-                            store.openMai = true;
+                            store.openMai = false;
+                            await new Promise((resolve) => setTimeout(resolve, 2500));
+                            let lastInsertedClasse = document.querySelectorAll("div.card-classe");
+                            if (!lastInsertedClasse || lastInsertedClasse.length === 0) {
+                                return;
+                            }
+                            await new Promise((resolve) => setTimeout(resolve, 1000));
+                            await ContinueCreateAcessClasseTour(lastInsertedClasse[0].getAttribute('data-tour'));
                         });
                     },
                 },
@@ -100,6 +108,14 @@ export async function StartTourClasseCreate() {
         return await driverObj.drive();
     })
 }
+
+
+
+
+
+
+
+
 export async function StartTourClasseDelete(){
     let store = Alpine.store("tourguide");
     store.openMai = false;
@@ -354,7 +370,7 @@ export async function StartTourClasseEdit()
                                             side: "top",
                                             align: "start",
                                             onPopoverRender: (popover, { config, state }) => {
-                                                const actions =  AddButtonActions(popover, "voltar ao inicio")
+                                                const actions =  AddButtonActions(popover, "Voltar ao início")
                                                 actions.addEventListener('click', async () => {
                                                     Livewire.dispatch("classe-edit-cancel");
                                                     await driverObj.destroy();
@@ -368,7 +384,7 @@ export async function StartTourClasseEdit()
                                         popover: {
                                             description: "Clique em 'Cancelar' para cancelar Ou 'Editar' para savar as alterações",
                                             onPopoverRender: (popover, { config, state }) => {
-                                                const actions =  AddButtonActions(popover, "voltar ao inicio")
+                                                const actions =  AddButtonActions(popover, "Voltar ao início")
                                                 actions.addEventListener('click', async () => {
                                                     //Livewire.dispatch("classe-delete-cancel");
                                                     await driverObj.destroy();

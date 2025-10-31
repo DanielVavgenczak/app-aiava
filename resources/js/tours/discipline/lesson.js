@@ -56,7 +56,6 @@ export async function ContinueUploadBlock(modules, dataId) {
         //await new Promise((resolve) => setTimeout(resolve, 3000));
         const videoElement = document.querySelector(`#temp-video-preview-${dataId}`);
         if (!videoElement) {
-          console.error("Elemento de vídeo não encontrado");
           return;
         }
         // Verifica se já tem src definido
