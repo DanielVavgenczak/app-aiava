@@ -5,7 +5,7 @@ export async function ContinueUploadBlock(modules, dataId) {
     {
       element: `#accordion-module-${dataId}`,
       popover: {
-        description: `Vou abrir nessa aula`,
+        description: `Vou abrir essa aula`,
         side: "bottom",
         align: "start",
         showButtons: [""],
