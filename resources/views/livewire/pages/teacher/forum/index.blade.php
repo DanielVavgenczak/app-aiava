@@ -1,10 +1,42 @@
+<?php
+
+use Livewire\Volt\Component;
+use App\Models\{Discipline};
+new class extends Component {
+  public $disciplines;
+  public string $search = '';
+  public function mount(){
+      $this->js('console.log("oi")');
+      $this->disciplines = $this->getDisciplines();
+    }
+
+    private function getDisciplines(){
+       $teacher_id = Auth::guard('teacher')->user()->id;
+        return Discipline::where('teacher_id', $teacher_id)
+            ->when($this->search, function ($query) {
+                $query->where('title', 'like', '%' . $this->search . '%');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+}; ?>
+
 <div>
-  <div class="w-full flex">
-    <div class="p-5  rounded-lg w-1/2">
-      <h3 class="text-lg text-gray-700 font-semibold">Fórum de Discussões</h3>
-      <p class="text-gray-600 text-sm font-normal">
-        Nesta aba, tanto professores quanto estudantes poderão criar tópicos de discussão. Os tópicos poderão ser restritos a uma turma específica ou abertos, permitindo que outras turmas da mesma disciplina também possam visualizar e participar das discussões. O layout está sendo planejado com inspiração em fóruns amplamente utilizados, como o Reddit, buscando oferecer uma navegação familiar, intuitiva e organizada, que favoreça a interação e a troca de conhecimento entre os participantes.
-      </p>
-    </div>
-    </div>
+  <div class="flex items-center justify-between">
+    <h2>Foruns</h2>
+    <!-- 
+    TODO: Adicionar modal para o novo topico diretamente na disciplina ?
+    
+    <button class="bg-pink-700 btn text-gray-50">Iniciar novo tópico</button>-->
   </div>
+    <div class="grid grid-cols-5 gap-2">
+      @foreach ($disciplines as $discipline)
+        <div class="p-4 border rounded border-[1px] border-gray-300">
+          <h3 class="text-gray-700 text-sm font-normal">{{ $discipline->title }}</h3>
+          topicos: 3
+          <a href="{{ route('teacher.forum.show', $discipline->id) }}">acessar</a>
+        </div>
+        
+      @endforeach
+    </div>
+</div>
