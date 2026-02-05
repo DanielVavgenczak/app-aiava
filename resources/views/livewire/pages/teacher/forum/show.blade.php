@@ -39,19 +39,14 @@ new #[Layout('layouts.app')]  class extends Component {
 
     protected function loadDisciplineContent(string $id): Discipline
     {
-        return Discipline::with([
-            'modules' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente
-            },
-            'modules.lessons' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente
-            },
-            'modules.activitTasks' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente
+        return Discipline::withCount('ForumTopics') // Adiciona a contagem
+        ->with([
+            'ForumTopics' => function ($q) {
+                $q->orderBy('created_at', 'ASC');
             },
         ])
-            ->where('id', $id)
-            ->first();
+        ->where('id', $id)
+        ->first(); // Não esqueça este first()!
     }
 
 
@@ -69,31 +64,27 @@ new #[Layout('layouts.app')]  class extends Component {
    </div>
    <div class="bg-white p-5">
       <div class="flex items-center justify-between">
-       <h2>{{ $discipline->title }}</h2>
+        <div>
+            <h2 >{{ $discipline->title }}</h2>
+            <small>Perguntar como selecionar a turma</small>
+        </div>
         <button class="bg-pink-700 btn text-gray-50"
         @click="$wire.openNewTopicModal">Criar novo tópico</button>
         <livewire:pages.teacher.forum.modals.new-topic />
       </div>
       <div class="content relative top-4">
-        <div class="p-3 p-4 border-[1px] border-gray-200 bg-gray-50">
-          <div class="flex flex-col">
-            <div class="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-purple-100">
-              <img
-              src="https://unsplash.com/pt-br/fotografias/man-in-black-button-up-shirt-ZHvM3XIOHoE"
-              alt="Foto de perfil"
-              class="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-              onerror="this.src='https://ui-avatars.com/api/?name=Usuário&background=4f46e5&color=fff&size=128'"
-              >
-            </div>
-            <h3>Fulando</h3>
-          </div>
-          <div>
-            <h3>Alguem conseguiu resolver os exercicios da a</h3>
-          </div>
-
+        <div>
+            @foreach ($discipline->ForumTopics as $topic )
+                <div class="bg-gray-100 p-5 my-2 rounded-sm">
+                    <div>
+                        <a href="{{ route('teacher.forum.question', $topic->id) }}">{{ $topic->title }}</a>
+                    </div>
+                    <span>
+                    {{ $topic->created_at }}
+                    </span>
+                </div>
+            @endforeach
         </div>
       </div>
-
-
    </div>
 </div>

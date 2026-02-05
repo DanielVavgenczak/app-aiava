@@ -2,6 +2,7 @@
 
 namespace App\Models\Forum;
 
+use App\Models\Discipline;
 use App\Models\Traits\UuidTrait;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,4 +13,9 @@ class ForumTopic extends Model
 
     protected $keyType = "uuid";
     protected $fillable = ['discipline_id', 'title', 'content'];
+
+    public function discipline()
+    {
+        return $this->belongsTo(Discipline::class);
+    }
 }

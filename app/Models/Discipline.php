@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Forum\ForumTopic;
 use App\Models\Teacher\Student;
 use App\Models\Teacher\Teacher;
 use App\Models\Traits\UuidTrait;
@@ -15,7 +16,7 @@ class Discipline extends Model
     public $incrementing = false;
 
     protected $keyType = "uuid";
-    protected $fillable = ['teacher_id','title'];
+    protected $fillable = ['teacher_id', 'title'];
 
     public function Teacher()
     {
@@ -28,6 +29,11 @@ class Discipline extends Model
     public function students()
     {
         return $this->hasMany(related: Student::class);
+    }
+
+    public function ForumTopics()
+    {
+        return $this->hasMany(related: ForumTopic::class);
     }
 
     protected static function boot()
