@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Forum\ForumTopic;
+use App\Models\Teacher\Classe;
 use App\Models\Teacher\Student;
 use App\Models\Teacher\Teacher;
 use App\Models\Traits\UuidTrait;
@@ -36,6 +37,10 @@ class Discipline extends Model
         return $this->hasMany(related: ForumTopic::class);
     }
 
+    public function classes()
+    {
+        return $this->hasMany(related: Classe::class);
+    }
     protected static function boot()
     {
         parent::boot();

@@ -3,6 +3,7 @@
 namespace App\Models\Teacher;
 
 use App\Models\Discipline;
+use App\Models\Forum\ForumTopic;
 use App\Models\Traits\UuidTrait;
 use App\Models\Teacher\{Student};
 use Illuminate\Database\Eloquent\Model;
@@ -27,5 +28,10 @@ class Classe extends Model
     public function students()
     {
         return $this->hasMany(Student::class, foreignKey: 'classe_id');
+    }
+
+    public function forumTopics()
+    {
+        return $this->hasMany(related: ForumTopic::class, foreignKey: 'classe_id');
     }
 }

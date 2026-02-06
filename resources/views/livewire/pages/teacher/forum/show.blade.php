@@ -9,13 +9,17 @@ new #[Layout('layouts.app')]  class extends Component {
   use Toast;
   public string $disciplineID = '';
   public $discipline;
+  public $classes;
 
   public function mount(string $id)
     {
         $this->disciplineID = $id;
         $this->discipline = $this->loadDisciplineContent($this->disciplineID);
-        //$this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
+        $this->classes = $this->loadClasse($this->disciplineID);
+
     }
+
+
 
     #[On('forum-event')]
     public function update($type, $msg)
@@ -42,16 +46,26 @@ new #[Layout('layouts.app')]  class extends Component {
         return Discipline::withCount('ForumTopics') // Adiciona a contagem
         ->with([
             'ForumTopics' => function ($q) {
-                $q->orderBy('created_at', 'ASC');
+                $q->orderBy('created_at', 'ASC')
+                ->with(['classe']);
             },
         ])
         ->where('id', $id)
-        ->first(); // Não esqueça este first()!
+        ->first();
     }
 
+    private function loadClasse($discipline_id) {
+        $this->classes = Discipline::find($discipline_id)->Classes;
+        return $this->classes;
+    }
 
     public function openNewTopicModal(){
-        $this->dispatch('create-new-topic', discipline_id: $this->disciplineID);
+
+        $this->dispatch(
+            'create-new-topic',
+            discipline_id: $this->disciplineID,
+            classes: $this->discipline ? $this->discipline->classes : collect()
+        );
     }
 }; ?>
 
@@ -79,7 +93,11 @@ new #[Layout('layouts.app')]  class extends Component {
                     <div>
                         <a href="{{ route('teacher.forum.question', $topic->id) }}">{{ $topic->title }}</a>
                     </div>
-                    <span>
+                    <div class="">
+                        <x-mary-badge value="{{ $topic->classe->name ?? 'Sem turma' }}"></x-mary-badge>
+                    </div>
+
+                    <span class="text-xs">
                     {{ $topic->created_at }}
                     </span>
                 </div>
