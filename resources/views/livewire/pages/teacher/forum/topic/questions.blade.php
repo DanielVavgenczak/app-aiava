@@ -59,13 +59,13 @@ new #[Layout('layouts.app')] class extends Component {
                             Postado em: {{ $topic->created_at->format('d/m/Y') }}
                         </span>
                     </div>
-                </div>
+                </div>  
                     @else
                 <div class="alert alert-warning">
                     <x-mary-icon name="o-exclamation-triangle" class="w-6" />
                     <span>Tópico não encontrado</span>
                 </div>
-            @endif
+            @endif  
             <div>
                 <button
                         @click="$dispatch('open-modal-new-question-topic', { topic_id: '{{ $topic->id }}' })"
@@ -94,7 +94,6 @@ new #[Layout('layouts.app')] class extends Component {
                         </div>
                     </div>
                 @endforeach
-            </div>
         @else
             <!-- Estado vazio -->
             <div class="text-center py-12">

@@ -3,14 +3,13 @@
 use Livewire\Volt\Component;
 
 new class extends Component {
-    
-  
+
+
   public function logout()
   {
-        $this->js("console.log('logout student')");
         Auth::guard('student')->logout();
         session()->flush();
-        return $this->redirect(route('student.login'), navigate: true);
+        return $this->redirect(route('login'));
   }
 }; ?>
 
@@ -18,7 +17,8 @@ new class extends Component {
     class="fixed z-40 top-0 left-0 w-full bg-white dark:bg-slate-900 dark:border-gray-700 h-[80px] py-4 px-4 border-[1px] border-gray-300 flex justify-between items-center">
     <div class="flex items-center gap-3">
         <x-mary-button icon="o-bars-3" class="btn-circle btn-ghost" @click="$store.expandedSidebar.toggle()" />
-        <img src="{{ asset('images/logo.png') }}" class="w-32" />
+        {{-- <img src="{{ asset('images/logo.png') }}" class="w-32" /> --}}
+        <div>logo</div>
     </div>
     <div class="flex items-center">
         <x-mary-button icon="o-bell" class="indicator border-0 btn-ghost hover:bg-transparent hover:text-pink-600"

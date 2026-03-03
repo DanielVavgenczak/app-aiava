@@ -32,7 +32,7 @@ class Discipline extends Model
         return $this->hasMany(related: Student::class);
     }
 
-    public function ForumTopics()
+    public function forumTopics()
     {
         return $this->hasMany(related: ForumTopic::class);
     }

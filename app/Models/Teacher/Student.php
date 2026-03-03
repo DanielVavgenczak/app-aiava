@@ -2,6 +2,8 @@
 
 namespace App\Models\Teacher;
 
+use App\Models\Discipline;
+use App\Models\Forum\ForumTopic;
 use App\Models\Traits\UuidTrait;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,7 +29,7 @@ class Student extends Authenticatable
         'password',
     ];
 
-     protected $hidden = [
+    protected $hidden = [
         'password',
         'remember_token',
     ];
@@ -37,17 +39,22 @@ class Student extends Authenticatable
         return $this->belongsTo(Classe::class, 'classe_id');
     }
 
+    public function discipline()
+    {
+        return $this->belongsTo(Discipline::class, 'discipline_id');
+    }
+
     public function teacher()
     {
         return $this->belongsTo(Teacher::class);
     }
 
-     public function profile()
+    public function profile()
     {
         return $this->hasOne(StudentProfile::class);
     }
 
-    public function firstName():string
+    public function firstName(): string
     {
         return explode(' ', $this->full_name)[0];
     }
@@ -59,6 +66,12 @@ class Student extends Authenticatable
 
         return implode(' ', $letras);
     }
+
+    public function owner()
+    {
+        return $this->morphMany(ForumTopic::class, 'owner');
+    }
+
     protected function casts(): array
     {
         return [

@@ -12,7 +12,7 @@ class ForumTopic extends Model
     public $incrementing = false;
 
     protected $keyType = "uuid";
-    protected $fillable = ['discipline_id', 'user_id', 'title', 'content', 'classe_id'];
+    protected $fillable = ['discipline_id', 'user_id', 'title', 'content', 'classe_id', 'owner_id', 'owner_type'];
 
     public function discipline()
     {
@@ -22,5 +22,15 @@ class ForumTopic extends Model
     public function classe()
     {
         return $this->belongsTo(related: \App\Models\Teacher\Classe::class);
+    }
+
+    public function questions()
+    {
+        return $this->hasMany(related: QuestionTopic::class);
+    }
+
+    public function owner()
+    {
+        return $this->morphTo();
     }
 }

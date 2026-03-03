@@ -3,6 +3,7 @@
 use Livewire\Volt\Component;
 use Livewire\Attributes\{Layout, On, Url};
 use App\Models\{Discipline};
+
 use Mary\Traits\Toast;
 
 new #[Layout('layouts.app')]  class extends Component {
@@ -18,8 +19,6 @@ new #[Layout('layouts.app')]  class extends Component {
         $this->classes = $this->loadClasse($this->disciplineID);
 
     }
-
-
 
     #[On('forum-event')]
     public function update($type, $msg)
@@ -47,7 +46,7 @@ new #[Layout('layouts.app')]  class extends Component {
         ->with([
             'ForumTopics' => function ($q) {
                 $q->orderBy('created_at', 'ASC')
-                ->with(['classe']);
+                ->with(['classe','owner']);
             },
         ])
         ->where('id', $id)
@@ -83,7 +82,7 @@ new #[Layout('layouts.app')]  class extends Component {
             <small>Perguntar como selecionar a turma</small>
         </div>
         <button class="bg-pink-700 btn text-gray-50"
-        @click="$wire.openNewTopicModal">Criar novo tópico</button>
+        @click="$wire.openNewTopicModal">Novo tópico</button>
         <livewire:pages.teacher.forum.modals.new-topic />
       </div>
       <div class="content relative top-4">
@@ -92,6 +91,9 @@ new #[Layout('layouts.app')]  class extends Component {
                 <div class="bg-gray-100 p-5 my-2 rounded-sm">
                     <div>
                         <a href="{{ route('teacher.forum.question', $topic->id) }}">{{ $topic->title }}</a>
+                    </div>
+                    <div>
+                        {{ $topic->owner->first_name ?? $topic->owner->full_name ?? 'Desconhecido' }}
                     </div>
                     <div class="">
                         <x-mary-badge value="{{ $topic->classe->name ?? 'Sem turma' }}"></x-mary-badge>

@@ -20,11 +20,11 @@ new class extends Component {
                 'label' => 'disciplina',
                 'badge' => null,
             ],
-            // [
-            //     'icon' => 'o-chat-bubble-left-right',
-            //     'route' => route('teacher.forum'),
-            //     'label' => 'Forum',
-            // ],
+            [
+                'icon' => 'o-chat-bubble-left-right',
+                'route' => route('student.forum.index'),
+                'label' => 'Forum',
+            ],
         ];
     }
 }; ?>
@@ -68,8 +68,5 @@ new class extends Component {
             </nav>
         </div>
 
-        <!-- Rodapé fixo no final -->
-        <div class="w-full py-3 dark:bg-slate-900">
-            <p class="text-sm text-center text-gray-600 dark:text-gray-400">Sos <br />Solutions</p>
-        </div>
+
     </aside>

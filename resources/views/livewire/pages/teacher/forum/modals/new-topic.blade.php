@@ -24,6 +24,11 @@ new class extends Component {
         $this->classes = $classes;
    }
 
+   protected function getClassStudent()
+   {
+        return Classe::where('discipline_id', $this->discipline_id)->get();
+   }
+
    public function save()
     {
         $this->validate([
@@ -34,6 +39,8 @@ new class extends Component {
             'title' => $this->title,
             'discipline_id' => $this->discipline_id,
             'classe_id' => $this->classe_id,
+            'owner_id' => Auth::guard('teacher')->user()->id,
+            'owner_type' => 'App\Models\Teacher\Teacher',
         ]);
 
         $this->open = false;

@@ -38,7 +38,8 @@
     <!-- Conteúdo superior -->
     <div class="py-5">
         <div class="flex flex-col items-center justify-center gap-2">
-            @if (!Auth::guard('teacher')->user()->profile?->avatar)
+
+            {{-- @if (!Auth::guard('teacher')->user()->profile?->avatar)
                 <livewire:pages.teacher.components.avatar
                     initiais="{{ Auth::guard('teacher')->user()->initialLetterToAvatar() }}" class="w-20 h-20">
                 @else
@@ -48,7 +49,7 @@
                         width="80" height="80" style="width: 80px; height: 80px; object-fit:cover;" loading="lazy" />
             @endif
             <h4 class="font-medium text-gray-600 capitalize dark:text-gray-200">
-                {{ Auth::guard('teacher')->user()->first_name }}</h4>
+                {{ Auth::guard('teacher')->user()->first_name }}</h4> --}}
         </div>
     </div>
 

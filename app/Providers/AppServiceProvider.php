@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use App\Http\Middleware\IsTeacher;
 use App\Http\Middleware\IsStudent;
+use App\Http\Middleware\TeacherOrStudent;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,10 +25,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-       // LivewireDoctor::initCustomAsset();
-       Livewire::addPersistentMiddleware([
-         IsTeacher::class,
-         IsStudent::class
+        // LivewireDoctor::initCustomAsset();
+        Livewire::addPersistentMiddleware([
+            IsTeacher::class,
+            IsStudent::class,
+            TeacherOrStudent::class
         ]);
         Teacher::observe(TeacherObserver::class);
     }

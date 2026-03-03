@@ -14,12 +14,12 @@ class IsTeacher
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-   public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next): Response
     {
         //dd('caindo nesse carda', Auth::guard('teacher')->user());
-        if(Auth::guard('teacher')->check()){
+        if (Auth::guard('teacher')->check()) {
             return $next($request);
         }
-        return redirect()->route('teacher.login')->with('error', 'Acesso restrito');
+        return redirect()->route('login')->with('error', 'Acesso restrito');
     }
 }

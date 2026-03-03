@@ -20,12 +20,12 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="bg-base-100/50 dark:bg-slate-900">
+<body class="bg-gray-100 dark:bg-slate-900">
     <x-mary-toast />
     <div class="flex flex-col bg-gray-100 min-w-min" x-data>
         <livewire:pages.student.components.header />
         <livewire:pages.student.components.aside />
-        <main class="relative h-full p-2 transition-all duration-300 ease-in-out top-16 "
+        <main class="relative h-full p-2 transition-all duration-300 ease-in-out top-16 bg-gray-100"
             x-bind:class="$store.expandedSidebar.expanded ? 'w-[calc(100%-16.666667%)] left-[16.666667%]' :
                 'w-[calc(100%-5rem)] left-20'">
             {{ $slot }}

@@ -15,17 +15,14 @@
     <!-- Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-
 <body class="bg-gray-100">
     <div class="flex flex-col items-center justify-center w-full h-screen gap-4">
-        <img src="{{ asset('images/logo.png') }}" alt="Logo plaraforma de ensino ailumnus" class="w-48 " />
+        <h3> Ava</h3>
         <div class="">
-
-            @if (Route::has('teacher.login'))
+            @if (Route::has('login'))
                 <livewire:welcome.navigation />
             @endif
         </div>
     </div>
 </body>
-
 </html>

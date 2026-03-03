@@ -17,8 +17,8 @@ class IsStudent
     public function handle(Request $request, Closure $next): Response
     {
         //dd(Auth::guard('student')->user());
-        if(!Auth::guard('student')->check()){
-            return redirect()->route('student.login')
+        if (!Auth::guard('student')->check()) {
+            return redirect()->route('login')
                 ->with('error', 'Area exclusiva para estudantes');
         }
         return $next($request);

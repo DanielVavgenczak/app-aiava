@@ -6,9 +6,11 @@ use App\Models\{Discipline};
 new class extends Component {
   public $disciplines;
   public string $search = '';
-  public function mount(){
+
+  public function mount()
+  {
       $this->disciplines = $this->getDisciplines();
-    }
+  }
 
     private function getDisciplines(){
        $teacher_id = Auth::guard('teacher')->user()->id;

@@ -24,3 +24,4 @@ yarn-error.log
 /.zed
 /docker/docker-compose.override.yml
 /docker/Dockerfile.dev
+/docs
