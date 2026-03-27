@@ -1,0 +1,12 @@
+<?php
+
+use Livewire\Component;
+use Livewire\Attributes\{Layout};
+
+new #[Layout('layouts.app')] class extends Component {
+    //
+}; ?>
+
+<div>
+    Painel de profile do aluno aqui dentro
+</div>

@@ -77,8 +77,8 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Database Table
-    |--------------------------------------------------------------------------
+        | Session Database Table
+        |--------------------------------------------------------------------------
     |
     | When using the "database" session driver, you may specify the table to
     | be used to store sessions. Of course, a sensible default is defined

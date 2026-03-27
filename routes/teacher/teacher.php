@@ -4,42 +4,38 @@ use App\Http\Controllers\Teacher\LessonUploadController;
 use App\Livewire\Teacher\Classes\Index;
 use App\Livewire\Teacher\Classes\Show;
 use Illuminate\Support\Facades\Route;
-use Livewire\Volt\Volt;
 
 
 Route::prefix("professor")->middleware('isTeacher')->group(function () {
 
-    Route::view('/', 'app.teacher.home.index')
+    Route::livewire('/', 'pages::teacher.home.index')
         ->name('teacher.index');
 
-    Volt::route('/perfil', 'pages.teacher.profile.index')
+    Route::livewire('/perfil', 'pages::teacher.profile.index')
         ->name('teacher.profile');
 
-    Route::view('/disciplina', 'app.teacher.discipline.index')
+    Route::livewire('/disciplina', 'pages::teacher.discipline.index')
         ->name('teacher.discipline');
 
-    Volt::route("disciplina/{id}", "pages.teacher.discipline.show")
+    Route::livewire("disciplina/{id}", "pages::teacher.discipline.show")
         ->name(name: 'teacher.discipline.show');
 
-    Route::view('/mensagens', 'app.teacher.messages.index')
+    Route::livewire('/mensagens', 'pages::teacher.messages.index')
         ->name('teacher.messages');
 
-    Route::get('/turmas', Index::class)
+    Route::livewire('/turmas', 'pages::teacher.classes.index')
         ->name('teacher.classes');
 
-    Route::get('/turmas/{classe}', Show::class)
+    Route::livewire('/turmas/{classe}',  'pages::teacher.classes.show')
         ->name('teacher.classes.show');
-
-
-
-    Route::view('/forum', 'app.teacher.forum.index')
+    Route::livewire('/forum', 'pages::teacher.forum.index')
         ->name('teacher.forum');
 
-    Volt::route('/forum/{id}', 'pages.teacher.forum.show')
+    Route::livewire('/forum/{id}', 'pages::teacher.forum.show')
         ->name('teacher.forum.show');
 
-    Volt::route('/forum/question/{id}', 'pages.teacher.forum.topic.questions')
-        ->name('teacher.forum.question');
+    Route::livewire('/forum/replies/{id}', 'pages::teacher.forum.replies')
+        ->name('teacher.forum.replies');
 
     // upload and transmition
     // TODO: verificar a rota que faz o upload se é necessario traduzir

@@ -2,10 +2,9 @@
 
 namespace App\Models\Teacher;
 
-use App\Models\Discipline;
 use App\Models\Forum\ForumTopic;
 use App\Models\Traits\UuidTrait;
-use App\Models\Teacher\{Student};
+use App\Models\Teacher\{Discipline, Student};
 use Illuminate\Database\Eloquent\Model;
 
 class Classe extends Model

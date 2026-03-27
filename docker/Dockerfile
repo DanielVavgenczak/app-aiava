@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-# Dependências do sistema
+# Instalar dependências para Laravel 12 + PostgreSQL + Vídeos
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -12,23 +12,24 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     nodejs \
     npm \
-    ffmpeg
+    ffmpeg \
+    && npm install -g yarn
 
-# Extensões PHP
+# Instalar extensões PHP necessárias
 RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath gd
 
-# Composer
+# Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Configurar PHP para uploads de vídeo
+RUN echo "upload_max_filesize = 100M" > /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/uploads.ini
 
 WORKDIR /var/www/html
 
-# Copia código (usado apenas em produção)
-COPY . .
-
-# Instala dependências PHP
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
-
-# Permissões padrão
-RUN chown -R www-data:www-data storage bootstrap/cache || true
+# 👇 REMOVER AS LINhas PROBLEMÁTICAS - vamos fazer isso depois que o código estiver copiado
+# Configurar permissões para Laravel (vamos fazer depois via comando)
 
 CMD ["php-fpm"]

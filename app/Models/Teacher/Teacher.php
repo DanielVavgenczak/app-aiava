@@ -2,7 +2,7 @@
 
 namespace App\Models\Teacher;
 
-use App\Models\Discipline;
+use App\Models\Teacher\Discipline;
 use App\Models\Traits\UuidTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;

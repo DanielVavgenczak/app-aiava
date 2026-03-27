@@ -2,18 +2,14 @@
 
 namespace App\Models\Teacher;
 
-use App\Models\Discipline;
 use App\Models\Forum\ForumTopic;
 use App\Models\Traits\UuidTrait;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Notifications\Notifiable;
 
 class Student extends Authenticatable
 {
-    use HasFactory, Notifiable, UuidTrait;
+    use  UuidTrait;
 
     protected $keyType = 'string';
     public $incrementing = false;
@@ -27,13 +23,91 @@ class Student extends Authenticatable
         'teacher_id',
         'discipline_id',
         'password',
+        'status',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'status' => 'string', // ✅ Cast para string
+    ];
 
+    /**
+     * Scope para alunos ativos
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope para alunos inativos
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('status', 'inactive');
+    }
+
+    /**
+     * Verifica se o aluno está ativo
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Verifica se o aluno está inativo
+     */
+    public function isInactive(): bool
+    {
+        return $this->status === 'inactive';
+    }
+
+    /**
+     * Ativa o aluno
+     */
+    public function activate(): bool
+    {
+        return $this->update(['status' => 'active']);
+    }
+
+    /**
+     * Desativa o aluno
+     */
+    public function deactivate(): bool
+    {
+        return $this->update(['status' => 'inactive']);
+    }
+
+    /**
+     * Alterna o status do aluno
+     */
+    public function toggleStatus(): bool
+    {
+        $newStatus = $this->isActive() ? 'inactive' : 'active';
+        return $this->update(['status' => $newStatus]);
+    }
+
+    /**
+     * Retorna a cor do badge baseado no status
+     */
+    public function getStatusColorAttribute(): string
+    {
+        return $this->isActive() ? 'green' : 'gray';
+    }
+
+    /**
+     * Retorna o label do status
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->isActive() ? 'Ativo' : 'Inativo';
+    }
     public function classe()
     {
         return $this->belongsTo(Classe::class, 'classe_id');

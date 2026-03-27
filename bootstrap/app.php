@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
                 base_path('routes/auth/auth.php'),
                 base_path('routes/teacher/teacher.php'),
                 base_path('routes/student/student.php'),
-                base_path('routes/forum/forum.php'),
             ]);
             // Route::middleware('web')
             //     ->group((base_path('routes/admin/admin.php')));

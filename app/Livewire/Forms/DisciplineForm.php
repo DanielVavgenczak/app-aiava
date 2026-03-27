@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Forms;
 
-use App\Models\Discipline;
+use App\Models\Teacher\Discipline;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Validate;
@@ -19,9 +19,9 @@ class DisciplineForm extends Form
 
     public function disciplineStore()
     {
-            $teacher_id = Auth::guard('teacher')->user()->id;
-            $this->validate([
-              'title' => [
+        $teacher_id = Auth::guard('teacher')->user()->id;
+        $this->validate([
+            'title' => [
                 'required',
                 'min:3',
                 'max:255',
@@ -31,28 +31,27 @@ class DisciplineForm extends Form
                         $fail('Você já possui uma disciplina com esse título!');
                     }
                 },
-              ]
-            ]);
-         
-            $discipline = Discipline::create([
-                "teacher_id" => $teacher_id,
-                "title" => $this->title,
-            ]);
-            $this->setDisciplineId($discipline->id);
-            return true;
-   }
+            ]
+        ]);
 
-   private function setDisciplineId(string $id)
-   {
-       $this->disciplineId = $id;
-   }
-   public function getDisciplineId()
-   {
-      return $this->disciplineId ?? null;
-   }
+        $discipline = Discipline::create([
+            "teacher_id" => $teacher_id,
+            "title" => $this->title,
+        ]);
+        $this->setDisciplineId($discipline->id);
+        return true;
+    }
+
+    private function setDisciplineId(string $id)
+    {
+        $this->disciplineId = $id;
+    }
+    public function getDisciplineId()
+    {
+        return $this->disciplineId ?? null;
+    }
     public function resetForm()
     {
         $this->title = '';
     }
-
 }

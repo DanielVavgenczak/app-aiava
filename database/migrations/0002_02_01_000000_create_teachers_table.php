@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
+    public function up(): void
     {
         Schema::create('teachers', function (Blueprint $table) {
             $table->uuid("id")->primary();
@@ -27,15 +27,6 @@ return new class extends Migration
             $table->string('token');
             $table->timestamp('created_at')->nullable();
         });
-
-        // Schema::create('sessions_teachers', function (Blueprint $table) {
-        //     $table->string('id')->primary();
-        //     $table->foreignUuid('teacher_id')->nullable()->index();
-        //     $table->string('ip_address', 45)->nullable();
-        //     $table->text('user_agent')->nullable();
-        //     $table->longText('payload');
-        //     $table->integer('last_activity')->index();
-        // });
     }
 
     /**
@@ -45,6 +36,5 @@ return new class extends Migration
     {
         Schema::dropIfExists('teachers');
         Schema::dropIfExists('password_reset_tokens_teacher');
-        // Schema::dropIfExists('sessions_teachers');
     }
 };
