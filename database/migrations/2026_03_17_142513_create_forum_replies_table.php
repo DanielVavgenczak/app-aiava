@@ -25,7 +25,6 @@ return new class extends Migration
             $table->integer('depth')->default(0); // 0 = resposta direta, 1+ = sub-resposta
 
             // Conteúdo
-            $table->text('content');
 
             // Autor (polimórfico - pode ser Professor ou Aluno)
             $table->uuid('author_id');

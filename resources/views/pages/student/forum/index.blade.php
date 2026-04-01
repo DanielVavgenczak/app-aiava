@@ -52,7 +52,6 @@ new #[Layout(name: 'layouts::student')] class extends Component {
         <div>
             <h2>Forum</h2>
         </div>
-        <div class="flex flex-col gap-2">
             <div>
 
                 <h3>
