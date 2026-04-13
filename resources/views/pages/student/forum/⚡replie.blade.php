@@ -1,118 +1,397 @@
 <?php
+// resources/views/livewire/pages/teacher/forum/topic/show.blade.php
 
 use Livewire\Component;
-use Livewire\Attributes\{Layout};
+use Livewire\Attributes\{Layout, On, Computed};
+use Livewire\WithPagination;
+use App\Models\Forum\{ForumTopic, ForumReplie as ForumReply};
+use Mary\Traits\Toast;
 use Illuminate\Support\Collection;
-use App\Models\Forum\{ForumTopic, ForumReplie};
 
 new #[Layout('layouts::student')] class extends Component {
+    use Toast, WithPagination;
 
-    public Collection $replies;
-    public $topic_id;
-    public $topic;
+    public string $topicId;
+    public ?ForumTopic $topic = null;
+    public int $perPage = 5;
 
-    public function mount($id)
+    public function mount(string $id): void
     {
-        $this->topic_id = $id;
-        $this->loadTopic($id); // Carrega o tópico primeiro
-        $this->loadQuestions($id);
+        $this->topicId = $id;
+        $this->loadTopic();
     }
 
-    public function openModelStudentReplie()
+    protected function loadTopic(): void
     {
-        $this->dispatch('student::open-reply-modal', topic_id: $this->topic_id);
+        $this->topic = ForumTopic::with(['discipline', 'classe', 'owner'])
+            ->withCount('replies')
+            ->findOrFail($this->topicId);
     }
 
-    protected function loadTopic($topic_id)
+    /**
+     * ✅ Carrega TODAS as respostas para agrupamento (ORDEM CRONOLÓGICA)
+     */
+    #[Computed]
+    public function allReplies(): Collection
     {
-        $this->topic = ForumTopic::find($topic_id);
-    }
+        if (!$this->topic) {
+            return collect();
+        }
 
-    protected function loadQuestions($topic_id)
-    {
-        $this->replies = ForumReplie::with(['topic'])
-            ->where('topic_id', $topic_id)
-            ->orderBy('created_at', 'desc') // Adicione ordenação se quiser
+        return ForumReply::where('topic_id', $this->topic->id)
+            ->with('author')
+            ->orderBy('created_at', 'asc')  // ✅ ordem cronológica para thread correto
             ->get();
     }
 
-}; ?>
+    /**
+     * ✅ Respostas paginadas (apenas diretas)
+     */
+    #[Computed]
+    public function replies()
+    {
+        if (!$this->topic) {
+            return collect();
+        }
+
+        return ForumReply::where('topic_id', $this->topic->id)
+            ->whereNull('parent_id')
+            ->with(['author'])
+            ->orderBy('created_at', 'asc')  // ✅ ordem cronológica
+            ->paginate($this->perPage);
+    }
+
+    /**
+     * ✅ Agrupa sub-respostas para cada resposta direta
+     */
+    #[Computed]
+    public function repliesWithChildren()
+    {
+        $directReplies = $this->replies;
+
+        if ($directReplies->isEmpty()) {
+            return collect();
+        }
+
+        // Agrupa todas as respostas por parent_id
+        $grouped = $this->allReplies->groupBy('parent_id');
+
+        return $directReplies->map(function($reply) use ($grouped) {
+            return [
+                'reply' => $reply,
+                'children' => $grouped->get($reply->id, collect())
+            ];
+        });
+    }
+
+    public function createReply(): void
+    {
+        $this->dispatch('student::open-reply-modal', topic_id: $this->topicId);
+    }
+
+    public function editReply($replyId): void
+    {
+        $this->dispatch('student::open-edit-reply-modal', replyId: $replyId);
+    }
+
+    public function deleteReply($replyId): void
+    {
+        $this->dispatch('student::open-delete-reply-modal', replyId: $replyId);
+    }
+
+    public function replyToReply($parentReplyId): void
+    {
+        // ✅ CORRIGIDO: busca o reply pelo ID
+        $reply = ForumReply::find($parentReplyId);
+
+        if (!$reply) {
+            $this->toast(type: 'error', title: 'Resposta não encontrada!');
+            return;
+        }
+
+        // ✅ Sempre responder à resposta DIRETA (depth = 0)
+        $targetParentId = $reply->parent_id ?? $parentReplyId;
+
+        // Busca o nome do autor da resposta que está sendo respondida
+        $mentionName = $reply->author_name;
+
+        $this->dispatch('student::open-reply-to-reply-modal',
+            topic_id: $this->topicId,
+            parentReplyId: $targetParentId,
+            mentionName: $mentionName
+        );
+    }
+
+    #[On('reply-event')]
+    public function refresh($type, $message): void
+    {
+        $this->loadTopic();
+
+        // ✅ Limpa caches computados
+        unset($this->allReplies);
+        unset($this->replies);
+        unset($this->repliesWithChildren);
+
+        match($type) {
+            'create' => $this->success($message),
+            'update' => $this->success($message),
+            'delete' => $this->error($message),
+            default => null,
+        };
+    }
+};?>
 
 <div>
-    <div class="py-4">
-        <a href="{{ url()->previous() }}" wire:navigate class="flex items-center gap-1 hover:opacity-80 transition">
-            <x-mary-icon name="o-arrow-left" class="w-4 text-gray-500" />
-            <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">voltar</span>
-        </a>
+    {{-- Breadcrumb --}}
+    <div class="mb-6 py-4">
+        <div class="flex items-center gap-2 text-sm">
+            <a href="{{ route('student.index') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
+                <x-mary-icon name="o-home" class="w-4 h-4" />
+            </a>
+            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
+            <a href="{{ route('student.forum.index') }}" wire:navigate class="text-gray-500 hover:text-blue-700">
+                Fóruns
+            </a>
+            @if($topic)
+            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
+            <a href="{{ route('student.forum.show', $topic->discipline_id) }}" wire:navigate
+                class="text-gray-500 hover:text-blue-700">
+                {{ $topic->discipline->title }}
+            </a>
+            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
+            <span class="text-blue-700 font-medium">{{ Str::limit($topic->title, 30) }}</span>
+            @endif
+        </div>
     </div>
 
-    <div class="bg-white p-5 rounded-lg shadow">
-        <!-- Título do tópico -->
-        <div class="mb-6 pb-4 border-gray-200 border-b border-b-[1px] flex justify-between">
-            @if($topic)
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">
-                        {{ $topic->title }}
-                    </h1>
-                    <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                        <span class="flex items-center gap-1">
-                            <x-mary-icon name="o-question-mark-circle" class="w-4" />
-                            {{ $replies->count() }} questão(ões)
-                        </span>
-                        <span class="flex items-center gap-1">
-                            <x-mary-icon name="o-calendar" class="w-4" />
-                            Postado em: {{ $topic->created_at->format('d/m/Y') }}
-                        </span>
+    @if($topic)
+    {{-- Header do Tópico --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div class="p-8">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex items-start gap-4 flex-1">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <x-mary-icon name="o-chat-bubble-left-right" class="w-8 h-8 text-blue-600" />
+                    </div>
+
+                    <div class="flex-1">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $topic->title }}</h1>
+                        <div class="flex flex-wrap items-center gap-4 text-gray-600 text-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium">{{ $topic->owner->full_name ?? $topic->owner->first_name }}</span>
+                                @if($topic->isOwnedByTeacher())
+                                <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">Professor</span>
+                                @else
+                                <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Aluno</span>
+                                @endif
+                            </div>
+                            <span>•</span>
+                            <div class="flex items-center gap-2">
+                                <x-mary-icon name="o-calendar" class="w-4 h-4" />
+                                <span>{{ $topic->created_at->format('d/m/Y H:i') }}</span>
+                            </div>
+                            <span>•</span>
+                            <div class="flex items-center gap-2">
+                                <x-mary-icon name="o-chat-bubble-bottom-center" class="w-4 h-4" />
+                                <span>{{ $topic->getRepliesCountAttribute() }} {{ Str::plural('resposta', $topic->getRepliesCountAttribute()) }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                    @else
-                <div class="alert alert-warning">
-                    <x-mary-icon name="o-exclamation-triangle" class="w-6" />
-                    <span>Tópico não encontrado</span>
-                </div>
-            @endif
-            <div>
-                <button
-                        @click="$wire.openModelStudentReplie"
-                        class="btn btn-sm mt-4"
-                    >
-                        Nova resposta
-                    </button>
-            </div>
 
+                <button wire:click="createReply"
+                    class="btn bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-lg flex-shrink-0">
+                    <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
+                    <span class="hidden sm:inline">Nova Resposta</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Lista de Respostas --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <h2 class="font-bold text-gray-900 flex items-center gap-2">
+                    <x-mary-icon name="o-chat-bubble-bottom-center" class="w-5 h-5 text-blue-600" />
+                    Respostas ({{ $topic->getRepliesCountAttribute() }})
+                </h2>
+            </div>
         </div>
 
-        <!-- Listagem de questões -->
-        @if ($replies->count() > 0)
-            <div class="space-y-4">
-                @foreach($replies as $replie)
-                    <div class="p-2 bg-gray-100">
-                        <div class="">
-                            <div class="flex gap-1 items-center mb-4">
-                               <div class="bg-gray-200 rounded-full w-8 h-8"></div>
-                               <h4 class="text-sm text-gray-600">Nome do autor</h4>
-                            </div>
-                            <p class="text-sm text-gray-700 p-2">{{ $replie->content }}</p>
-                        </div>
-                        <div>
-                            <span class="text-xs ">Postado em: {{ $replie->created_at->format('d/m/Y H:i') }}</span>
+        @if($this->repliesWithChildren->count() > 0)
+        <div class="divide-y divide-gray-200">
+            @foreach($this->repliesWithChildren as $item)
+            @php
+                $reply = $item['reply'];
+                $children = $item['children'];
+            @endphp
+
+            {{-- Resposta Principal --}}
+            <div class="p-6" wire:key="reply-{{ $reply->id }}">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            {{ substr($reply->author_name, 0, 1) }}
                         </div>
                     </div>
-                @endforeach
-        @else
-            <!-- Estado vazio -->
-            <div class="text-center py-12">
-                <x-mary-icon name="o-document-text" class="w-8 h-8 text-gray-700 mx-auto mb-4" />
-                <h4 class="text-lg font-medium text-gray-700 mb-2">
-                    Nenhuma questão cadastrada ainda
-                </h4>
-                <p class="text-gray-500 mb-6">
-                    Este tópico ainda não possui    . Seja o primeiro a adicionar uma!
-                </p>
+
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-semibold text-gray-900">{{ $reply->author_name }}</span>
+
+                                    @if($reply->isTeacher())
+                                    <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                                        Professor
+                                    </span>
+                                    @else
+                                    <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                                        Aluno
+                                    </span>
+                                    @endif
+
+                                    @if($reply->isEdited())
+                                    <span class="text-xs text-gray-400">(editado)</span>
+                                    @endif
+                                </div>
+
+                                <div class="flex items-center gap-2 mt-1 text-sm text-gray-500">
+                                    <x-mary-icon name="o-clock" class="w-3 h-3" />
+                                    <span>{{ $reply->created_at->diffForHumans() }}</span>
+                                </div>
+                            </div>
+
+                            @if($reply->isMyReply(auth()->guard('teacher')->id(), 'teacher'))
+                            <div class="flex items-center gap-2">
+                                <button wire:click="editReply('{{ $reply->id }}')"
+                                    class="btn btn-sm bg-blue-100 text-blue-600" title="Editar">
+                                    <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
+                                </button>
+
+                                <button wire:click="deleteReply('{{ $reply->id }}')"
+                                    class="btn btn-sm bg-red-100 text-red-600" title="Excluir">
+                                    <x-mary-icon name="o-trash" class="w-4 h-4" />
+                                </button>
+                            </div>
+                            @endif
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4 mb-3 border border-gray-200">
+                            <p class="text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $reply->content }}</p>
+                        </div>
+
+                        <button wire:click="replyToReply('{{ $reply->id }}')"
+                            class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50">
+                            <x-mary-icon name="o-chat-bubble-left" class="w-4 h-4" />
+                            Responder
+                        </button>
+
+                        {{-- ✅ SUB-RESPOSTAS - vem do agrupamento --}}
+                        @if($children->count() > 0)
+                        <div class="mt-6">
+                            <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
+                                <div class="h-px bg-gray-300 flex-1"></div>
+                                <span class="font-medium">{{ $children->count() }} {{ Str::plural('resposta', $children->count()) }}</span>
+                                <div class="h-px bg-gray-300 flex-1"></div>
+                            </div>
+
+                            <div class="space-y-3">
+                                @foreach($children as $subReply)
+                                <div class="flex items-start gap-3 bg-blue-50 rounded-lg p-4 border-l-4 border-blue-400"
+                                    wire:key="sub-reply-{{ $subReply->id }}">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-{{ $subReply->isTeacher() ? 'blue' : 'green' }}-500 to-{{ $subReply->isTeacher() ? 'purple' : 'blue' }}-600 rounded-full flex items-center justify-center text-white font-bold">
+                                            {{ substr($subReply->author_name, 0, 1) }}
+                                        </div>
+                                    </div>
+
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span class="font-semibold text-sm text-gray-900">{{ $subReply->author_name }}</span>
+
+                                                @if($subReply->isTeacher())
+                                                <span class="px-1.5 py-0.5 bg-blue-600 text-white text-xs font-semibold rounded">
+                                                    Professor
+                                                </span>
+                                                @endif
+
+                                                <span class="text-xs text-gray-500">{{ $subReply->created_at->diffForHumans() }}</span>
+                                            </div>
+
+                                            @if($subReply->isMyReply(auth()->guard('teacher')->id(), 'teacher'))
+                                            <div class="flex items-center gap-1">
+                                                <button wire:click="editReply('{{ $subReply->id }}')" class="btn btn-xs bg-gray-100 text-blue-600">
+                                                    <x-mary-icon name="o-pencil" class="w-3 h-3" />
+                                                </button>
+
+                                                <button wire:click="deleteReply('{{ $subReply->id }}')" class="btn btn-xs btn-ghost text-red-600">
+                                                    <x-mary-icon name="o-trash" class="w-3 h-3" />
+                                                </button>
+                                            </div>
+                                            @endif
+                                        </div>
+
+                                        <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $subReply->content }}</p>
+
+                                        <button wire:click="replyToReply('{{ $subReply->id }}')"
+                                            class="btn btn-xs btn-ghost text-blue-600 mt-2">
+                                            <x-mary-icon name="o-chat-bubble-left" class="w-3 h-3" />
+                                            Responder
+                                        </button>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
             </div>
+            @endforeach
+        </div>
+
+        {{-- Paginação --}}
+        @if($this->replies->hasPages())
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            {{ $this->replies->links() }}
+        </div>
         @endif
-
-
+        @else
+        {{-- Estado Vazio --}}
+        <div class="text-center py-16">
+            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+                <x-mary-icon name="o-chat-bubble-left" class="w-12 h-12 text-blue-600" />
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma resposta ainda</h3>
+            <p class="text-gray-500 mb-6">
+                Seja o primeiro a responder este tópico e iniciar a discussão!
+            </p>
+            <button wire:click="createReply"
+                class="btn bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0">
+                <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
+                Adicionar Primeira Resposta
+            </button>
+        </div>
+        @endif
     </div>
-    <livewire:student.forum.modal-replie-topic />
+    @else
+    {{-- Tópico não encontrado --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <x-mary-icon name="o-exclamation-triangle" class="w-16 h-16 mx-auto text-yellow-500 mb-4" />
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Tópico não encontrado</h3>
+        <p class="text-gray-500 mb-6">
+            O tópico que você está procurando não existe ou foi removido.
+        </p>
+        <a href="{{ route('student.forum.index') }}" wire:navigate class="btn btn-primary">
+            <x-mary-icon name="o-arrow-left" class="w-5 h-5" />
+            Voltar aos Fóruns
+        </a>
+    </div>
+    @endif
+
+
+    {{-- <livewire:student.forum.modal-replie-to-replie-topic /> --}}
 </div>

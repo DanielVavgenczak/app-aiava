@@ -24,7 +24,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
         return $this->disciplineClasseInfo;
     }
 
-    // TODO: Refactor this method to clear more
+    // TODO: Refactor this method to clear more"
     private function authenticatedUser()
     {
         if (!Auth::guard('teacher')->check()) {
@@ -106,7 +106,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
 
                 <p>{{ $disciplineClasseInfo->classe->name }}</p>
                 {{-- Botão de Acesso --}}
-                <a href="{{ route('student.forum.show', $disciplineClasseInfo->id) }}" wire:navigate
+                <a href="{{ route('student.forum.show', $disciplineClasseInfo->discipline->id) }}" wire:navigate
                     class="btn btn-block btn-sm bg-gradient-to-r from-blue-700 to-blue-500 text-white border-0 hover:from-blue-700 hover:to-blue-500 group-hover:shadow-lg transition-all">
                     <x-mary-icon name="o-arrow-right-circle" class="w-4 h-4" />
                     Acessar

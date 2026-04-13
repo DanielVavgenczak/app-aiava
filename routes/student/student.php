@@ -20,8 +20,8 @@ Route::prefix('aluno')->middleware('isStudent')->group(function () {
     Route::livewire('/forum/{id}', 'pages::student.forum.show')
         ->name('student.forum.show');
 
-    Route::livewire('/forum/topicos/{id}', 'pages::student.forum.replie')
-        ->name('student.forum.topic.index');
+    Route::livewire('/forum/replies/{id}', 'pages::student.forum.replie')
+        ->name('student.forum.topic.replie');
 
     Route::livewire('/mensagens', 'pages::student.messages.index')
         ->name('student.messages');

@@ -63,7 +63,7 @@ new class extends Component {
             wire:model="content"
             placeholder="Digite sua resposta..."
             rows="6"
-            class="textarea textarea-bordered w-full"
+            class="textarea textarea-bordered w-full !outline-none"
         ></textarea>
 
         <div class="flex justify-end space-x-2">

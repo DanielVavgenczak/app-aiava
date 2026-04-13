@@ -261,7 +261,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                     <div class="flex-1 min-w-0">
                                         {{-- Título --}}
                                         <a
-                                            href="{{ route('student.forum.topic.index', $topic->id) }}"
+                                            href="{{ route('student.forum.topic.replie', $topic->id) }}"
                                             wire:navigate
                                             class="text-lg font-semibold text-gray-900 hover:text-pink-700 transition-colors block truncate"
                                         >
@@ -398,7 +398,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                         {{-- Título com estrela --}}
                                         <div class="flex items-center gap-2">
                                           <a
-                                                href="{{ route('student.forum.topic.index', $topic->id) }}"
+                                                href="{{ route('student.forum.index', $topic->id) }}"
                                                 wire:navigate
                                                 class="text-lg font-bold text-gray-900 hover:text-blue-700 transition-colors truncate"
                                             >
