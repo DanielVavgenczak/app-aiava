@@ -200,7 +200,7 @@ new #[Layout('layouts::student')] class extends Component {
                 </div>
 
                 <button wire:click="createReply"
-                    class="btn bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-lg flex-shrink-0">
+                    class="btn btn-sm bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-lg flex-shrink-0">
                     <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                     <span class="hidden sm:inline">Nova Resposta</span>
                 </button>
@@ -392,6 +392,6 @@ new #[Layout('layouts::student')] class extends Component {
     </div>
     @endif
 
-
-    {{-- <livewire:student.forum.modal-replie-to-replie-topic /> --}}
+    <livewire:student.forum.modal-replie-topic />
+    <livewire:student.forum.modal-replie-to-replie-forum />
 </div>
