@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\On;
+use Livewire\Attributes\{On, Validate};
 use App\Models\Forum\ForumReplie;
 use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
@@ -12,6 +12,8 @@ new class extends Component {
     public bool $open = false;
     public string $topic_id = '';
     public string $parent_id = '';
+
+    #[Validate('required', message: 'O campo Resposta é obrigatório!')]
     public string $content = '';
 
     #[On('teacher::open-reply-modal')]
@@ -25,9 +27,7 @@ new class extends Component {
 
     public function save()
     {
-        $this->validate([
-            'content' => 'required|min:3|max:5000',
-        ]);
+        $this->validate();
 
         $author = Auth::guard('teacher')->check()
             ? Auth::guard('teacher')->user()
@@ -59,16 +59,16 @@ new class extends Component {
 
 <x-mary-modal wire:model="open" title="Nova resposta" size="lg">
     <form wire:submit.prevent="save" class="space-y-4">
-        <textarea
+        <x-mary-textarea
             wire:model="content"
             placeholder="Digite sua resposta..."
             rows="6"
-            class="textarea textarea-bordered w-full"
-        ></textarea>
+            class="textarea textarea-bordered w-full !outline-none"
+        />
 
         <div class="flex justify-end space-x-2">
-            <button type="button" class="btn btn-ghost" wire:click="cancel">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Enviar</button>
+            <button type="button" class="btn btn-sm btn-ghost" wire:click="cancel">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-primary">Enviar</button>
         </div>
     </form>
 </x-mary-modal>

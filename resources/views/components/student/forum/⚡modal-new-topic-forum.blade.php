@@ -8,7 +8,7 @@ new class extends Component {
     public bool $open = false;
     public string $discipline_id = '';
 
-    #[Validate('required', message: 'O campo Novo topico é obrigatório0!')]
+    #[Validate('required', message: 'O campo Novo topico é obrigatório!')]
     public string $title = '';
 
     #[On('student::new-topic-forum')]

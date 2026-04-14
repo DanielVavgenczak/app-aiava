@@ -13,12 +13,57 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     public string $topicId;
     public ?ForumTopic $topic = null;
-    public int $perPage = 5;
+    public int $perPage = 2;
+    public array $visibleChildrenCount = []; // Novo estado para controlar quantas sub-respostas mostrar por resposta
 
     public function mount(string $id): void
     {
         $this->topicId = $id;
         $this->loadTopic();
+
+        // Inicializa contador de sub-respostas visíveis
+        foreach ($this->repliesWithChildren as $item) {
+            $replyId = $item['reply']->id;
+            $this->visibleChildrenCount[$replyId] = 2; // Mostra 2 inicialmente
+        }
+    }
+
+    /**
+     * Carrega mais sub-respostas para uma resposta específica
+     */
+    public function loadMoreChildren($replyId): void
+    {
+        // Incrementa +5 sub-respostas
+        $this->visibleChildrenCount[$replyId] += 2;
+    }
+
+    /**
+     * Verifica se ainda tem mais sub-respostas para carregar
+     */
+    public function hasMoreChildren($replyId): bool
+    {
+        $children = $this->getChildrenForReply($replyId);
+        return $children->count() > ($this->visibleChildrenCount[$replyId] ?? 2);
+    }
+
+    /**
+     * Pega as sub-respostas visíveis para uma resposta
+     */
+    public function getVisibleChildren($replyId): Collection
+    {
+        $children = $this->getChildrenForReply($replyId);
+        $limit = $this->visibleChildrenCount[$replyId] ?? 2;
+
+        return $children->take($limit);
+    }
+
+    /**
+     * Pega todas as sub-respostas de uma resposta (do agrupamento)
+     */
+    private function getChildrenForReply($replyId): Collection
+    {
+        $item = $this->repliesWithChildren->firstWhere('reply.id', $replyId);
+        return $item ? $item['children'] : collect();
     }
 
     protected function loadTopic(): void
@@ -201,7 +246,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                 </div>
 
                 <button wire:click="createReply"
-                    class="btn bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-lg flex-shrink-0">
+                    class="btn btn-sm bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-lg flex-shrink-0">
                     <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                     <span class="hidden sm:inline">Nova Resposta</span>
                 </button>
@@ -290,6 +335,14 @@ new #[Layout('layouts::teacher')] class extends Component {
                         </button>
 
                         {{-- ✅ SUB-RESPOSTAS - vem do agrupamento --}}
+                        {{-- Sub-respostas com LOAD MORE --}}
+                        @php
+                            $allChildren = $children; // Todas as sub-respostas
+                            $visibleCount = $visibleChildrenCount[$reply->id] ?? 2;
+                            $visibleChildren = $allChildren->take($visibleCount);
+                            $hiddenCount = $allChildren->count() - $visibleCount;
+                            $hasMore = $hiddenCount > 0;
+                        @endphp
                         @if($children->count() > 0)
                         <div class="mt-6">
                             <div class="flex items-center gap-2 text-sm text-gray-500 mb-4">
@@ -299,7 +352,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                             </div>
 
                             <div class="space-y-3">
-                                @foreach($children as $subReply)
+                                @foreach($visibleChildren as $subReply)
                                 <div class="flex items-start gap-3 bg-blue-50 rounded-lg p-4 border-l-4 border-blue-400"
                                     wire:key="sub-reply-{{ $subReply->id }}">
                                     <div class="flex-shrink-0">
@@ -346,6 +399,38 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 </div>
                                 @endforeach
                             </div>
+
+                            @if ($hasMore)
+                                                    <div class="flex justify-center mt-4">
+                                                        <button wire:click="loadMoreChildren('{{ $reply->id }}')"
+                                                            wire:loading.attr="disabled"
+                                                            wire:target="loadMoreChildren('{{ $reply->id }}')"
+                                                            class="btn btn-ghost btn-sm text-blue-600 hover:bg-blue-50 transition-all gap-2">
+                                                            <span wire:loading.remove
+                                                                wire:target="loadMoreChildren('{{ $reply->id }}')">
+                                                                <x-mary-icon name="o-chevron-down" class="w-4 h-4" />
+                                                                Ver mais {{ $hiddenCount }}
+                                                                {{ Str::plural('resposta', $hiddenCount) }}
+                                                            </span>
+                                                            <span wire:loading
+                                                                wire:target="loadMoreChildren('{{ $reply->id }}')">
+                                                                <x-mary-loading class="loading-spinner loading-sm" />
+                                                                Carregando...
+                                                            </span>
+                                                        </button>
+                                                    </div>
+                                                @endif
+
+                                                {{-- Indicador que mostrou todas --}}
+                                                @if (!$hasMore && $allChildren->count() > 5)
+                                                    <div class="flex justify-center mt-4">
+                                                        <span class="text-xs text-gray-400 flex items-center gap-1">
+                                                            <x-mary-icon name="o-check" class="w-3 h-3" />
+                                                            Todas as {{ $allChildren->count() }} respostas carregadas
+                                                        </span>
+                                                    </div>
+                                                @endif
+
                         </div>
                         @endif
                     </div>
