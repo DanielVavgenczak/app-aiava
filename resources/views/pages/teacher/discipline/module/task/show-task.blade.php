@@ -198,7 +198,7 @@ new class extends Component {
                                     @if ($editingQuestionIndex === $index && $editingOptionIndex === $optIndex)
                                         <div class="items-center gap-2 flex">
                                             <span class="w-5 text-gray-500">{{ chr(65 + $optIndex) }}.</span>
-                                            <x-text-input wire:model="editingOptionText"
+                                            <x-mary-input wire:model="editingOptionText"
                                                 class="px-3 py-2 text-[15px] flex-1 focus:border-red-500 focus:outline focus:outline-red-500"
                                                 wire:keydown.enter="saveOptionEdit" autofocus />
                                             <div class="flex gap-1">

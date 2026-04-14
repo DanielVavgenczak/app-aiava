@@ -2,10 +2,10 @@
 
 use Livewire\Component;
 use Livewire\Attributes\{Layout, On, Url};
-use App\Models\{Discipline};
+use App\Models\Teacher\{Discipline};
 use Mary\Traits\Toast;
 
-new #[Layout('layouts.app')] class extends Component {
+new #[Layout('layouts::teacher')] class extends Component {
     use Toast;
     public bool $openFormNewLesson = false;
     public $discipline;
@@ -278,15 +278,16 @@ new #[Layout('layouts.app')] class extends Component {
                     @endif
                 </div>
                 <div class="w-full h-screen">
-                    <livewire:pages.teacher.discipline.module.block.video-content :key="'video-block-' . Str::random(10)" />
+                    <livewire:pages::teacher.discipline.module.block.video-content
+                        :key="'video-block-' . Str::random(10)" />
                 </div>
             </div>
-          <livewire:pages.teacher.discipline.module.task.show-task
+          <livewire:pages::teacher.discipline.module.task.show-task
             wire:key="'task-module-' .{{ $discipline->id ?? ''}}" />
-          <livewire:pages.teacher.discipline.module.modals.create
+          <livewire:pages::teacher.discipline.module.modals.create
             :disciplineId="$discipline->id"
             wire:key="'create-module-' . {{ $discipline->id ?? ''}}" />
-              <livewire:pages.teacher.discipline.module.modals.create-task
+              <livewire:pages::teacher.discipline.module.modals.create-task
             :lessons="$discipline->modules"
             :disciplineId="$discipline->id"
             wire:key="'new-task-' . {{ $discipline->id ?? ''}}" />
