@@ -16,12 +16,15 @@ new #[Layout('layouts::teacher')] class extends Component {
     public bool $showTaskModule = false;
     public string $disciplineID = '';
     public bool $openedTaskShow = false;
+
     #[Url]
     public ?string $highlight = null;
     public function mount(string $id)
     {
         if (session('delete-with-files')) {
-            $this->error(session('delete-with-files'), icon: 'o-trash', css: 'alert-error');
+            $this->error(session('delete-with-files'),
+                icon: 'o-trash',
+                css: 'alert-error');
             session()->forget('delete-with-files');
         }
         $this->disciplineID = $id;
@@ -32,7 +35,8 @@ new #[Layout('layouts::teacher')] class extends Component {
     public function selectedBlock($block_id)
     {
         $this->blockSelected = $this->discipline->modules->flatMap->lessons->firstWhere('id', $block_id);
-        $this->dispatch('load-video-lesson', $block_id)->to('pages.teacher.discipline.module.block.video-content');
+        $this->dispatch('load-video-lesson', $block_id)
+        ->to('pages.teacher.discipline.module.block.video-content');
     }
 
     public function refreshUploadVideo()
@@ -52,7 +56,18 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     public function openModalNewLesson()
     {
-        $this->dispatch('open-new-block-to-module', true);
+        $this->js("console.log('oque deu essa merda')");
+        $this->dispatch('teacher::create-new-lesson',
+                disciplineId: $this->disciplineID
+        );
+    }
+
+    public function openModalEditModule($id)
+    {
+        $this->dispatch(
+            'teacher::open-edit-module',
+            module_id: $id
+        );
     }
 
     /** Open modal new task */
@@ -80,9 +95,10 @@ new #[Layout('layouts::teacher')] class extends Component {
         $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
     }
 
-    #[On('module-event')]
+    #[On('teacher::module-event')]
     public function update($type, $msg)
     {
+        $this->js("console.log('Evento recebido: {$type} - {$msg}')");
         match ($type) {
             'update', 'create', 'uploaded' => $this->handleEventWithToast($type, $msg),
             'delete' => $this->handleEventWithToast($type, $msg),
@@ -105,17 +121,17 @@ new #[Layout('layouts::teacher')] class extends Component {
     {
         return Discipline::with([
             'modules' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente
+                $q->orderBy('created_at', 'asc'); // Ordem crescente
             },
             'modules.lessons' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente
+                $q->orderBy('created_at', 'asc'); // Ordem crescente
             },
             'modules.activitTasks' => function ($q) {
-                $q->orderBy('created_at', 'ASC'); // Ordem crescente
+                $q->orderBy('created_at', 'asc'); // Ordem crescente
             },
         ])
-            ->where('id', $id)
-            ->first();
+         ->where('id', $id)
+         ->first();
     }
 
 
@@ -143,12 +159,25 @@ new #[Layout('layouts::teacher')] class extends Component {
 }; ?>
 <div>
 
-    {{-- TODO: criar um componente para receber o link de voltar  --}}
     <div class="py-4">
-        <a href="{{ route('teacher.discipline') }}" wire:navigate>
-            <x-mary-icon name="o-arrow-left" class="w-4 text-gray-500" />
-            <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">voltar</span>
-        </a>
+        <div class="flex items-center gap-2 text-sm">
+            <a href="{{ route('teacher.index') }}" wire:navigate class="text-gray-500 hover:text-pink-700 transition-colors">
+                <x-mary-icon name="o-home" class="w-4 h-4" />
+            </a>
+            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
+             <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-pink-700 transition-colors">
+                Disciplinas
+            </a>
+
+            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
+             <span class="text-gray-500 hover:text-pink-700 transition-colors">
+                {{ $discipline->title }}
+            </span>
+            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
+            <span class="text-gray-500 hover:text-pink-700">
+                Aulas
+            </span>
+        </div>
     </div>
     <!-- modal new module -->
     <div x-data="{ openCollapseId: null }" class="p-5 bg-white" data-tour="{{ $discipline->id }}">
@@ -169,13 +198,15 @@ new #[Layout('layouts::teacher')] class extends Component {
                 </div>
                 <div>
                     @if ($discipline->modules->count() > 0)
-                        <button class="bg-pink-600 btn btn-sm text-gray-50 open-new-task " id="content-task-create"
+                        <button class="bg-blue-700/100 btn btn-sm text-gray-50 open-new-task " id="content-task-create"
                             wire:click="openModalTask">
                             <x-mary-icon name="o-document-duplicate" class="w-5 h-5" /> Atividade / Avaliação
                         </button>
                     @endif
-                    <button class="bg-pink-600  btn btn-sm text-gray-50 open-new-lesson" id="content-lesson-create"
-                        x-on:click="$dispatch('open-module-create',{open: true})"
+                    <button
+                        class="bg-blue-700  btn btn-sm text-gray-50 open-new-lesson"
+                        id="content-lesson-create"
+                        x-on:click="$wire.openModalNewLesson()"
                         data-tour="new-lesson-{{ $discipline->id }}">
                         <x-mary-icon name="o-plus" />
                         Aula
@@ -183,33 +214,42 @@ new #[Layout('layouts::teacher')] class extends Component {
                 </div>
             </div>
             <div class="flex gap-5 relative h-[calc(100vh-180px)]">
-                <div class="w-1/2 h-fit overflow-y-auto" wire:key="module-list-container" id="module-list-all">
+                <div class="w-1/2 h-auto overflow-y-auto" wire:key="module-list-container" id="module-list-all">
                     @if ($discipline->modules->count() > 0)
                         @foreach ($discipline->modules as $module)
-                            <div class="w-full bg-white border-[1px] border-gray-100 px-3 py-2 accordion module-card"
+                            <div
+                                class="w-full bg-white border-[1px] border-gray-100 px-3 py-2 accordion module-card"
                                 wire:key="module-{{ $module->id }}"
                                 x-data="{ isExpanded: false }"
                                 x-show="true"
-                                id="accordion-{{ $module->id }}" data-tour="{{ $module->id }}">
+                                id="accordion-{{ $module->id }}"
+                                data-tour="{{ $module->id }}">
                                 <div class="flex items-center" id="accordion-module-{{ $module->id }}">
-                                    <x-mary-dropdown class="" wire:key="module-options-{{ $module->id }}">
+                                    <x-mary-dropdown wire:key="module-options-{{ $module->id }}">
                                         <x-slot:trigger>
-                                            <x-mary-button icon="o-ellipsis-vertical"
+                                            <x-mary-button
+                                                icon="o-ellipsis-vertical"
                                                 id="tourguide-content-lesson-options"
-                                                class="bg-white border-none btn-set-dropdown" />
+                                                class="btn  border-none btn-set-dropdown" />
                                         </x-slot:trigger>
-                                        <x-mary-menu-item title="Editar" id="content-lesson-edit-btn"
-                                            x-on:click="$dispatch('open-edit-module', { id: '{{ $module->id }}' })"
+                                        <x-mary-menu-item
+                                            title="Editar"
+                                            id="content-lesson-edit-btn"
+                                            x-on:click="$wire.openModalEditModule('{{ $module->id }}')"
                                             icon="o-pencil-square" />
-                                        <x-mary-menu-item id="content-lesson-delete-btn" class="btn-to-delete"
-                                            title="Deletar" icon="o-trash"
+                                        <x-mary-menu-item
+                                            id="content-les-delete-b
+                                            class="btn-to-delete"
+                                            title="Deletar"
+                                            icon="o-trash"
                                             x-on:click="$dispatch('open-delete-module', {
-                                            id: '{{ $module->id }}' })" />
+                                            id:'{{ $module->id }}' })" />
                                     </x-mary-dropdown>
                                     <div id="content-lesson-add-new-block-{{ $module->id }}"
                                         class="flex items-center justify-between w-full cursor-pointer open-collapse-btn">
-                                        <span
-                                            class="text-[14px] font-normal tracking-wide text-gray-700 capitalize relative left-[2%]">{{ $module->title }}</span>
+                                        <span class="text-[14px] font-normal tracking-wide text-gray-700 capitalize relative left-[2%]">
+                                            {{ $module->title }}
+                                        </span>
                                         <button class="bg-white cursor-pointer open-new-block-lesson"
                                             id="open-accordion-block-{{ $module->id }}"
                                             x-on:click="openCollapseId === '{{ $module->id }}' ? openCollapseId = null : openCollapseId = '{{ $module->id }}'; isExpanded = !isExpanded">
@@ -220,11 +260,11 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 <div class="flex flex-col gap-3 p-4 bg-gray-100"
                                     x-show="openCollapseId === '{{ $module->id }}'" x-collapse>
                                     <button id="block-open-new-block-{{ $module->id }}"
-                                        class="btn text-white tracking-wider uppercase text-[12px] bg-pink-700 tour-open-new-block-to-click cursor-pointer"
+                                        class="btn text-white tracking-wider uppercase text-[12px] bg-blue-600 tour-open-new-block-to-click cursor-pointer"
                                         x-on:click="$dispatch('open-new-block-to-module', { open: true })">
                                         <x-mary-icon name="o-plus" /> bloco
                                     </button>
-                                    <livewire:pages.teacher.discipline.module.block.index
+                                    <livewire:teacher.discipline.block-video.index
                                         :module_id="$module->id"
                                         :title="$module->title" :key="'block-index-' . $module->id" />
                                     <ul x-data="{ activeLesson: null }" class="lesson-list">
@@ -258,7 +298,8 @@ new #[Layout('layouts::teacher')] class extends Component {
                                                     class="w-4 h-4 text-pink-600" />
                                             </div>
                                             <span
-                                                class="text-xs font-light tracking-wide text-pink-600 uppercase">atividade
+                                                class="text-xs font-light tracking-wide text-pink-600 uppercase">
+                                                atividade
                                             </span>
                                         </div>
                                     </div>
@@ -266,9 +307,11 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 @endforeach
                                 <!-- drawer task module -->
                             @endif
-                            <livewire:pages.teacher.discipline.module.modals.edit :$module :key="'module-edit-' . $module->id" />
+
+                            <livewire:teacher.discipline.module.edit :$module :key="'module-edit-' . $module->id"/>
+                            {{-- <livewire:pages.teacher.discipline.module.modals.edit :$module :key="'module-edit-' . $module->id" />
                             <livewire:pages.teacher.discipline.module.modals.delete :id="$module->id"
-                                :key="'module-delete-' . $module->id" />
+                                :key="'module-delete-' . $module->id" /> --}}
                         @endforeach
                     @else
                         <div wire:key="no-modules" class="absolute w-full h-screen bg-white">
@@ -282,11 +325,17 @@ new #[Layout('layouts::teacher')] class extends Component {
                         :key="'video-block-' . Str::random(10)" />
                 </div>
             </div>
+
+            <!-- CRUD MODAL TO LESSON -->
+            <livewire:teacher.discipline.module.create />
+
+
           <livewire:pages::teacher.discipline.module.task.show-task
             wire:key="'task-module-' .{{ $discipline->id ?? ''}}" />
-          <livewire:pages::teacher.discipline.module.modals.create
+          {{-- <livewire:teacher.discipline.create
             :disciplineId="$discipline->id"
-            wire:key="'create-module-' . {{ $discipline->id ?? ''}}" />
+            wire:key="'create-module-' . {{ $discipline->id ?? ''}}" /> --}}
+
               <livewire:pages::teacher.discipline.module.modals.create-task
             :lessons="$discipline->modules"
             :disciplineId="$discipline->id"

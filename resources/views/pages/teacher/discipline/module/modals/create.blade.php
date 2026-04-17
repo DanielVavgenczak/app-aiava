@@ -68,7 +68,7 @@ new class extends Component {
                 <button type="button" wire:click="cancel" id="module-input-cancel"
                     class="btn btn-sm bg-ghost">Cancelar</button>
                 <button type="submit" spinner id="module-input-create"
-                    class="btn btn-sm text-gray-50 bg-pink-600">Registrar
+                    class="btn btn-sm text-gray-50 bg-blue-700">Registrar
                 </button>
             </div>
         </form>

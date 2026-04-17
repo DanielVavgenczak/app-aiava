@@ -20,7 +20,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="">
+<body>
+      <x-mary-toast />
     <div class="flex flex-col bg-gray-50 min-w-min" x-data>
          <livewire:teacher.header />
          <livewire:teacher.menu />
