@@ -39,8 +39,8 @@ document.addEventListener("alpine:init", () => {
                     "StartTourCreateActivitTask"
                 ],
             },
-             {
-                exact: true,
+            {
+                exact:true,
                 isDynamic: false,
                 path: "/teacher/classes",
                 tourModule: () => import("./classe_list"),
@@ -51,7 +51,7 @@ document.addEventListener("alpine:init", () => {
                     "StartTourClasseAccess",
                 ],
             },
-             {
+            {
                 exact: false,
                 isDynamic: true,
                 path: "/teacher/classes",
@@ -63,9 +63,16 @@ document.addEventListener("alpine:init", () => {
                     "StartTourStudentAccess",
                     "StartTourStudentDelete"
                 ],
-            }
+            },
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/student/panel",
+                tourModule: () => import("./student/panel"),
+                tours: ["StartTourStudentPanel"],
+            },
         ],
-       
+        
         cancelOptionsTourPage() {
             this.openMai = false;
         },
