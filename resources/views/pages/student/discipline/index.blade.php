@@ -59,8 +59,11 @@ new #[Layout('layouts::student')] class extends Component {
                             <li class="text-gray-600"><span
                                     class="font-semibold tracking-wide mr-1">Prefessor:</span>{{ $discipline->teacher->fullName() }}
                             </li>
-                            <li class="text-gray-600"><span
-                                    class="font-semibold tracking-wide mr-1">Aulas:</span>{{ $discipline->modules->count() }}
+                            <li class="text-gray-600">
+                                <span
+                                  class="font-semibold tracking-wide mr-1">
+                                  Aulas:
+                                </span>{{ $discipline->modules->count() }}
                             </li>
                         </ul>
                     </div>

@@ -3,29 +3,33 @@
 use Livewire\Component;
 use Livewire\Attributes\{On, Computed};
 use App\Models\Lesson;
+use Illuminate\Support\Facades\URL;
+
 new class extends Component {
     public Lesson $lesson;
     public $show = false;
     public bool $hasPrevious = false;
     public bool $hasNext = false;
     public $showEndMessage = false;
-
-    #[Computed]
-    public $video_url = '';
+    public $video_url = ''; // ✅ Muda de computed pra propriedade normal
 
     #[On('stundent-lesson-streaming-block')]
     public function streamingLesson($lesson_id)
     {
         $this->lesson = Lesson::where('id', $lesson_id)->first();
         if(!$this->lesson) return;
+
         $this->show = true;
         $this->updateNavigationStates();
         $this->showEndMessage = false;
+
+        // ✅ Inicia vídeo imediatamente após carregar a lesson
+        $this->initVideo();
     }
 
     public function navigate($direction)
     {
-       if (!$this->lesson) return;
+        if (!$this->lesson) return;
 
         $operator = $direction === 'next' ? '>' : '<';
         $order = $direction === 'next' ? 'asc' : 'desc';
@@ -39,14 +43,13 @@ new class extends Component {
             $this->streamingLesson($adjacentLesson->id);
             $this->dispatch('update-student-lesson-highlight', lesson_id: $adjacentLesson->id);
         } else {
-            // Mostra mensagem apenas no último bloco
             if ($direction === 'next') {
                 $this->showEndMessage = true;
             }
         }
     }
 
-     protected function updateNavigationStates()
+    protected function updateNavigationStates()
     {
         if (!$this->lesson) {
             $this->hasPrevious = false;
@@ -67,21 +70,22 @@ new class extends Component {
     {
         if (!empty($this->lesson->path_file)) {
             $this->video_url = URL::temporarySignedRoute('media.stream', now()->addMinutes(30), ['lesson_id' => $this->lesson->id]);
+
+            // ✅ Dispara o evento com o nome correto
             $this->dispatch('video-load', url: $this->video_url);
         }
     }
-    public function boot()
-    {
-        $this->initVideo();
-    }
-}; ?>
+
+    // ✅ Remove o boot() e coloca a lógica no lugar certo
+};
+?>
 
 <div class="bg-white rounded-xl shadow-md overflow-hidden">
     @if (!empty($lesson))
-        <!-- Container do Player (Aspect Ratio 16:9) -->
         <div class="relative pt-[56.25%] bg-gray-900">
-            <!-- Placeholder enquanto o vídeo carrega -->
-            <div wire:loading wire:target="initVideo"
+            <div
+                wire:loading
+                wire:target="initVideo"
                 class="absolute inset-0 flex items-center justify-center bg-gray-800">
                 <div class="animate-pulse flex flex-col items-center">
                     <x-mary-loading />
@@ -89,16 +93,22 @@ new class extends Component {
                 </div>
             </div>
 
-            <!-- Player de Vídeo -->
-            <div wire:init="initVideo" class="absolute inset-0">
-                <video wire:ignore id="videoPlayer" class="w-full h-full object-contain" controls playsinline
+            <div class="absolute inset-0">
+                <video
+                    wire:ignore
+                    id="videoPlayer"
+                    class="w-full h-full object-contain"
+                    controls
+                    playsinline
                     preload="metadata">
                     <source src="{{ $video_url }}" type="video/mp4">
-                    Seu navegador não suporta vídeos HTML5.
+                        Seu navegador não suporta vídeos HTML5.
                 </video>
+
+
             </div>
         </div>
-        <!-- 👇 MENSAGEM DE FIM DOS BLOCOS -->
+
         @if($showEndMessage)
         <div class="mx-5 mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-center gap-3">
@@ -113,30 +123,20 @@ new class extends Component {
             </div>
         </div>
         @endif
+
         <div class="w-full p-5 flex justify-between items-center">
-            <!-- Botão Anterior -->
             @if($hasPrevious)
-                <button
-                    type="button"
-                    class="btn btn-sm text-gray-600"
-                    wire:click="navigate('previous')">
+                <button type="button" class="btn btn-sm text-gray-600" wire:click="navigate('previous')">
                     <x-mary-icon name="o-chevron-left" /> Anterior
                 </button>
             @else
-                <button
-                    type="button"
-                    class="btn btn-sm text-gray-600  cursor-not-allowed"
-                    disabled>
+                <button type="button" class="btn btn-sm text-gray-600 cursor-not-allowed" disabled>
                     <x-mary-icon name="o-chevron-left" /> Anterior
                 </button>
             @endif
 
-            <!-- Botão Próximo -->
             @if($hasNext)
-                <button
-                    type="button"
-                    class="btn btn-sm text-gray-600"
-                    wire:click="navigate('next')">
+                <button type="button" class="btn btn-sm text-gray-600" wire:click="navigate('next')">
                     Próximo <x-mary-icon name="o-chevron-right" />
                 </button>
             @else
@@ -145,9 +145,8 @@ new class extends Component {
                 </div>
             @endif
         </div>
-        <!-- Informações da Aula -->
-        <div class="p-4 border-t border-gray-100">
 
+        <div class="p-4 border-t border-gray-100">
             <div class="flex justify-between items-start">
                 <div>
                     <h2 class="text-xl font-bold text-gray-800">{{ $lesson->title }}</h2>
@@ -161,20 +160,6 @@ new class extends Component {
                         </span>
                     @endif
                 </div>
-                <div class="flex space-x-2">
-                    {{-- <button class="p-2 text-gray-500 hover:text-pink-600 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                        </svg>
-                    </button>
-                    <button class="p-2 text-gray-500 hover:text-pink-600 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                        </svg>
-                    </button> --}}
-                </div>
             </div>
 
             <p class="mt-3 text-gray-600">{{ $lesson->description }}</p>
@@ -182,25 +167,18 @@ new class extends Component {
             <div class="mt-4 pt-4 border-t border-gray-100">
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
-                            @if (!$lesson->teacher->profile?->avatar)
-                            <livewire:pages.teacher.components.avatar
-                                initiais="{{ $lesson->teacher->initialLetterToAvatar() }}" class="w-20 h-20">
-                            @else
-                                <img src="{{ asset('storage/' .$lesson->teacher->profile->avatar) }}"
-                                    :class="$store.expandedSidebar.expanded ? 'w-20 h-20' : 'w-12 h-12'"
-                                    class="transition-all duration-300 ease-in-out border-2 border-gray-200 rounded-full dark:border-slate-700"
-                                    width="80" height="80" style="width: 80px; height: 80px; object-fit:cover;" loading="lazy" />
+                        @if (!$lesson->teacher->profile?->avatar)
+                            <livewire:pages::teacher.components.avatar
+                                initiais="{{ $lesson->teacher->initialLetterToAvatar() }}" class="w-20 h-20" />
+                        @else
+                            <img src="{{ asset('storage/' . $lesson->teacher->profile->avatar) }}"
+                                class="transition-all duration-300 ease-in-out border-2 border-gray-200 rounded-full dark:border-slate-700"
+                                width="80" height="80" style="width: 80px; height: 80px; object-fit:cover;" loading="lazy" />
                         @endif
-
-
-
-                        {{-- <img class="h-8 w-8 rounded-full"
-                            src="{{ asset('storage/' . $lesson->teacher->profile->avatar ?? '') ?? asset('images/no-avatar.png') }}"
-                            alt=""> --}}
                     </div>
                     <div class="flex flex-col gap-1">
-                        <h4>Professor</h4>
-                        <p class="text-sm text-gray-500">
+                        <h4 class="text-sm font-medium text-gray-500">Professor</h4>
+                        <p class="text-sm text-gray-800 font-medium">
                             {{ $lesson->teacher->fullName() }}
                         </p>
                     </div>
@@ -208,7 +186,6 @@ new class extends Component {
             </div>
         </div>
     @else
-        <!-- Estado vazio -->
         <div class="p-8 text-center w-full bg-gray-100 h-full">
             <x-mary-icon name="o-video-camera" class="w-8 h-8 text-gray-600" />
             <h3 class="mt-2 tracking-wide text-sm font-medium text-gray-900">Nenhuma aula selecionada</h3>
@@ -218,29 +195,24 @@ new class extends Component {
 </div>
 
 @script
-    <script>
-        document.addEventListener('livewire:initialized', () => {
-            const player = document.getElementById('videoPlayer');
+<script>
+    // ✅ SÓ UM SCRIPT, SIMPLES E LIMPO
+    document.addEventListener('livewire:initialized', () => {
+        const player = document.getElementById('videoPlayer');
 
-            // Inicializa o player quando o componente estiver pronto
-            Livewire.on('video-ready', (url) => {
-                if (player) {
-                    player.src = url;
-                    // Para melhor UX, você pode adicionar mais controles aqui
-                    player.addEventListener('loadedmetadata', () => {
-                        player.play().catch(e => console.log('Auto-play prevented:', e));
-                    });
-                }
+        if (player) {
+            // ✅ Escuta o evento correto
+            Livewire.on('video-load', (event) => {
+                console.log('Video loading:', event.url);
+                player.src = event.url;
+
+                // Tenta dar play automaticamente
+                player.play().catch(e => {
+                    console.log('Autoplay prevented:', e);
+                });
             });
-        });
-    </script>
-@endscript
-</div>
-@script
-    <script>
-        $wire.on('video-load', event => {
-            let video = document.getElementById("videoPlayer");
-            video.src = event.url;
-        });
-    </script>
+        }
+    });
+
+</script>
 @endscript

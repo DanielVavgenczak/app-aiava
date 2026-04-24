@@ -182,7 +182,7 @@ new #[Layout('layouts::teacher')] class extends Component {
     <!-- modal new module -->
     <div x-data="{ openCollapseId: null }" class="p-5 bg-white" data-tour="{{ $discipline->id }}">
         <div class="h-screen">
-            <div class="flex items-center justify-between mt-4 mb-10" x-data>
+            <div class="flex items-center justify-between mt-4 mb-10 " x-data>
                 <div class="flex flex-col gap-4">
                     <div>
                         <h2 class="text-lg font-semibold tracking-wider text-gray-800">
@@ -264,9 +264,10 @@ new #[Layout('layouts::teacher')] class extends Component {
                                         x-on:click="$dispatch('open-new-block-to-module', { open: true })">
                                         <x-mary-icon name="o-plus" /> bloco
                                     </button>
-                                    <livewire:teacher.discipline.block-video.index
-                                        :module_id="$module->id"
-                                        :title="$module->title" :key="'block-index-' . $module->id" />
+
+                                     <livewire:teacher.discipline.block-video.index :module_id="$module->id" :key="'block-video-' . $module->id" :title="$module->title"/>
+                                    {{-- <livewire:pages.teacher.discipline.block.video :module_id="$module->id" :key="'block-video-' . $module->id" /> --}}
+
                                     <ul x-data="{ activeLesson: null }" class="lesson-list">
                                       @foreach ($module->lessons as $lesson)
                                           <li class="">
@@ -322,21 +323,17 @@ new #[Layout('layouts::teacher')] class extends Component {
                 </div>
                 <div class="w-full h-screen">
                     <livewire:pages::teacher.discipline.module.block.video-content
-                        :key="'video-block-' . Str::random(10)" />
+                        :key="'video-block-' . $discipline->id ?? ''" />
                 </div>
             </div>
-
-            <!-- CRUD MODAL TO LESSON -->
-            <livewire:teacher.discipline.module.create />
-
-
+          <livewire:teacher.discipline.module.create />
           <livewire:pages::teacher.discipline.module.task.show-task
             wire:key="'task-module-' .{{ $discipline->id ?? ''}}" />
           {{-- <livewire:teacher.discipline.create
             :disciplineId="$discipline->id"
             wire:key="'create-module-' . {{ $discipline->id ?? ''}}" /> --}}
 
-              <livewire:pages::teacher.discipline.module.modals.create-task
+          <livewire:pages::teacher.discipline.module.modals.create-task
             :lessons="$discipline->modules"
             :disciplineId="$discipline->id"
             wire:key="'new-task-' . {{ $discipline->id ?? ''}}" />

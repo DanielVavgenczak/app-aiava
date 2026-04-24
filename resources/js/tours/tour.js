@@ -1,7 +1,6 @@
 import { StartTourDisciplineCreateContent } from "./discipline_content";
 
 document.addEventListener("alpine:init", () => {
-    console.log("Tour iniciado");
     Alpine.store("tourguide", {
         openMai: false,
         continueTour: false,
@@ -10,14 +9,14 @@ document.addEventListener("alpine:init", () => {
             {
                 exact:true,
                 isDynamic: false,
-                path: "/teacher",
+                path: "/professor",
                 tourModule: () => import("./home"),
                 tours: ["HomeTour"],
             },
             {
                 exact:true,
                 isDynamic: false,
-                path: "/teacher/discipline",
+                path: "/professor/disciplina",
                 tourModule: () => import("./discipline"),
                 tours: [
                     "StartTourCreateDiscipline",
@@ -30,7 +29,7 @@ document.addEventListener("alpine:init", () => {
             {
                 exact: false,
                 isDynamic: true,
-                path: "/teacher/discipline",
+                path: "/professor/disciplina",
                 tourModule: () => import("./discipline_content"),
                 tours: [
                     "StartTourDisciplineCreateContent",
@@ -42,7 +41,7 @@ document.addEventListener("alpine:init", () => {
             {
                 exact:true,
                 isDynamic: false,
-                path: "/teacher/classes",
+                path: "/professor/classes",
                 tourModule: () => import("./classe_list"),
                 tours: [
                     "StartTourClasseCreate",
@@ -54,7 +53,7 @@ document.addEventListener("alpine:init", () => {
             {
                 exact: false,
                 isDynamic: true,
-                path: "/teacher/classes",
+                path: "/professor/classes",
                 tourModule: () => import("./classe_content"),
                 tours: [
                     "StartTourStudentRegister",
@@ -72,7 +71,7 @@ document.addEventListener("alpine:init", () => {
                 tours: ["StartTourStudentPanel"],
             },
         ],
-        
+
         cancelOptionsTourPage() {
             this.openMai = false;
         },
@@ -80,9 +79,11 @@ document.addEventListener("alpine:init", () => {
             this.loading = true;
             const currentPath = window.location.pathname.trim();
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-           
+
             for (const page of this.pages) {
-              if (page.exact && currentPath === page.path) {
+                console.log("Verificando página para tour:", page.path, "Current path:", currentPath);
+                if (page.exact && currentPath === page.path) {
+                    console.log("Iniciando tour...", currentPath);
                     this.openMai = true;
                     try {
                         const tourModule = await page.tourModule();

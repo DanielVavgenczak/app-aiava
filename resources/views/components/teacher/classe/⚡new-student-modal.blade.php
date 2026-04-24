@@ -4,8 +4,10 @@ use Livewire\Component;
 use App\Models\Teacher\{Classe, Student};
 use Livewire\Attributes\{On, Validate};
 use Illuminate\Support\Facades\Hash;
+use Mary\Traits\Toast;
 
 new class extends Component {
+    use Toast;
     public bool $open = false;
 
     #[Validate('required', message: 'Nome é obrigatório!')]
@@ -36,6 +38,28 @@ new class extends Component {
             'studentEmail' => 'required|email',
             'studentPhone' => 'nullable|string'
         ]);
+         // ✅ VERIFICA SE EMAIL JÁ EXISTE NA LISTA ATUAL
+    $emailExistsInList = collect($this->students)->contains(function ($student) use ($validated) {
+        return $student['email'] === $validated['studentEmail'];
+    });
+
+        if ($emailExistsInList) {
+            $this->addError('studentEmail', 'Este email já foi adicionado na lista atual.');
+            return;
+        }
+
+        // ✅ VERIFICA SE EMAIL JÁ EXISTE NO BANCO (para o mesmo teacher)
+        $emailExistsInDb = Student::where('teacher_id', Auth::guard('teacher')->user()->id)
+            ->where('email', $validated['studentEmail'])
+            ->exists();
+
+        if ($emailExistsInDb) {
+            $this->addError('studentEmail', 'Este email já está cadastrado para outro aluno seu.');
+            return;
+        }
+
+
+
         $students = [
             'name' => $validated['studentName'],
             'email' => $validated['studentEmail'],
@@ -58,6 +82,7 @@ new class extends Component {
     public function storeStudent()
     {
         try {
+
             DB::transaction(function () {
                 foreach ($this->students as $student) {
                     $phone = !empty(trim($student['phone'] ?? '')) ? $student['phone'] : null;
@@ -81,10 +106,11 @@ new class extends Component {
                   $this->error(
                       'Telefone já cadastrado',
                       'Este número de telefone já está em uso por outro aluno.',
-                      position: 'toast-top toast-end',
+                      position: 'toast-top toast-end ',
                       timeout: 8000
                   );
               } else if (str_contains($e->getMessage(), 'students_teacher_id_email_unique')) {
+
                   $this->error(
                       'Email já cadastrado',
                       'Este email já está em uso para um dos seus alunos.',

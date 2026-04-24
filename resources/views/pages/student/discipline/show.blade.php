@@ -127,7 +127,7 @@ new #[Layout('layouts::student')] class extends Component {
 
                 {{-- Player de Vídeo --}}
                 <div class="w-3/4">
-                    <livewire:pages.student.discipline.lesson.show-video-lesson />
+                    <livewire:pages::student.discipline.lesson.show-video-lesson />
                 </div>
             </div>
         @else

@@ -30,5 +30,6 @@ Route::prefix('aluno')->middleware('isStudent')->group(function () {
     Route::livewire('/perfil', 'pages.student.profile.index')
         ->name('student.profile');
     // Load streaming lesson
-    Route::get("/lesson/{lesson_id}", [LessonUploadController::class, 'stream'])->name('media.stream');
+    Route::get("/lesson/{lesson_id}", [LessonUploadController::class, 'stream'])
+        ->name('media.stream');
 });

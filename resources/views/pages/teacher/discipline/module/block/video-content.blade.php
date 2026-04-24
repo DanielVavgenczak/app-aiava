@@ -147,7 +147,7 @@ new class extends Component {
             Atualizar
         </button> --}}
         @if ($lesson)
-            <button x-on:click="$wire.sureDeleteBlock = true" class="btn btn-sm bg-pink-600 text-gray-50">
+            <button x-on:click="$wire.sureDeleteBlock = true" class="btn btn-sm bg-blue-700 text-white">
                 <x-mary-icon name="o-trash" class="w-5 h-5" />
                 Excluir bloco
             </button>
@@ -157,7 +157,7 @@ new class extends Component {
     <!-- Player de vídeo -->
     @if ($lesson)
         <div>
-            <livewire:pages.teacher.discipline.module.block.video :lesson_id="$lesson->id" :key="'video-block-' . $lesson->id" />
+            <livewire:pages::teacher.discipline.module.block.video :lesson_id="$lesson->id" :key="'video-block-' . $lesson->id" />
         </div>
            @if($showEndBlock)
             <div class="mx-5 mb-3 p-4 bg-pink-50 border border-pink-200 rounded-lg">
