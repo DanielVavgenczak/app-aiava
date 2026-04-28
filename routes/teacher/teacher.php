@@ -1,8 +1,6 @@
 <?php
 
 use App\Http\Controllers\Teacher\LessonUploadController;
-use App\Livewire\Teacher\Classes\Index;
-use App\Livewire\Teacher\Classes\Show;
 use Illuminate\Support\Facades\Route;
 
 

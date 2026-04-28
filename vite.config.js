@@ -15,13 +15,17 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    server: {
-        host: '0.0.0.0',   // servidor escuta tudo
-        port: 5173,
-        strictPort: true,
-        hmr: {
-            host: 'localhost', // 👈 AQUI é o segredo
-        },
+   server: {
+    host: '0.0.0.0', // 👈 FORÇA binding externo real
+    port: 5173,
+    strictPort: true,
+    hmr: {
+        host: 'localhost',
+        protocol: 'ws',
     },
+    watch: {
+        usePolling: true,
+    },
+}
 
 });

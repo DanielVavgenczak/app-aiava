@@ -25,7 +25,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // LivewireDoctor::initCustomAsset();
         Livewire::addPersistentMiddleware([
             IsTeacher::class,
             IsStudent::class,

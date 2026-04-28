@@ -21,7 +21,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
 <div>
         <div class="w-full text-center">
-            <h2 class="text-xl font-bold text-gray-900">Ava - Login</h2>
+            <h2 class="text-xl font-bold text-gray-900">IAAVA- Loginnn</h2>
         </div>
         <form wire:submit="login" class="mt-8 space-y-6">
             <div class="rounded-md shadow-sm -space-y-px">
