@@ -49,12 +49,10 @@ services:
     networks:
       - ailumnus_network
 
-  redis:
+redis:
     image: redis:7-alpine
     container_name: ailumnus_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     networks:
       - ailumnus_network
 
