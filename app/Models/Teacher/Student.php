@@ -6,10 +6,13 @@ use App\Models\Forum\ForumTopic;
 use App\Models\Traits\UuidTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+
+use Illmuninate\Broadcasting\PrivateChannel;
 
 class Student extends Authenticatable
 {
-    use  UuidTrait;
+    use  UuidTrait, Notifiable;
 
     protected $keyType = 'string';
     public $incrementing = false;
@@ -144,6 +147,11 @@ class Student extends Authenticatable
     public function owner()
     {
         return $this->morphMany(ForumTopic::class, 'owner');
+    }
+
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'chat-teacher-student.' . $this->id;
     }
 
     protected function casts(): array

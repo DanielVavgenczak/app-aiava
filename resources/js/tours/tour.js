@@ -66,9 +66,23 @@ document.addEventListener("alpine:init", () => {
             {
                 exact: true,
                 isDynamic: false,
-                path: "/student/panel",
+                path: "/aluno/panel",
                 tourModule: () => import("./student/panel"),
                 tours: ["StartTourStudentPanel"],
+            },
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/student/mensagens",
+                tourModule: () => import("./student/messages"),
+                tours: ["StartTourStudentMessages"],
+            },
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/professor/mensagens",
+                tourModule: () => import("./teacher/messages"),
+                tours: ["StartTourTeacherMessages"],
             },
         ],
 

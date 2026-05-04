@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illmuninate\Broadcasting\PrivateChannel;
 
 class Teacher extends Authenticatable
 {
@@ -54,6 +55,10 @@ class Teacher extends Authenticatable
         ];
     }
 
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'chat-teacher-student.' . $this->id;
+    }
     public function disciplines()
     {
         return $this->hasMany(Discipline::class);
