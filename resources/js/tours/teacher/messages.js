@@ -3,7 +3,6 @@ const store = Alpine.store("tourguide");
 
 export async function StartTourTeacherMessages() {
     store.openMai = false;
-
     const teacherId = document.querySelector('[id^="teacher-messages-header-"]')?.id.replace('teacher-messages-header-', '') || '';
     if (!teacherId) {
         console.error("ID do professor não encontrado");

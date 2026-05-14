@@ -4,7 +4,7 @@ const store =  Alpine.store("tourguide");
 export async function StartTourCreateDiscipline() {
     store.openMai = false;
     const newDisciplineButton = document.querySelector("button#discipline-create");
-    if(!newDisciplineButton.id){
+    if(!newDisciplineButton){
         return;
     }
     const driverObj = drivertour({
@@ -68,20 +68,16 @@ export async function StartTourCreateDiscipline() {
                     if (!btnCancel || !btnCreate) {
                         return;
                     }
-                    btnCancel.addEventListener("click", async () =>{
+                    btnCancel.addEventListener("click", async () => {
                         await Livewire.dispatch("discipline-close-modal-create");
                         await driverObj.destroy();
                         store.openMai = true;
                     });
 
-                    /**
-                     * Esse codigo aqui é apenas para o video do de apresentção
-                     * depois devemos rever as funcionalidades
-                     */
-                    await btnCreate.addEventListener("click", async () =>{
+                    btnCreate.addEventListener("click", async () => {
                         await new Promise((resolve) => setTimeout(resolve, 500));
                         const errorTitle = document.querySelector("#title_discipline_error");
-                        await new Promise((resolve) => setTimeout(resolve, 100));                      
+                        await new Promise((resolve) => setTimeout(resolve, 100));
                         /** Resolução temporaria até recriarmos */
                         if(errorTitle && errorTitle.textContent.trim() !== ""){
                             alert("Erro: Você ja possue uma disciplina com esse titulo.");
@@ -89,15 +85,15 @@ export async function StartTourCreateDiscipline() {
                         }
                         await new Promise((resolve) => setTimeout(resolve, 500));
                         /** para fechar o model  */
-                        Livewire.dispatch("discipline-close-modal-create");                       
+                        Livewire.dispatch("discipline-close-modal-create");
                         await driverObj.destroy();
                         store.openMai = false;
-                        
+
                         await new Promise((resolve) => setTimeout(resolve, 500));
                         console.log("vai continuar");
 
                         await new Promise((resolve) => setTimeout(resolve, 2000));
-                        
+
                         const disciplinesAfterCount = document.querySelectorAll("div.discipline-card");
                         const lastRegisted = disciplinesAfterCount[0];
                         if(!lastRegisted) return;
@@ -107,54 +103,47 @@ export async function StartTourCreateDiscipline() {
                         // b1480804-d382-4493-a2ad-797540e1b1af
                         console.log("Quantidade de disciplinas", disciplinesAfterCount.length);
 
-                     
+
                         // Cria uma Promise que resolve quando o evento for recebido
                         disciplineIdToManager = dataId;
-                     
+
+                        let updatedDriverObj;
                         const continueStepe = [
-                                {
-                                    element: `#discipline-${disciplineIdToManager}`,
-                                    popover: {
-                                        description: `Agora vamos adicionar conteúdo a essa disciplina`,
-                                        side: "bottom",
-                                        align: "start",
-                                        showButtons:['']
-                                    },
-                                    onHighlighted: async (el) => {
-                                        await new Promise((resolve) => setTimeout(resolve, 3000));
-                                        await driverObj.moveNext();
-                                    }
+                            {
+                                element: `#discipline-${disciplineIdToManager}`,
+                                popover: {
+                                    description: `Agora vamos adicionar conteúdo a essa disciplina`,
+                                    side: "bottom",
+                                    align: "start",
+                                    showButtons:['']
                                 },
-                                {
-                                    element: `#discipline-manager-content-${disciplineIdToManager}`,
-                                    popover: {
-                                        description: `Vou clicar aqui para acessar página da disciplina`,
-                                        side: "bottom",
-                                        align: "start",
-                                        showButtons:['']
-                                    },
-                                    onHighlighted: async (el) => {
-                                        await new Promise((resolve) => setTimeout(resolve, 1000));
-                                        el.click();
-                                        await updatedDriverObj.destroy()
-                                        store.continueTour = true;
-                                        Livewire.dispatch('continue-created-content', {continue:true});
-                                    }
+                                onHighlighted: async (el) => {
+                                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                                    await driverObj.moveNext();
+                                }
+                            },
+                            {
+                                element: `#discipline-manager-content-${disciplineIdToManager}`,
+                                popover: {
+                                    description: `Vou clicar aqui para acessar página da disciplina`,
+                                    side: "bottom",
+                                    align: "start",
+                                    showButtons:['']
                                 },
-                            ];
-                            const updatedDriverObj = drivertour({
-                                ...configDriver,
-                                steps: continueStepe,
-                            });
-                            await updatedDriverObj.drive();
-                            /** Mapeamos em qual disciplina vai adicionar o conteudo apos o cadastro */
-                            Livewire.on('send-id-discipline', async (event) => {
-                                disciplineIdToManager = event.discipline_id
-                                console.log("Id da disciplina", disciplineIdToManager);
-                                //await driverObj.destroy();
-                                await new Promise((resolve) => setTimeout(resolve, 2000))
-                                
-                            });
+                                onHighlighted: async (el) => {
+                                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                                    el.click();
+                                    await updatedDriverObj.destroy()
+                                    store.continueTour = true;
+                                    Livewire.dispatch('continue-created-content', {continue:true});
+                                }
+                            },
+                        ];
+                        updatedDriverObj = drivertour({
+                            ...configDriver,
+                            steps: continueStepe,
+                        });
+                        await updatedDriverObj.drive();
                     });
                 },
             },
@@ -164,7 +153,6 @@ export async function StartTourCreateDiscipline() {
 }
 /** Tour to edit disciplines */
 export async function StartTourEditDiscipline() {
-    let store = Alpine.store("tourguide");
     store.openMai = false;
      const createInitialTour = () => {
         return drivertour({
@@ -178,7 +166,7 @@ export async function StartTourEditDiscipline() {
                             const actions = AddButtonActions(popover, "Voltar ao início");
                             actions.addEventListener('click', async () => {
                                 driverObj.destroy();
-                                const removeIndex = document.querySelectorAll("div.content-discipline");
+                                const removeIndex = document.querySelectorAll("div.discipline-card");
                                 removeIndex.forEach((item) => item.style.zIndex = "0");
                                 store.openMai = true;
                             });
@@ -322,7 +310,6 @@ export async function StartTourEditDiscipline() {
 }
 /** Delete */
 export async function StartTourDeleteDiscipline() {
-    let store = Alpine.store("tourguide");
     store.openMai = false;
     const createInitialTour = () => {
         return drivertour({
@@ -336,7 +323,7 @@ export async function StartTourDeleteDiscipline() {
                             const actions = AddButtonActions(popover, "Voltar ao inicio");
                             actions.addEventListener('click', async () => {
                                 driverObj.destroy();
-                                const removeIndex = document.querySelectorAll("div.content-discipline");
+                                const removeIndex = document.querySelectorAll("div.discipline-card");
                                 removeIndex.forEach((item) => item.style.zIndex = "0");
                                 store.openMai = true;
                             });
@@ -481,7 +468,6 @@ export async function StartTourDeleteDiscipline() {
 }
 
 export async function StartTourSearchDiscipline(){
-    let store = Alpine.store("tourguide");
     store.openMai = false;
     const inputSearch = document.querySelector("#discipline-input-search");
     if(!inputSearch){
@@ -500,7 +486,7 @@ export async function StartTourSearchDiscipline(){
                             const actions = AddButtonActions(popover, "voltar ao inicio");
                             actions.addEventListener('click', async () => {
                                 driverObj.destroy();
-                                const removeIndex = document.querySelectorAll("div.content-discipline");
+                                const removeIndex = document.querySelectorAll("div.discipline-card");
                                 removeIndex.forEach((item) => item.style.zIndex = "0");
                                 store.openMai = true;
                             });
@@ -530,7 +516,6 @@ export async function StartTourSearchDiscipline(){
     return await driverObj.drive();
 }
 export async function StartTourManagerDisciplineContent(){
-    let store = Alpine.store("tourguide");
     store.openMai = false;
     const createInitialTour = () => {
         return drivertour({
@@ -544,7 +529,7 @@ export async function StartTourManagerDisciplineContent(){
                             const actions = AddButtonActions(popover, "voltar ao inicio");
                             actions.addEventListener('click', async () => {
                                 driverObj.destroy();
-                                const removeIndex = document.querySelectorAll("div.content-discipline");
+                                const removeIndex = document.querySelectorAll("div.discipline-card");
                                 removeIndex.forEach((item) => item.style.zIndex = "0");
                                 store.openMai = true;
                             });
@@ -571,7 +556,8 @@ export async function StartTourManagerDisciplineContent(){
                                 const dataId = discipline.getAttribute('data-tour');
                                 // Destrói o tour atual
                                 await driverObj.destroy();
-                                // Cria um novo tour com os passos atualizados
+
+                                let updatedDriverObj;
                                 const secondStep = [
                                     {
                                         element: `#${disciplineId}`,
@@ -603,8 +589,7 @@ export async function StartTourManagerDisciplineContent(){
                                         }
                                     },
                                 ];
-                                // // Cria um novo tour com os passos atualizados
-                                const updatedDriverObj = drivertour({
+                                updatedDriverObj = drivertour({
                                     ...configDriver,
                                     steps: secondStep,
                                 });

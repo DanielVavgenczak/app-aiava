@@ -51,15 +51,15 @@ new class extends Component {
                 </button>
             </div>
             <div id="create-confirm" wire:loading.remove>
-                <button class="bg-pink-600 btn btn-sm text-gray-50 hover:bg-pink-900" type="submit">
+                <button class="bg-blue-600 btn btn-sm text-gray-50 hover:bg-blue-900" type="submit">
                     Registrar
                 </button>
                 <div id="{{ $diciplineIdToManager }}"></div>
             </div>
             <div wire:loading wire:target="store" class="flex flex-col justify-center w-full text-center">
-              <span class="text-xs tracking-wider text-pink-600">Registrando</span>
+              <span class="text-xs tracking-wider text-blue-600">Registrando</span>
                 <div class="mb-2">
-                    <x-mary-loading class="text-pink-600 loading-dots" />
+                    <x-mary-loading class="text-blue-600 loading-dots" />
                 </div>
             </div>
         </div>

@@ -1,7 +1,5 @@
-
-    Alpine.data('notifications', (user) => ({
-         user: user,
-
+Alpine.data('notifications', (user) => ({
+        user: user,
         open: false,
         notifications: [],
         init() {

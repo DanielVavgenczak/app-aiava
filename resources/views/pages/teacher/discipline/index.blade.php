@@ -118,6 +118,7 @@ new #[Layout('layouts::teacher')] class extends Component {
             </div>
 
             <button
+                id="discipline-create"
                 wire:click="createDiscipline"
                 class="btn bg-gradient-to-r from-blue-700 to-blue-500 text-white border-0 hover:from-blue-700 hover:to-blue-700 shadow-sm"
             >
@@ -150,6 +151,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                 <div class="relative">
                     <x-mary-icon name="o-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                        id="discipline-input-search"
                         type="text"
                         wire:model.live.debounce.300ms="search"
                         placeholder="Buscar disciplina..."
@@ -207,142 +209,191 @@ new #[Layout('layouts::teacher')] class extends Component {
     </div>
 
     {{-- Lista de Disciplinas --}}
-    @if($this->disciplines->count() > 0)
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            @foreach ($this->disciplines as $discipline)
-                <div
-                    class="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-blue-300 transition-all duration-200 overflow-hidden"
-                    wire:key="discipline-{{ $discipline->id }}"
-                >
-                    {{-- Header com Cor --}}
-                    <div class="h-32 bg-gradient-to-br from-blue-500 to-blue-700 relative">
-                        <div class="absolute inset-0 bg-blue-500 bg-opacity-10 group-hover:bg-opacity-0 transition-opacity"></div>
+    <div id="discipline-card">
+        @if($this->disciplines->count() > 0)
+            <div id="disciplines-all" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                @foreach ($this->disciplines as $discipline)
+                    <div
+                        class="group bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-blue-300 transition-all duration-200 overflow-hidden discipline-card"
+                        wire:key="discipline-{{ $discipline->id }}"
+                        id="discipline-{{ $discipline->id }}"
+                        data-tour="{{ $discipline->id }}"
+                    >
+                        {{-- Header com Cor --}}
+                        <div class="h-32 bg-gradient-to-br from-blue-500 to-blue-700 relative">
+                            <div class="absolute inset-0 bg-blue-500 bg-opacity-10 group-hover:bg-opacity-0 transition-opacity"></div>
 
-                        {{-- Menu de Ações --}}
-                        <div class="absolute top-3 right-3 z-10 bg-blue-500">
-                            <div class="dropdown dropdown-end">
-                                <button
-                                    tabindex="0"
-                                    class="btn btn-sm btn-circle bg-blue-500 hover:bg-white border-0 shadow-sm"
-                                >
-                                    <x-mary-icon name="o-ellipsis-vertical" class="w-5 h-5 text-white" />
-                                </button>
-                                <ul tabindex="0" class="dropdown-content menu p-2 shadow-xl bg-white rounded-box w-52 border border-gray-200 mt-2">
-                                    <li>
-                                        <button wire:click="detailsDiscipline('{{ $discipline->id }}')">
-                                            <x-mary-icon name="o-document-magnifying-glass" class="w-4 h-4" />
-                                            Ver Detalhes
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button wire:click="editDiscipline('{{ $discipline->id }}')">
-                                            <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
-                                            Editar
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button
-                                            wire:click="deleteDiscipline('{{ $discipline->id }}')"
-                                            class="text-red-600 hover:bg-red-50"
-                                        >
-                                            <x-mary-icon name="o-trash" class="w-4 h-4" />
-                                            Excluir
-                                        </button>
-                                    </li>
-                                </ul>
+                            {{-- Menu de Ações --}}
+                            <div class="absolute top-3 right-3 z-10 bg-blue-500">
+                                <div class="dropdown dropdown-end">
+                                    <button
+                                        id="tour-operations-{{ $discipline->id }}"
+                                        tabindex="0"
+                                        class="btn btn-sm btn-circle bg-blue-500 hover:bg-white border-0 shadow-sm"
+                                    >
+                                        <x-mary-icon name="o-ellipsis-vertical" class="w-5 h-5 text-white" />
+                                    </button>
+                                    <ul tabindex="0" class="dropdown-content menu p-2 shadow-xl bg-white rounded-box w-52 border border-gray-200 mt-2">
+                                        <li>
+                                            <button wire:click="detailsDiscipline('{{ $discipline->id }}')">
+                                                <x-mary-icon name="o-document-magnifying-glass" class="w-4 h-4" />
+                                                Ver Detalhes
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button wire:click="editDiscipline('{{ $discipline->id }}')" class="tour-discipline-edit-{{ $discipline->id }}">
+                                                <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
+                                                Editar
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                wire:click="deleteDiscipline('{{ $discipline->id }}')"
+                                                class="text-red-600 hover:bg-red-50 tour-discipline-delete-{{ $discipline->id }}"
+                                            >
+                                                <x-mary-icon name="o-trash" class="w-4 h-4" />
+                                                Excluir
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {{-- Ícone Central --}}
+                            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
+                                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg ring-4 ring-white">
+                                    <x-mary-icon name="o-academic-cap" class="w-8 h-8 text-blue-600" />
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Ícone Central --}}
-                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg ring-4 ring-white">
-                                <x-mary-icon name="o-academic-cap" class="w-8 h-8 text-blue-600" />
+                        {{-- Conteúdo --}}
+                        <div class="pt-10 px-5 pb-5">
+                            {{-- Título --}}
+                            <h3 class="text-center text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
+                                {{ $discipline->title }}
+                            </h3>
+
+                            {{-- Info --}}
+                            <div class="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
+                                <x-mary-icon name="o-calendar" class="w-3 h-3" />
+                                <span>Criada {{ $discipline->created_at->diffForHumans() }}</span>
                             </div>
+
+                            {{-- Botão de Acesso --}}
+                            <a
+                                id="discipline-manager-content-{{ $discipline->id }}"
+                                href="{{ route('teacher.discipline.show', $discipline) }}"
+                                wire:navigate
+                                class="btn btn-primary btn-block btn-sm group-hover:bg-blue-700"
+                            >
+                                <x-mary-icon name="o-arrow-right-circle" class="w-4 h-4" />
+                                Gerenciar Conteúdo
+                            </a>
                         </div>
                     </div>
 
-                    {{-- Conteúdo --}}
-                    <div class="pt-10 px-5 pb-5">
-                        {{-- Título --}}
-                        <h3 class="text-center text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
-                            {{ $discipline->title }}
-                        </h3>
+                    {{-- Modais --}}
+                    <livewire:teacher.modal-details-discipline
+                        :discipline="$discipline"
+                        :wire:key="'details-' . $discipline->id"
+                    />
+                    <livewire:teacher.modal-edit-discipline
+                        :discipline="$discipline"
+                        :wire:key="'edit-' . $discipline->id"
+                    />
+                    <livewire:teacher.modal-delete-discipline
+                        :id="$discipline->id"
+                        :title="$discipline->title"
+                        :wire:key="'delete-' . $discipline->id"
+                    />
+                @endforeach
 
-                        {{-- Info --}}
-                        <div class="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
-                            <x-mary-icon name="o-calendar" class="w-3 h-3" />
-                            <span>Criada {{ $discipline->created_at->diffForHumans() }}</span>
-                        </div>
+            </div>
 
-                        {{-- Botão de Acesso --}}
-                        <a
-                            href="{{ route('teacher.discipline.show', $discipline) }}"
-                            wire:navigate
-                            class="btn btn-primary btn-block btn-sm group-hover:bg-blue-700"
-                        >
-                            <x-mary-icon name="o-arrow-right-circle" class="w-4 h-4" />
-                            Gerenciar Conteúdo
-                        </a>
-                    </div>
+            {{-- Paginação --}}
+            @if($this->disciplines->hasPages())
+                <div class="mt-8">
+                    {{ $this->disciplines->links() }}
+                </div>
+            @endif
+        @else
+            {{-- Estado Vazio --}}
+            <div id="disciplines-empty" class="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
+                <div class="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
+                    <x-mary-icon name="o-academic-cap" class="w-12 h-12 text-blue-600" />
                 </div>
 
-                {{-- Modais --}}
-                <livewire:teacher.modal-details-discipline
-                    :discipline="$discipline"
-                    :wire:key="'details-' . $discipline->id"
-                />
-                <livewire:teacher.modal-edit-discipline
-                    :discipline="$discipline"
-                    :wire:key="'edit-' . $discipline->id"
-                />
-                <livewire:teacher.modal-delete-discipline
-                    :id="$discipline->id"
-                    :title="$discipline->title"
-                    :wire:key="'delete-' . $discipline->id"
-                />
-            @endforeach
-        </div>
-
-        {{-- Paginação --}}
-        @if($this->disciplines->hasPages())
-            <div class="mt-8">
-                {{ $this->disciplines->links() }}
+                @if($search)
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma disciplina encontrada</h3>
+                    <p class="text-gray-500 mb-6">
+                        Não encontramos disciplinas com o termo "{{ $search }}".
+                    </p>
+                    <button
+                        wire:click="clearFilters"
+                        class="btn btn-primary"
+                    >
+                        <x-mary-icon name="o-arrow-path" class="w-5 h-5" />
+                        Limpar Busca
+                    </button>
+                @else
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma disciplina cadastrada</h3>
+                    <p class="text-gray-500 mb-6">
+                        Você ainda não possui disciplinas cadastradas. Crie sua primeira disciplina!
+                    </p>
+                    <button
+                        wire:click="createDiscipline"
+                        class="btn bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0"
+                    >
+                        <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
+                        Criar Primeira Disciplina
+                    </button>
+                @endif
             </div>
         @endif
-    @else
-        {{-- Estado Vazio --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center">
-            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-                <x-mary-icon name="o-academic-cap" class="w-12 h-12 text-blue-600" />
-            </div>
+    </div>
 
-            @if($search)
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma disciplina encontrada</h3>
-                <p class="text-gray-500 mb-6">
-                    Não encontramos disciplinas com o termo "{{ $search }}".
-                </p>
-                <button
-                    wire:click="clearFilters"
-                    class="btn btn-primary"
-                >
-                    <x-mary-icon name="o-arrow-path" class="w-5 h-5" />
-                    Limpar Busca
-                </button>
-            @else
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma disciplina cadastrada</h3>
-                <p class="text-gray-500 mb-6">
-                    Você ainda não possui disciplinas cadastradas. Crie sua primeira disciplina!
-                </p>
-                <button
-                    wire:click="createDiscipline"
-                    class="btn bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0"
-                >
-                    <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
-                    Criar Primeira Disciplina
-                </button>
-            @endif
+     {{-- Tour Modal --}}
+    <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2
+            -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
+            shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+           <div class="flex justify-between items-center">
+               <h2 class="text-lg font-normal text-gray-700">Opção das disciplinas</h2>
+                <div class="flex justify-end">
+                    <x-mary-button icon="o-x-mark"
+                        class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                </div>
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+              <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Criar uma disciplina"
+                    x-on:click="$store.tourguide.start('StartTourCreateDiscipline')" />
+
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-blue-100"
+                    label="Editar uma disciplina"
+                    x-on:click="$store.tourguide.start('StartTourEditDiscipline')" />
+
+                 <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Filtrar uma disciplina"
+                    x-on:click="$store.tourguide.start('StartTourSearchDiscipline')" />
+                 <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Gerenciar conteúdo de uma disciplina"
+                    x-on:click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
+                <x-mary-button
+                    class="font-medium text-red-600 border-[1px] border-red-600 btn hover:bg-red-600 hover:text-gray-100"
+                    label="Deletar uma disciplina"
+                    x-on:click="$store.tourguide.start('StartTourDeleteDiscipline')" />
+                </div>
         </div>
-    @endif
+        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
+    </div>
 
     {{-- Modal de Criação --}}
     <livewire:teacher.modal-new-discipline />
