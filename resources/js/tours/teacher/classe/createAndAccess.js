@@ -1,4 +1,4 @@
-import { configDriver, AddButtonActions } from "../utils";
+import { configDriver, AddButtonActions } from "../../utils";
 import { ContinueRegisterStudentTour } from "./RegisterStudent";
 export async function ContinueCreateAcessClasseTour(dataTour) {
   let dataId = dataTour;

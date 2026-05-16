@@ -23,19 +23,24 @@
 <body>
       <x-mary-toast />
     <div class="flex flex-col bg-gray-50 min-w-min" x-data>
-         <livewire:teacher.header />
-         <livewire:teacher.menu />
+         <livewire:teacher.layout.header />
+         <livewire:teacher.layout.menu />
         <main class="relative h-screen p-2 transition-all duration-300 ease-in-out top-[100px]"
             x-bind:class="$store.expandedSidebar.expanded ? 'w-[calc(100%-16.666667%)] left-[16.666667%]' :
                 'w-[calc(100%-5rem)] left-20'">
             {{ $slot }}
         </main>
         <x-mary-button
-            class="fixed z-[999] bg-pink-600 right-5 bottom-5 btn-circle btn-lg text-gray-50"
+            class="fixed z-[999] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50"
             x-on:click="$store.tourguide.initTour()"
             id="ativation-mai"
-            icon="o-question-mark-circle"
-            x-show="!$store.tourguide.openMai" />
+            x-show="!$store.tourguide.openMai">
+            <img
+                src="{{ asset('images/rb-aiava.png') }}"
+                alt="Iniciar tour guiado"
+                class="w-[100px] h-auto"
+            />
+        </x-mary-button>
     </div>
 </body>
 </html>

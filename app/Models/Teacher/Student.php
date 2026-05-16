@@ -149,6 +149,14 @@ class Student extends Authenticatable
         return $this->morphMany(ForumTopic::class, 'owner');
     }
 
+
+
+
+    public function lastName(): string
+    {
+        return explode(' ', $this->full_name)[1];
+    }
+
     public function receivesBroadcastNotificationsOn(): string
     {
         return 'chat-teacher-student.' . $this->id;

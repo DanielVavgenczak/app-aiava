@@ -58,22 +58,22 @@ new class extends Component {
 <x-mary-modal wire:model="open" title="Novo topico" subtitle="Crie um novo tópico">
     <div>
         <form wire:submit.prevent="save">
-            <div class="mb-4">
+            <div class="mb-4" id="forum-input-title">
                 <x-mary-input wire:model="title" label="Novo tópico" class="class-input-name !outline-none"
                 autocomplete="title" />
             </div>
-            <div class="mb-4" id="classe-input-discipline">
+            <div class="mb-4" id="forum-input-class">
                 <label class="block mb-1 text-sm font-medium text-gray-700">Turma</label>
                     <x-mary-select wire:model="classe_id"
                     placeholder="Selecione uma turma" :options="$classes"
                         option-label="name" option-value="id" placeholder-value="0" class="w-full !outline-none" />
             </div>
-            <div class="mt-2 flex justify-end w-full">
-                <button class="btn btn-sm text-gray-50 capitalize bg-ghost" @click="$wire.cancel" wire:loading.remove>
+            <div class="mt-2 flex justify-end w-full" id="forum-input-actions">
+                <button class="btn btn-sm text-gray-800 capitalize bg-ghost" @click="$wire.cancel">
                     Cancelar
                 </button>
 
-                <button class="btn btn-sm text-gray-500 capitalize bg-blue-700 hover:bg-blue-900" type="submit">
+                <button class="btn btn-sm text-gray-50 capitalize bg-blue-700 hover:bg-blue-900" type="submit">
                     cadastrar
                 </button>
                <div wire:loading wire:target="save" class="flex flex-col justify-center w-full text-center">

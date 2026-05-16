@@ -272,13 +272,19 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                         <div class="flex flex-wrap items-center gap-3 mt-3">
                                             {{-- Autor --}}
                                             <div class="flex items-center gap-2">
-                                                {{-- <div class="w-8 h-8 rounded-full bg-gradient-to-br {{ $isTeacher ? 'from-blue-500 to-blue-600' : 'from-blue-300 to-blue-600' }} flex items-center justify-center text-white text-xs font-bold shadow">
-                                                    {{ substr($topic->owner->full_name ?? $topic->owner->first_name ?? 'U', 0, 1) }}
-                                                </div> --}}
+
                                                 @php
-                                                    $name = $topic->owner->full_name ?? $topic->owner->first_name
+                                                    $name = $topic->owner->full_name ?? $topic->owner->first_name;
                                                 @endphp
+
+                                                @if($topic->owner->profile?->avatar)
+                                                    <img src="{{ asset('storage/' . $topic->owner->profile->avatar) }}" class="w-10 h-10 rounded-full" alt="{{ $name }}"/>
+
+                                                @else
                                                     <livewire:user-avatar-forum-list initiais="{{ $name }}"/>
+
+                                                @endif
+
 
                                                 <div>
                                                     <p class="text-sm font-medium {{ $isTeacher ? 'text-blue-700' : 'text-green-700' }}">
@@ -455,14 +461,14 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                             </div>
                         @empty
                             <div class="text-center py-16">
-                                <div class="w-24 h-24 mx-auto bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
-                                    <x-mary-icon name="o-document-plus" class="w-12 h-12 text-pink-600" />
+                                <div class="w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-4">
+                                    <x-mary-icon name="o-document-plus" class="w-12 h-12 text-blue-600" />
                                 </div>
                                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Você ainda não tem tópicos</h3>
                                 <p class="text-gray-500 mb-6">Crie seu primeiro tópico e compartilhe suas ideias!</p>
                                 <button
                                    @click="$wire.openNewTopicModal"
-                                    class="btn bg-gradient-to-r from-pink-600 to-purple-600 text-white border-0"
+                                    class="btn bg-blue-400 text-white border-0 text-gray-900"
                                 >
                                     <x-mary-icon name="o-sparkles" class="w-5 h-5" />
                                     Criar Meu Primeiro Tópico

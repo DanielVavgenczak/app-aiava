@@ -21,12 +21,6 @@ new #[Layout('layouts::student')] class extends Component {
             'modules' => function ($q) {
                 $q->orderBy('created_at', 'ASC'); // Ordem crescente
             },
-            // 'modules.lessons' => function ($q) {
-            //     $q->orderBy('created_at', 'ASC'); // Ordem crescente
-            // },
-            // 'modules.activitTasks' => function ($q) {
-            //     $q->orderBy('created_at', 'ASC'); // Ordem crescente
-            // },
         ])
             ->where('id', Auth::guard('student')->user()->discipline_id)
             ->first(); // Especificar colunas
@@ -75,27 +69,6 @@ new #[Layout('layouts::student')] class extends Component {
             </div>
         </div>
     </div>
-    {{-- <div class="card flex flex-col gap-3 border-gray-200 border-[1px] p-5 rounded-md shadow-sm">
-                <header class="flex flex-col items-center justify-center">
-                    <x-mary-icon name="o-academic-cap" class="w-8 h-8 text-blue-500" />
-                    <div class="mt-4 text-center">
-                        <h3 class="tracking-wider text-gray-700 font-medium mb-2">{{ $discipline->title }}</h3>
-                    </div>
-                </header>
-                <div>
-                    <div class="flex flex-col gap-2">
-                        <span
-                            class="text-[15px] tracking-wider text-gray-600"><b>Professor</b>:{{ $discipline->teacher->fullName() }}</span>
-                        <span class="text-[15px] tracking-wider text-gray-600"><b
-                                class="mr-2">Aulas:</b>{{ count($discipline->modules) }}</span>
-                    </div>
-                    <div class="w-full">
-                        <a href="{{ route('student.lessons', $discipline->id) }}"
-                            class="btn-block btn-md  bg-gray-500 tracking-wider font-medium">acessar
-                        </a>
-                    </div>
-                </div>
-            </div> --}}
 </div>
 </div>
 </div>

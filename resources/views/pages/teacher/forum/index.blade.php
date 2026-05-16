@@ -26,7 +26,7 @@ new #[Layout('layouts::teacher')] class extends Component {
 }; ?>
 
 <div>
-      <div class="py-4">
+      <div class="py-4" id="forum-breadcrumb">
         <div class="flex items-center gap-2 text-sm">
             <a href="{{ route('teacher.index') }}" wire:navigate class="text-gray-500 hover:text-pink-700 transition-colors">
                 <x-mary-icon name="o-home" class="w-4 h-4" />
@@ -35,15 +35,13 @@ new #[Layout('layouts::teacher')] class extends Component {
             <a href="{{ route('teacher.forum') }}" wire:navigate class="text-gray-500 hover:text-pink-700">
                 Fórum
             </a>
-            {{-- <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-pink-700 font-medium">{{ $discipline->title }}</span> --}}
         </div>
     </div>
 
     {{-- Card de Postagens no Fórum --}}
 <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
     {{-- Header do Card --}}
-    <div class="px-6 py-5">
+    <div class="px-6 py-5" id="forum-header">
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -68,9 +66,10 @@ new #[Layout('layouts::teacher')] class extends Component {
     {{-- Conteúdo --}}
     <div class="p-6">
         @if($disciplines->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            <div id="forum-discipline-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 @foreach ($disciplines as $discipline)
                     <div
+                        @if($loop->first) id="forum-discipline-card" @endif
                         class="group relative bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl p-4 hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition-all duration-300"
                         wire:key="forum-discipline-{{ $discipline->id }}"
                     >
@@ -98,6 +97,7 @@ new #[Layout('layouts::teacher')] class extends Component {
 
                         {{-- Botão de Acesso --}}
                         <a
+                            @if($loop->first) id="forum-access-btn" @endif
                             href="{{ route('teacher.forum.show', $discipline->id) }}"
                             wire:navigate
                             class="btn btn-sm btn-block bg-gradient-to-r from-blue-700 to-blue-500 text-white border-0 hover:from-blue-700 hover:to-blue-500 group-hover:shadow-lg transition-all"
@@ -110,7 +110,7 @@ new #[Layout('layouts::teacher')] class extends Component {
             </div>
         @else
             {{-- Estado Vazio --}}
-            <div class="text-center py-12">
+            <div id="forum-empty-state" class="text-center py-12">
                 <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <x-mary-icon name="o-inbox" class="w-10 h-10 text-gray-400" />
                 </div>
@@ -130,5 +130,33 @@ new #[Layout('layouts::teacher')] class extends Component {
         @endif
     </div>
 </div>
+
+    {{-- Tour Modal --}}
+    <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2
+            -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
+            shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+           <div class="flex justify-between items-center">
+               <h2 class="text-lg font-normal text-gray-700">Opções do Fórum</h2>
+                <div class="flex justify-end">
+                    <x-mary-button icon="o-x-mark"
+                        class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Visão geral do Fórum"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForum')" />
+              <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Interagir"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumInteract')" />
+            </div>
+        </div>
+        {{-- <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" /> --}}
+    </div>
 
 </div>

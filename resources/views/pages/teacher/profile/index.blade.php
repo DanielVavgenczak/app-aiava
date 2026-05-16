@@ -1,11 +1,10 @@
 <?php
 
-use Illuminate\View\View;
-use Livewire\Volt\Component;
+use Livewire\Component;
 use Livewire\Attributes\{Layout};
 
-new #[Layout('layouts.app')] class extends Component {
-   
+new #[Layout('layouts::teacher')] class extends Component {
+
 
 }; ?>
 <div>
@@ -21,17 +20,17 @@ new #[Layout('layouts.app')] class extends Component {
             <div></div>
             @if (Auth::guard('teacher')->user()->profile?->avatar)
                 <img src="{{ asset('storage/' . Auth::guard('teacher')->user()->profile->avatar) }}"
-                    class="w-20 h-20 rounded-full" />
+                    class="w-20 h-20 rounded-full" alt="{{ Auth::guard('teacher')->user()->fullName() }}"/>
             @else
                 <div class="flex flex-col items-center justify-center gap-3">
-                    <livewire:pages.teacher.components.avatar
-                        initiais="{{ Auth::guard('teacher')->user()->initialLetterToAvatar() }}">
+                    <livewire:user-avatar
+                        initiais="{{ Auth::guard('teacher')->user()->initialLetterToAvatar() }}"/>
                         <h3 class="text-base text-gray-600">{{ Auth::guard('teacher')->user()->fullName() }}</h3>
                 </div>
             @endif
             <x-mary-button label="Editar Perfil" icon-right="o-pencil-square"
                 x-on:click="$dispatch('open-modal-update-profile', { open:true })" />
-            <livewire:pages.teacher.profile.modals.update />
+            <livewire:teacher.profile.update />
         </div>
     </div>
     <div class="flex flex-col gap-4">
@@ -43,13 +42,6 @@ new #[Layout('layouts.app')] class extends Component {
             <div>
                 <h3 class="text-lg font-semibold text-gray-700">E-mail</h3>
                 {{ Auth::guard('teacher')->user()->email }}
-            </div>
-        </div>
-        <div>
-            <h3 class="text-lg font-semibold">Informações do plano</h3>
-            <div>
-                <h4>Plano atual</h4>
-                <p>Informações do plano</p>
             </div>
         </div>
     </div>

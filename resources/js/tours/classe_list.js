@@ -1,4 +1,4 @@
-import { ContinueCreateAcessClasseTour } from "./classe/createAndAccess";
+import { ContinueCreateAcessClasseTour } from "./teacher/classe/createAndAccess";
 import { AddButtonActions, configDriver
  } from "./utils";
 

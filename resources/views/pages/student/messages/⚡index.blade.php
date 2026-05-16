@@ -185,8 +185,8 @@ new #[Layout(name: 'layouts::student')] class extends Component
     {{-- Breadcrumb --}}
     <div class="mb-6">
         <div class="flex items-center gap-2 text-sm p-4">
-            <a href="{{ route('student.index') }}" wire:navigate class="text-gray-500 hover:text-green-700 transition-colors">
-                <x-mary-icon name="o-home" class="w-4 h-4" />
+            <a href="{{ route('student.discipline') }}" wire:navigate class="text-gray-500 hover:text-green-700 transition-colors">
+                <x-mary-icon name="o-academic-cap" class="w-4 h-4" />
             </a>
             <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
             <span class="text-green-700 font-medium">Chat</span>
@@ -202,9 +202,12 @@ new #[Layout(name: 'layouts::student')] class extends Component
     </div>
 
     @if($this->classe)
-        <div class="grid grid-cols-12 gap-6 h-[calc(100%-8rem)]" x-data="notifications({{Auth::guard('student')->user()}})" id="student-messages-{{ Auth::guard('student')->id() }}">
+        <div class="grid grid-cols-12 gap-6 h-[calc(100%-2rem)]"
+            x-data="notifications({{Auth::guard('student')->user()}})"
+            id="student-messages-{{ Auth::guard('student')->id() }}">
             {{-- Sidebar: Contatos --}}
-            <div class="col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" id="chat-sidebar-{{ Auth::guard('student')->id() }}">
+            <div class="col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col"
+            id="chat-sidebar-{{ Auth::guard('student')->id() }}">
                 <div class="p-4 border-b border-gray-200 bg-gray-50">
                     <h2 class="font-bold text-gray-900">Conversas</h2>
                 </div>
@@ -235,9 +238,19 @@ new #[Layout(name: 'layouts::student')] class extends Component
                             id="teacher-chat-{{ Auth::guard('student')->id() }}"
                         >
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                                    {{ substr($this->teacher->full_name ?? $this->teacher->first_name, 0, 1) }}
-                                </div>
+
+
+                                @if ($this->teacher->profile?->avatar)
+                                    <img src="{{ asset('storage/' . $this->teacher->profile->avatar) }}"
+                                        class="w-10 h-10 rounded-full" alt="{{ $this->teacher->full_name ?? $this->teacher->first_name }}"/>
+
+                                @else
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                        {{ substr($this->teacher->full_name ?? $this->teacher->first_name, 0, 1) }}
+                                    </div>
+                                @endif
+
+
                                 <div class="flex-1 min-w-0">
                                     <h3 class="font-semibold text-sm text-gray-900 truncate">
                                         Prof. {{ $this->teacher->full_name ?? $this->teacher->first_name }}
@@ -289,15 +302,21 @@ new #[Layout(name: 'layouts::student')] class extends Component
             {{-- Área de Chat --}}
             <div class="col-span-9 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" id="chat-area-{{ Auth::guard('student')->id() }}">
                 {{-- Header do Chat --}}
-                <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-700 to-blue-600 text-white">
+                <div class="p-4 border-b border-gray-200 bg-blue-400 text-white">
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center">
                             @if($isGroupChat)
                                 <x-mary-icon name="o-user-group" class="w-6 h-6" />
                             @else
                                 <span class="font-bold text-lg">
                                     @if($selectedRecipientType === 'App\Models\Teacher\Teacher')
-                                        {{ substr($this->teacher->full_name ?? 'P', 0, 1) }}
+
+                                        @if ($this->teacher->profile?->avatar)
+                                            <img src="{{ asset('storage/' . $this->teacher->profile->avatar) }}" class="w-12 h-12 rounded-full object-cover">
+                                        @else
+
+                                            {{ substr($this->teacher->full_name ?? 'P', 0, 1) }}
+                                        @endif
                                     @else
                                         {{ substr($this->classmates->firstWhere('id', $selectedRecipientId)?->full_name ?? 'A', 0, 1) }}
                                     @endif
@@ -451,7 +470,7 @@ new #[Layout(name: 'layouts::student')] class extends Component
                     setTimeout(() => {
                         container.scrollTop = container.scrollHeight;
                     }, 50);
-                }            
+                }
             })
             .notification((notification) => {
                 if (notification.sender_id && notification.sender_type) {

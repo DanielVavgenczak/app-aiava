@@ -12,16 +12,17 @@ new #[Layout('layouts.guest')] class extends Component {
         $type = $this->form->authenticate();
         // TODO: adicionar taost e deixar isso mais limpo e performatico
         if ($type === 'teacher') {
-            return $this->redirect(route('teacher.index'));
+            return $this->redirect(route('teacher.discipline'));
         }
-        return $this->redirect(route('student.index'));
+        return $this->redirect(route('student.discipline'));
     }
 
 }; ?>
 
 <div>
         <div class="w-full text-center">
-            <h2 class="text-xl font-bold text-gray-900">IAAVA- Loginnn</h2>
+            <img src="/images/aiava-logo.png" class="w-32 mx-auto" />
+            <h5 class="text-xl font-bold text-gray-600">Login</h5>
         </div>
         <form wire:submit="login" class="mt-8 space-y-6">
             <div class="rounded-md shadow-sm -space-y-px">

@@ -2,8 +2,7 @@
 
 use Livewire\Component;
 use Livewire\Attributes\{Validate, On};
-use App\Models\Teacher\{Classe, Student};
-use App\Models\{Discipline};
+use App\Models\Teacher\{Classe, Student,Discipline};
 use Mary\Traits\Toast;
 
 new class extends Component {
@@ -18,7 +17,7 @@ new class extends Component {
     public array $disciplines = [];
 
     #[On('edit-classe-modal')]
-    public function openEdit($id)
+    public function open($id)
     {
         if ($this->classe->id === $id || !$this->classe->id === '') {
             $this->open = true;

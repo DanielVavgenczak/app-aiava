@@ -1,20 +1,17 @@
-import { AddButtonActions, configDriver } from "./utils";
-import { ContinueUploadBlock } from "./discipline/lesson";
+import { AddButtonActions, configDriver } from "../../utils";
+import { ContinueUploadBlock } from "./lesson";
 
 Livewire.on("continue-created-content", async (event) => {
-  console.log("Evento recebido:", event);
   try {
     if (!event?.continue) {
-      console.warn("Evento ignorado: continue = false");
       return;
     }
 
-    console.log("⏳ Iniciando o tour de criação de conteúdo...");
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     await StartTourDisciplineCreateContent();
-    console.log("✅ Tour de conteúdo iniciado com sucesso.");
   } catch (e) {
+    // tra
     console.error("❌ Erro ao continuar o tour de criação de conteúdo:", e);
   } finally {
     console.log("📦 Iniciando bloco de upload...");
@@ -117,14 +114,14 @@ export async function StartTourDisciplineCreateContent() {
             };
             const btnCancel = el.querySelector(`#module-input-cancel`);
             const btnCreate = el.querySelector(`#module-input-create`);
-           
+
             await  btnCancel.addEventListener("click", toCloseActions);
             await btnCreate.addEventListener("click", async () => {
-               await new Promise((resolve) => setTimeout(resolve, 1000));    
-                
+               await new Promise((resolve) => setTimeout(resolve, 1000));
+
               const errorTitle = document.querySelector("#title_module_error");
-                await new Promise((resolve) => setTimeout(resolve, 500));    
-                if(errorTitle && errorTitle.textContent.trim() !== ""){                
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                if(errorTitle && errorTitle.textContent.trim() !== ""){
                     alert("Aviso: Você ja possue uma aula com esse nome.");
                     return;
                 }
@@ -152,7 +149,7 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
     const modules = document.querySelectorAll("div.module-card");
     const lastLessonRegisted = modules[modules.length - 1].getAttribute("data-tour");
     let moduleText = `Vamos adicionar um bloco à aula criada`
-    await new Promise((resolve) => setTimeout(resolve, 1000)); 
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await ContinueUploadBlock(null, lastLessonRegisted);
     return;
   });
@@ -163,14 +160,14 @@ export async function StartTourDisciplineUploadBlockToLessonSelected() {
   store.openMai = false;
   let running = false;
   return new Promise(async (resolve) => {
-    const modulesCard = document.querySelectorAll("div.module-card");    
+    const modulesCard = document.querySelectorAll("div.module-card");
     await new Promise((resolve) => setTimeout(resolve, 1000))
     if(modulesCard.length === 1) {
        const uniqueModule = modulesCard[0].getAttribute('data-tour');
        await ContinueUploadBlock(null, uniqueModule);
        return;
     }
-    
+
     const driverObj = drivertour({
       ...configDriver,
       steps: [
@@ -181,14 +178,14 @@ export async function StartTourDisciplineUploadBlockToLessonSelected() {
             showButtons: [""],
           },
           onHighlighted: async (el) => {
-            await new Promise((resolve) => setTimeout(resolve, 1000));                        
-            let moduleSelected = false;            
-            if(modulesCard.length > 1) {         
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            let moduleSelected = false;
+            if(modulesCard.length > 1) {
               modulesCard.forEach(module => {
                 module.style.zIndex = "200000000"
                 module.addEventListener('click', async (event) => {
                   if (moduleSelected) return;
-                  
+
                   event.preventDefault();
                   moduleSelected = true;
                   running = true;
@@ -198,19 +195,19 @@ export async function StartTourDisciplineUploadBlockToLessonSelected() {
                       otherModule.style.zIndex = "0";
                     }
                   });
-                  
+
                   const moduleId = module.getAttribute('data-tour');
                   await driverObj.destroy()
                   await ContinueUploadBlock(null, moduleId);
                   resolve();
-                });       
+                });
               });
              }
           },
         }
       ],
     });
-    
+
     await driverObj.drive();
     resolve();
   });

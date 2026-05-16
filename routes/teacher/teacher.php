@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix("professor")->middleware('isTeacher')->group(function () {
 
-    Route::livewire('/', 'pages::teacher.home.index')
-        ->name('teacher.index');
-
     Route::livewire('/perfil', 'pages::teacher.profile.index')
         ->name('teacher.profile');
 

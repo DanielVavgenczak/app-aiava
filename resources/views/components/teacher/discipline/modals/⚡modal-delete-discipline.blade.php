@@ -66,10 +66,10 @@ new class extends Component {
 <x-mary-modal wire:model="open">
     <div class="flex flex-col items-center gap-2 p-5" id="discipline-delete-text-{{ $id ?? '' }}"
         wire:loading.remove>
-        <div class="p-5 bg-red-100 rounded-full">
-            <x-mary-icon name="o-trash" class="w-6 h-6 text-red-700" />
+        <div class="p-5 bg-blue-100 rounded-full">
+            <x-mary-icon name="o-trash" class="w-6 h-6 text-blue-700" />
         </div>
-        <p class="mb-3 text-sm font-medium tracking-wider text-red-600">
+        <p class="mb-3 text-sm font-medium tracking-wider text-blue-600">
             {{ $title }}
         </p>
     </div>
@@ -77,7 +77,7 @@ new class extends Component {
         <div class="mb-2">
             <x-mary-loading class="progress-error w-7 h-7" />
         </div>
-        <p class="text-xs tracking-wider text-pink-600">Deletando</p>
+        <p class="text-xs tracking-wider text-blue-600">Deletando</p>
     </div>
 
     <div id="discipline-delete-actions-{{ $id ?? '' }}" class="flex justify-center w-full" wire:loading.remove>
@@ -85,7 +85,7 @@ new class extends Component {
             class="capitalize btn btn-sm btn-ghost">
             cancelar
         </button>
-        <button class="capitalize bg-pink-700 btn btn-sm text-red-50" x-on:click="$wire.delete" wire:loading.remove
+        <button class="capitalize bg-blue-500 btn btn-sm text-blue-50" x-on:click="$wire.delete" wire:loading.remove
             id="discipline-delete-send-{{ $id ?? '' }}">
             Deletar
         </button>

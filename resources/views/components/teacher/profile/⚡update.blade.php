@@ -1,11 +1,12 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{On, Validate};
+use Livewire\Attributes\{Layout,On, Validate};
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
 use Mary\Traits\Toast;
-new class extends Component {
+
+new #[Layout('layouts::teacher')] class extends Component {
     use WithFileUploads, Toast;
     public $user;
     public $open = false;
@@ -17,7 +18,6 @@ new class extends Component {
     public function mount()
     {
         $this->user = Auth::guard('teacher')->user();
-        \Log::debug('verificando oque vem se vem o avatar: '.$this->user->profile->avatar);
        if($this->user->profile->avatar == null || $this->user->profile->avatar == '') {
             $this->image = 'images/user-noavatar.png';
         } else {

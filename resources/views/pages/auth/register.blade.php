@@ -15,7 +15,8 @@ new #[Layout('layouts.guest')] class extends Component {
 
 <div>
     <div class="w-full text-center">
-        <h2 class="text-xl font-bold text-gray-900">Ava - Registrar</h2>
+            <img src="/images/aiava-logo.png" class="w-32 mx-auto" />
+            <h5 class="text-xl font-bold text-gray-600">Registrar</h5>
     </div>
     <form wire:submit="register">
         <!-- Name -->

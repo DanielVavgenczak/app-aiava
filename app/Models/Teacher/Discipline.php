@@ -24,6 +24,10 @@ class Discipline extends Model
     {
         return $this->belongsTo(related: Teacher::class);
     }
+
+    /**
+     *  Na verdade modules quer dizaer lessons
+     */
     public function modules()
     {
         return $this->hasMany(related: Module::class);

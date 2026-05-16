@@ -1,9 +1,9 @@
-import { configDriver, AddButtonActions } from "../utils";
+import { configDriver, AddButtonActions } from "../../utils";
 export async function ContinueRegisterStudentTour() {
 
   return new Promise(async (resolve) => {
           const btnStudentRegister = document.querySelector("button#student-register");
-          if(!btnStudentRegister) return;        
+          if(!btnStudentRegister) return;
           const driverObj = drivertour({
               ...configDriver,
               steps: [
@@ -23,7 +23,7 @@ export async function ContinueRegisterStudentTour() {
                           await driverObj.moveNext();
                       },
                   },
-  
+
                   {
                       element: `#student-input-full_name`,
                       popover: {
@@ -49,16 +49,16 @@ export async function ContinueRegisterStudentTour() {
                                   alert('Por favor, insira o email do aluno.');
                                   return;
                               }
-                              
+
                               if(!validEmailRegex.test(emailStudent.value)){
                                   alert('Por favor, insira um email válido.');
                                   return;
                               }
-                             
+
 
                               await driverObj.moveNext();
                           }
-                      
+
                       },
                   },
                   {
@@ -70,7 +70,7 @@ export async function ContinueRegisterStudentTour() {
                   {
                       element: `#student-input-add`,
                       popover: {
-                          description: "Clique em '+', para adicionar o aluno a lista de inscrição",                         
+                          description: "Clique em '+', para adicionar o aluno a lista de inscrição",
                       },
                       onHighlighted: async (el) => {
                           await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -129,12 +129,12 @@ export async function ContinueRegisterStudentTour() {
                           }
                           cancel.addEventListener("click",async(event) => {
                               event.preventDefault();
-  
+
                               Livewire.dispatch("student-register-cancel");
                               await driverObj.destroy();
                               store.openMai = true;
                           });
-  
+
                           save.addEventListener("click", async () => {
                               Livewire.dispatch("student-register-cancel");
                               await driverObj.destroy();

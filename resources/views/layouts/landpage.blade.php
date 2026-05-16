@@ -17,7 +17,7 @@
 </head>
 <body class="bg-gray-100">
     <div class="flex flex-col items-center justify-center w-full h-screen gap-4">
-        <h3> Ava</h3>
+        <img src="{{ asset('images/aiava-logo.png') }}" alt="Logo" class="w-32">
         <div class="">
             <livewire:landingpage.authentication />
             @if (Route::has('login'))

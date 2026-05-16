@@ -10,7 +10,7 @@ class StudentProfile extends Model
     use UuidTrait;
     public $incrementing = false;
     protected $keyType = "uuid";
-    protected $fillable = ['student_id','avatar', 'cover','avatar_path', 'cover_path'];
+    protected $fillable = ['student_id', 'avatar', 'avatar_path'];
 
     public function student()
     {

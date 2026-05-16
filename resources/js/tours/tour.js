@@ -1,4 +1,4 @@
-import { StartTourDisciplineCreateContent } from "./discipline_content";
+import { StartTourDisciplineCreateContent } from "./teacher/discipline/content";
 
 document.addEventListener("alpine:init", () => {
     Alpine.store("tourguide", {
@@ -17,7 +17,7 @@ document.addEventListener("alpine:init", () => {
                 exact:true,
                 isDynamic: false,
                 path: "/professor/disciplina",
-                tourModule: () => import("./discipline"),
+                tourModule: () => import("./teacher/discipline/discipline"),
                 tours: [
                     "StartTourCreateDiscipline",
                     "StartTourEditDiscipline",
@@ -30,7 +30,7 @@ document.addEventListener("alpine:init", () => {
                 exact: false,
                 isDynamic: true,
                 path: "/professor/disciplina",
-                tourModule: () => import("./discipline_content"),
+                tourModule: () => import("./teacher/discipline/content"),
                 tours: [
                     "StartTourDisciplineCreateContent",
                     "StartTourDisciplineCreateContentUploadBlock",
@@ -84,6 +84,24 @@ document.addEventListener("alpine:init", () => {
                 tourModule: () => import("./teacher/messages"),
                 tours: ["StartTourTeacherMessages"],
             },
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/professor/forum",
+                tourModule: () => import("./teacher/forum/forum"),
+                tours: ["StartTourTeacherForum", "StartTourTeacherForumInteract"],
+            },
+            {
+                exact: false,
+                isDynamic: true,
+                path: "/professor/forum",
+                tourModule: () => import("./teacher/forum/forum"),
+                tours: [
+                    "StartTourTeacherForumShowNewTopic",
+                    "StartTourTeacherForumShowSelectTopic",
+                    "StartTourTeacherForumShowMyTopics",
+                ],
+            },
         ],
 
         cancelOptionsTourPage() {
@@ -95,9 +113,9 @@ document.addEventListener("alpine:init", () => {
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
             for (const page of this.pages) {
-                console.log("Verificando página para tour:", page.path, "Current path:", currentPath);
+                 //console.log("Verificando página para tour:", page.path, "Current path:", currentPath);
                 if (page.exact && currentPath === page.path) {
-                    console.log("Iniciando tour...", currentPath);
+                    //console.log("Iniciando tour...", currentPath);
                     this.openMai = true;
                     try {
                         const tourModule = await page.tourModule();

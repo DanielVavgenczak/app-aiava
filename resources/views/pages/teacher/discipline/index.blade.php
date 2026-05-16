@@ -1,6 +1,4 @@
 <?php
-// resources/views/livewire/pages/teacher/discipline/index.blade.php
-
 use Livewire\Component;
 use Livewire\Attributes\{Layout, On, Computed};
 use Livewire\WithPagination;
@@ -49,6 +47,16 @@ new #[Layout('layouts::teacher')] class extends Component {
         ];
     }
 
+    #[Computed]
+    public function lessonCount()
+    {
+
+        return Discipline::
+        withCount('lessons')
+        ->where('teacher_id', $this->getTeacherGuard()->id())
+        ->get();
+    }
+
     public function clearFilters(): void
     {
         $this->reset(['search', 'sortBy']);
@@ -95,13 +103,18 @@ new #[Layout('layouts::teacher')] class extends Component {
     {
         $this->resetPage();
     }
+
+    private function getTeacherGuard()
+    {
+        return auth()->guard('teacher');
+    }
 }; ?>
 
 <div>
     {{-- Breadcrumb --}}
     <div class="mb-6">
         <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('teacher.index') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
+            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
                 <x-mary-icon name="o-home" class="w-4 h-4" />
             </a>
             <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
@@ -120,7 +133,7 @@ new #[Layout('layouts::teacher')] class extends Component {
             <button
                 id="discipline-create"
                 wire:click="createDiscipline"
-                class="btn bg-gradient-to-r from-blue-700 to-blue-500 text-white border-0 hover:from-blue-700 hover:to-blue-700 shadow-sm"
+                class="btn bg-blue-400 text-white border-0 hover:bg-blue-600 shadow-sm"
             >
                 <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                 Nova Disciplina
@@ -130,14 +143,14 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     {{-- Card de Estatísticas --}}
     <div class="mb-6">
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-sm">
+        <div class="bg-blue-400 rounded-sm p-6 text-white shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-blue-100 text-sm font-medium">Total de Disciplinas</p>
                     <p class="text-3xl font-bold mt-2">{{ $this->stats['disciplines'] }}</p>
                 </div>
                 <div class="bg-white bg-opacity-20 rounded-full p-4">
-                    <x-mary-icon name="o-academic-cap" class="w-8 h-8 text-blue-900" />
+                    <x-mary-icon name="o-academic-cap" class="w-8 h-8 text-blue-500" />
                 </div>
             </div>
         </div>
@@ -220,16 +233,16 @@ new #[Layout('layouts::teacher')] class extends Component {
                         data-tour="{{ $discipline->id }}"
                     >
                         {{-- Header com Cor --}}
-                        <div class="h-32 bg-gradient-to-br from-blue-500 to-blue-700 relative">
-                            <div class="absolute inset-0 bg-blue-500 bg-opacity-10 group-hover:bg-opacity-0 transition-opacity"></div>
+                        <div class="h-32 bg-blue-400 relative">
+                            <div class="absolute inset-0 bg-blue-400 bg-opacity-10 group-hover:bg-opacity-0 transition-opacity"></div>
 
                             {{-- Menu de Ações --}}
-                            <div class="absolute top-3 right-3 z-10 bg-blue-500">
+                            <div class="absolute top-3 right-3 z-10 bg-blue-400">
                                 <div class="dropdown dropdown-end">
                                     <button
                                         id="tour-operations-{{ $discipline->id }}"
                                         tabindex="0"
-                                        class="btn btn-sm btn-circle bg-blue-500 hover:bg-white border-0 shadow-sm"
+                                        class="btn btn-sm btn-circle bg-blue-400 hover:bg-white hover:text-gray-400 border-0 shadow-sm"
                                     >
                                         <x-mary-icon name="o-ellipsis-vertical" class="w-5 h-5 text-white" />
                                     </button>
@@ -241,7 +254,8 @@ new #[Layout('layouts::teacher')] class extends Component {
                                             </button>
                                         </li>
                                         <li>
-                                            <button wire:click="editDiscipline('{{ $discipline->id }}')" class="tour-discipline-edit-{{ $discipline->id }}">
+                                            <button wire:click="editDiscipline('{{ $discipline->id }}')"
+                                                class="tour-discipline-edit-{{ $discipline->id }}">
                                                 <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                                 Editar
                                             </button>
@@ -277,6 +291,9 @@ new #[Layout('layouts::teacher')] class extends Component {
                             {{-- Info --}}
                             <div class="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
                                 <x-mary-icon name="o-calendar" class="w-3 h-3" />
+                                <span id="card-discipline-count-module-{{ $discipline->id }}">
+                                    Aulas: {{ $discipline->modules->count() }}
+                                </span>
                                 <span>Criada {{ $discipline->created_at->diffForHumans() }}</span>
                             </div>
 
@@ -285,7 +302,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 id="discipline-manager-content-{{ $discipline->id }}"
                                 href="{{ route('teacher.discipline.show', $discipline) }}"
                                 wire:navigate
-                                class="btn btn-primary btn-block btn-sm group-hover:bg-blue-700"
+                                class="btn  btn-block btn-sm bg-blue-400 text-gray-50"
                             >
                                 <x-mary-icon name="o-arrow-right-circle" class="w-4 h-4" />
                                 Gerenciar Conteúdo
@@ -294,15 +311,15 @@ new #[Layout('layouts::teacher')] class extends Component {
                     </div>
 
                     {{-- Modais --}}
-                    <livewire:teacher.modal-details-discipline
+                    <livewire:teacher.discipline.modals.modal-details-discipline
                         :discipline="$discipline"
                         :wire:key="'details-' . $discipline->id"
                     />
-                    <livewire:teacher.modal-edit-discipline
+                    <livewire:teacher.discipline.modals.modal-edit-discipline
                         :discipline="$discipline"
                         :wire:key="'edit-' . $discipline->id"
                     />
-                    <livewire:teacher.modal-delete-discipline
+                    <livewire:teacher.discipline.modals.modal-delete-discipline
                         :id="$discipline->id"
                         :title="$discipline->title"
                         :wire:key="'delete-' . $discipline->id"
@@ -358,12 +375,12 @@ new #[Layout('layouts::teacher')] class extends Component {
         <div
             class="absolute top-1/2 left-1/2 transform -translate-x-1/2
             -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
-            shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+            shadow-lg border-[1px] border-blue-200 p-6 flex flex-col gap-5">
            <div class="flex justify-between items-center">
                <h2 class="text-lg font-normal text-gray-700">Opção das disciplinas</h2>
                 <div class="flex justify-end">
                     <x-mary-button icon="o-x-mark"
-                        class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                        class="bg-white border-none btn-square hover:none hover:bg-blue-400 hover:text-gray-100"
                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
             </div>
@@ -387,14 +404,14 @@ new #[Layout('layouts::teacher')] class extends Component {
                     label="Gerenciar conteúdo de uma disciplina"
                     x-on:click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
                 <x-mary-button
-                    class="font-medium text-red-600 border-[1px] border-red-600 btn hover:bg-red-600 hover:text-gray-100"
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                     label="Deletar uma disciplina"
                     x-on:click="$store.tourguide.start('StartTourDeleteDiscipline')" />
                 </div>
         </div>
-        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
     </div>
 
     {{-- Modal de Criação --}}
-    <livewire:teacher.modal-new-discipline />
+    <livewire:teacher.discipline.modals.modal-new-discipline />
 </div>

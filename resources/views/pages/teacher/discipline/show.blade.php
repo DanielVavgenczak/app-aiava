@@ -308,11 +308,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 @endforeach
                                 <!-- drawer task module -->
                             @endif
-
                             <livewire:teacher.discipline.module.edit :$module :key="'module-edit-' . $module->id"/>
-                            {{-- <livewire:pages.teacher.discipline.module.modals.edit :$module :key="'module-edit-' . $module->id" />
-                            <livewire:pages.teacher.discipline.module.modals.delete :id="$module->id"
-                                :key="'module-delete-' . $module->id" /> --}}
                         @endforeach
                     @else
                         <div wire:key="no-modules" class="absolute w-full h-screen bg-white">
@@ -346,35 +342,35 @@ new #[Layout('layouts::teacher')] class extends Component {
         <!-- Modal options tour -->
           <div x-data class="fixed inset-0 z-50 bg-gray-900/50" x-show="$store.tourguide.openMai">
               <div
-                  class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+                  class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-d-200 p-6 flex flex-col gap-5">
                   <div class="flex items-center justify-between">
                     <h2 class="text-[14px] tracking-wide font-medium text-gray-700">
                       Aqui você pode adicionar novas aulas e blocos
                       </h2>
-                      <button
+                      <x-mary-button
                         class="btn btn-sm btn-ghost"
                         x-on:click="$store.tourguide.cancelOptionsTourPage()">
                         <x-mary-icon name="o-x-mark" class="w-4 text-gray-700"/>
-                      </button>
+                      </x-mary-button>
                   </div>
                   <!-- options show !-->
                   @if (!$openFormNewLesson)
                       <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
                           <x-mary-button
-                              class="text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                              class="text-blue-600 border-[1px] border-blue-600 btn  hover:text-gray-100"
                               label="Criar nova aula"
                               x-on:click="$store.tourguide.start('StartTourDisciplineCreateContent')" />
                           @if ($discipline->modules->count() > 0)
                               <x-mary-button
-                                  class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                  class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                                   label="Adicionar bloco"
                                   x-on:click="$store.tourguide.start('StartTourDisciplineUploadBlockToLessonSelected')" />
                               <x-mary-button
-                                  class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                  class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                                   label="Deletar uma aula"
                                   x-on:click="$store.tourguide.startTourbDeleteModule()" />
                               <x-mary-button
-                                  class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                                  class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                                   label="Criar uma tarefa"
                                   x-on:click="$store.tourguide.startCreateTaskLesson()" />
                               {{-- <x-mary-button
@@ -386,7 +382,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                   @else
                     <!-- options create task -->
                       <x-mary-button
-                          class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                          class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                           label="Vamos criar uma atividade"
                           x-on:click="$store.tourguide.start('StartTourCreateActivitTask')" />
                   @endif

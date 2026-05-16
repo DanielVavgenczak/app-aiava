@@ -146,7 +146,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
         $this->dispatch('message-sent');
     }
 
-    //#[On('echo-private:chat.user.' . auth()->guard('teacher')->id() . ',message.sent')]
     public function onMessageReceived($payload): void
     {
         // Atualiza a lista de mensagens quando recebe nova mensagem
@@ -159,10 +158,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
         $this->notifications[$studentId] = $count + 1;
     }
 
-    // public function render()
-    // {
-    //     return view('livewire.pages.teacher.chat.index');
-    // }
 };
 ?>
 
@@ -170,7 +165,8 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
     {{-- Breadcrumb --}}
     <div class="mb-6">
         <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('teacher.index') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
+            <a href="{{ route('teacher.discipline') }}"
+                wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
                 <x-mary-icon name="o-home" class="w-4 h-4" />
             </a>
             <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
@@ -188,7 +184,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
         </div>
     </div>
 
-    <div class="grid grid-cols-12 gap-6 h-[calc(100%-8rem)]" id="teacher-messages-{{ Auth::guard('teacher')->id() }}">
+    <div class="grid grid-cols-12 gap-6 h-[calc(100%-2rem)]" id="teacher-messages-{{ Auth::guard('teacher')->id() }}">
         {{-- Sidebar: Lista de Turmas --}}
         <div class="col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" id="classes-sidebar-{{ Auth::guard('teacher')->id() }}">
             {{-- Header Sidebar --}}
@@ -262,10 +258,14 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
                             <div class="flex items-center gap-3">
                                 <div class="relative">
                                     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                        {{ substr($student->full_name ?? $student->first_name, 0, 1) }}
+                                        @if($student->profile?->avatar)
+                                            <img src="{{ asset('storage/' . $student->profile->avatar) }}"
+                                                alt="{{ $student->full_name }}"
+                                                class="w-full h-full object-cover rounded-full">
+                                        @else
+                                            {{ substr($student->full_name ?? $student->first_name, 0, 1) }}
+                                        @endif
                                     </div>
-                                    {{-- Online indicator (implementar depois) --}}
-                                    {{-- <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div> --}}
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <h3 class="font-semibold text-sm text-gray-900 truncate">
@@ -279,7 +279,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
                                             </span>
                                         @endif
                                     </div>
-                                </div>
                                 </div>
                             </div>
                         </button>

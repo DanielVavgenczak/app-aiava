@@ -86,10 +86,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
         $this->dispatch('teacher::create-classe', disciplineId: $this->disciplineFilter);
     }
 
-    public function editClasse($classeId): void
-    {
-        $this->dispatch('edit-classe-modal', id: $classeId);
-    }
+
 
     public function deleteClasse($classeId): void
     {
@@ -132,12 +129,8 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     {{-- Breadcrumb --}}
     <div class="mb-6">
         <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('teacher.index') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
-                <x-mary-icon name="o-home" class="w-4 h-4" />
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-blue-700">
-                Disciplinas
+            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
+                <x-mary-icon name="o-academic-cap" class="w-4 h-4" />
             </a>
             <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
             <span class="text-blue-700 font-medium">Turmas</span>
@@ -379,8 +372,8 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
                                 {{-- Editar --}}
                                 <button
-                                    wire:click="editClasse({{ $classe->id }})"
-                                    class="btn btn-sm bg-green-600 text-white hover:bg-green-700 border-0"
+                                    x-on:click="$dispatch('edit-classe-modal',{id: '{{ $classe->id }}'})"
+                                    class="btn btn-sm bg-green-200 text-gray-700 hover:bg-green-400 border-0"
                                     title="Editar turma"
                                 >
                                     <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
@@ -401,8 +394,8 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                     </div>
 
                     {{-- Modais --}}
-                    <livewire:teacher.modal-edit-classe :classe="$classe" :wire:key="'edit-' . $classe->id" />
-                    <livewire:teacher.modal-delete-classe :classe="$classe" :wire:key="'delete-' . $classe->id" />
+                    <livewire:teacher.classe.edit-classe :classe="$classe" :wire:key="'edit-' . $classe->id" />
+                    {{-- <livewire:pages::teacher.modal-delete-classe :classe="$classe" :wire:key="'delete-' . $classe->id" /> --}}
                 @endforeach
             </div>
 

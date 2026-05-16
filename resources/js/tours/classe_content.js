@@ -1,4 +1,4 @@
-import { ContinueRegisterStudentTour } from "./classe/RegisterStudent";
+import { ContinueRegisterStudentTour } from "./teacher/classe/RegisterStudent";
 import { AddButtonActions, configDriver } from "./utils";
 export async function StartTourStudentFilter()
 {

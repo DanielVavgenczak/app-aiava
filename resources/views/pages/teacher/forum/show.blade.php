@@ -151,7 +151,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
 <div>
     {{--  TODO: implementar um componente para essa porra aqui --}}
-    <div class="py-4">
+    <div class="py-4" id="forum-show-breadcrumb">
         <div class="flex items-center gap-2 text-sm">
             <a href="{{ route('teacher.index') }}" wire:navigate class="text-gray-500 hover:text-pink-700 transition-colors">
                 <x-mary-icon name="o-home" class="w-4 h-4" />
@@ -168,7 +168,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     {{-- Conteúdo Principal --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         {{-- Header Melhorado --}}
-        <div class="p-6 border-b border-gray-200">
+        <div class="p-6 border-b border-gray-200" id="forum-show-header">
             <div class="flex items-center justify-between">
                 <div class="flex items-start gap-4">
                     {{-- Info da Disciplina referenciando com o forum --}}
@@ -190,7 +190,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                 </div>
 
                 {{-- Controles --}}
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3" id="forum-show-controls">
                     {{-- Seletor de itens --}}
                     <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
                         <x-mary-icon name="o-view-columns" class="w-4 h-4 text-gray-500" />
@@ -208,6 +208,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
                     {{-- Botão Novo Tópico --}}
                     <button
+                        id="forum-show-new-topic"
                         @click="$wire.openNewTopicModal"
                         class="btn btn-md bg-blue-700 text-white border-0"
                     >
@@ -219,7 +220,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
         </div>
 
         {{-- Abas --}}
-        <div class="p-6">
+        <div class="p-6" id="forum-show-tabs">
             <x-mary-tabs wire:model="selectedTab">
                 {{-- ==================== ABA: TODOS OS TÓPICOS ==================== --}}
                 <x-mary-tab name="all-tap">
@@ -233,7 +234,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                         </div>
                     </x-slot:label>
 
-                    <div class="space-y-3 mt-4">
+                    <div class="space-y-3 mt-4" id="forum-show-all-topics">
                         @forelse ($this->allTopics as $topic)
                             @php
                                 $isMyTopic = str_ends_with($topic->owner_type, 'Student')
@@ -243,7 +244,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             @endphp
 
                             <div
-                                class="group relative bg-white border border-gray-100 rounded-sm p-5 hover:shadow-sm hover:border-blue-300 transition-all duration-200 {{ $isMyTopic ? 'ring-[1px] ring-blue-200' : '' }}"
+                                class="group relative bg-white border border-gray-100 rounded-sm p-5 hover:shadow-sm hover:border-blue-300 transition-all duration-200 topic-item {{ $isMyTopic ? 'ring-[1px] ring-blue-200' : '' }}"
                                 wire:key="all-topic-{{ $topic->id }}"
                             >
                                 {{-- Badge "Novo" flutuante --}}
@@ -372,14 +373,14 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                         </div>
                     </x-slot:label>
 
-                    <div class="space-y-3 mt-4">
+                    <div class="space-y-3 mt-4" id="forum-show-my-topics">
                         @forelse ($this->myTopics as $topic)
                             @php
                                 $isNew = $topic->created_at->diffInMinutes(now()) < 60;
                             @endphp
 
                             <div
-                                class="group relative border-[1px] border-blue-100 rounded-sm p-5 hover:shadow-sm hover:from-blue-200 hover:to-blue-200 transition-all duration-200"
+                                class="group relative border-[1px] border-blue-100 rounded-sm p-5 hover:shadow-sm hover:from-blue-200 hover:to-blue-200 transition-all duration-200 topic-item"
                                 wire:key="my-topic-{{ $topic->id }}"
                             >
                                 {{-- Badge "Novo" --}}
@@ -484,6 +485,38 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     </div>
 
 
+
+    {{-- Tour Modal --}}
+    <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2
+            -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
+            shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+           <div class="flex justify-between items-center">
+               <h2 class="text-lg font-normal text-gray-700">Opções do Fórum</h2>
+                <div class="flex justify-end">
+                    <x-mary-button icon="o-x-mark"
+                        class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Criar um novo tópico"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowNewTopic')" />
+              <x-mary-button
+                    class="font-medium text-green-600 border-[1px] border-green-600 btn hover:bg-green-600 hover:text-gray-100"
+                    label="Selecionar um tópico e acessar"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowSelectTopic')" />
+              <x-mary-button
+                    class="font-medium text-purple-600 border-[1px] border-purple-600 btn hover:bg-purple-600 hover:text-gray-100"
+                    label="Selecionar meus tópicos"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowMyTopics')" />
+            </div>
+        </div>
+        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
+    </div>
 
     <livewire:teacher.forum.modal-new-topic-forum />
 

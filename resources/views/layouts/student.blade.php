@@ -29,10 +29,17 @@
         'w-[calc(100%-5rem)] left-20'">
         {{ $slot }}
         </main>
-        <x-mary-button
-            class="fixed z-[999] bg-pink-600 right-5 bottom-5 btn-circle btn-lg text-gray-50"
-            x-on:click="$store.tourguide.initTour()" id="ativation-mai" icon="o-question-mark-circle"
-            x-show="!$store.tourguide.openMai" />
+               <x-mary-button
+            class="fixed z-[999] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50"
+            x-on:click="$store.tourguide.initTour()"
+            id="ativation-mai"
+            x-show="!$store.tourguide.openMai">
+            <img
+                src="{{ asset('images/rb-aiava.png') }}"
+                alt="Iniciar tour guiado"
+                class="w-[100px] h-auto"
+            />
+        </x-mary-button>
     </div>
 @livewireScripts
 </body>

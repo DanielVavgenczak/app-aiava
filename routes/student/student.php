@@ -5,9 +5,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('aluno')->middleware('isStudent')->group(function () {
 
-    Route::livewire('/', 'pages::student.home.index')
-        ->name('student.index');
-
     Route::livewire('/disciplina', 'pages::student.discipline.index')
         ->name('student.discipline');
 
@@ -27,8 +24,9 @@ Route::prefix('aluno')->middleware('isStudent')->group(function () {
         ->name('student.messages');
 
 
-    Route::livewire('/perfil', 'pages.student.profile.index')
+    Route::livewire('/perfil', 'pages::student.profile.index')
         ->name('student.profile');
+
     // Load streaming lesson
     Route::get("/lesson/{lesson_id}", [LessonUploadController::class, 'stream'])
         ->name('media.stream');

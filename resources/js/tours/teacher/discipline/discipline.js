@@ -1,4 +1,4 @@
-import { AddButtonActions, configDriver } from "./utils";
+import { AddButtonActions, configDriver } from "../../utils";
 const store =  Alpine.store("tourguide");
 
 export async function StartTourCreateDiscipline() {
@@ -47,18 +47,7 @@ export async function StartTourCreateDiscipline() {
                 element: `#discipline-save`,
                 popover: {
                     description: `Clique em 'Registrar' para salvar ou 'Cancelar' para cancelar o registro.`,
-                    //showButtons: ['']
-                    // onPopoverRender: (popover, { config, state }) => {
-                    //     const actions = AddButtonActions(
-                    //         popover,
-                    //         "Voltar ao início",
-                    //     );
-                    //     actions.addEventListener("click", async() => {
-                    //         Livewire.dispatch("close-create");
-                    //         await driverObj.destroy();
-                    //         store.openMai = true;
-                    //     });
-                    // },
+
                 },
                 onHighlighted: async (el) => {
                     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -98,11 +87,6 @@ export async function StartTourCreateDiscipline() {
                         const lastRegisted = disciplinesAfterCount[0];
                         if(!lastRegisted) return;
                         const dataId = lastRegisted.getAttribute("data-tour");
-                        console.log("Data id da ultima disciplina", dataId);
-                        //b1480804-d382-4493-a2ad-797540e1b1af
-                        // b1480804-d382-4493-a2ad-797540e1b1af
-                        console.log("Quantidade de disciplinas", disciplinesAfterCount.length);
-
 
                         // Cria uma Promise que resolve quando o evento for recebido
                         disciplineIdToManager = dataId;
@@ -125,7 +109,7 @@ export async function StartTourCreateDiscipline() {
                             {
                                 element: `#discipline-manager-content-${disciplineIdToManager}`,
                                 popover: {
-                                    description: `Vou clicar aqui para acessar página da disciplina`,
+                                    description: `Vou clicar aqui para acessar a página da disciplina`,
                                     side: "bottom",
                                     align: "start",
                                     showButtons:['']
@@ -144,6 +128,11 @@ export async function StartTourCreateDiscipline() {
                             steps: continueStepe,
                         });
                         await updatedDriverObj.drive();
+
+                        Livewire.on('discipline-send-id-tour', async (event) => {
+                            disciplineIdToManager = event.discipline_id;
+                            store.disciplineId = event.discipline_id;
+                        });
                     });
                 },
             },
@@ -471,7 +460,6 @@ export async function StartTourSearchDiscipline(){
     store.openMai = false;
     const inputSearch = document.querySelector("#discipline-input-search");
     if(!inputSearch){
-        console.error("Input de pesquisa não encontrado");
         return;
     }
      const createInitialTour = () => {
@@ -562,7 +550,7 @@ export async function StartTourManagerDisciplineContent(){
                                     {
                                         element: `#${disciplineId}`,
                                         popover: {
-                                            description: `Inicar opções de gerenciamento`,
+                                            description: `Iniciar gerenciamento`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
@@ -576,13 +564,39 @@ export async function StartTourManagerDisciplineContent(){
                                     {
                                         element: `#discipline-manager-content-${dataId}`,
                                         popover: {
-                                            description: `Clicar no titulo da disciplina`,
+                                            description: `Vou clicar no botão gerenciar conteúdo`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
                                         },
                                         onHighlighted: async (el) => {
                                             await new Promise((resolve) => setTimeout(resolve, 3000));
+                                            const filterCountModules = document.querySelectorAll(`#card-discipline-count-module-${dataId}`);
+
+                                            if (!filterCountModules || filterCountModules.length === 0) return;
+
+                                            // Pega o texto (ex: "Aulas: 0" ou "Aulas: 3")
+                                            const fullText = filterCountModules[0]?.textContent?.trim() || '';
+
+                                            // Extrai só o número
+                                            const match = fullText.match(/(\d+)/);
+                                            const count = match ? parseInt(match[1], 10) : 0;
+
+                                            /**
+                                             * Caso o numero de mulos seja 0 Faremos com que o tour
+                                             * seja redirecionado e aberto para adicionar aulas
+                                             *
+                                             */
+                                            if(count === 0){
+
+                                                el.click();
+                                                await updatedDriverObj.destroy()
+                                                store.continueTour = true;
+                                                Livewire.dispatch('continue-created-content', {continue:true});
+
+                                                return;
+                                            }
+
                                             el.click();
                                             await store.initTour()
                                             await updatedDriverObj.destroy()
