@@ -4,7 +4,6 @@ document.addEventListener("alpine:init", () => {
 
         toggle() {
             this.expanded = !this.expanded;
-            console.log('clicando here')
         },
 
         // Classes condicionais para Tailwind

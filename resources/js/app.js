@@ -7,7 +7,7 @@ import './tours/tour';
 import './upload-chunck';
 import './menu/index';
 import './menu/active';
-import './expanded_preview';
+//import './expanded_preview';
 import './libs/expand_text';
 import './libs/mask';
 

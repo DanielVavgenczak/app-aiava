@@ -6,6 +6,7 @@ document.addEventListener('alpine:init', () => {
             window.addEventListener('popstate', () => {
                 this.currentPath = window.location.pathname;
             });
+            console.log(" quem está chamando isso daqui ", window.location.pathname)
 
             // Atualiza currentPath após navegação com Livewire
             document.addEventListener('livewire:navigated', () => {
@@ -25,15 +26,15 @@ document.addEventListener('alpine:init', () => {
             if (current === route) return true;
 
             // Caso 2: Subrotas (ex: /app/teacher/discipline/123)
-            if (route.startsWith('/teacher/')) {
-                const routeBase = route.split('/teacher/')[1].split('/')[0];
-                const currentBase = current.split('/teacher/')[1]?.split('/')[0];
+            if (route.startsWith('/professor/')) {
+                const routeBase = route.split('/professor/')[1].split('/')[0];
+                const currentBase = current.split('/professor/')[1]?.split('/')[0];
                 if (routeBase && currentBase === routeBase) {
                     return true;
                 }
-            }else if (route.startsWith('/student/')) {
-                const routeBase = route.split('/student/')[1].split('/')[0];
-                const currentBase = current.split('/student/')[1]?.split('/')[0];
+            }else if (route.startsWith('/aluno/')) {
+                const routeBase = route.split('/aluno/')[1].split('/')[0];
+                const currentBase = current.split('/aluno/')[1]?.split('/')[0];
                 if (routeBase && currentBase === routeBase) {
                     return true;
                 }
