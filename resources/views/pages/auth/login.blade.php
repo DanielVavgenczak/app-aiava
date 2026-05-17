@@ -67,7 +67,7 @@ new #[Layout('layouts.guest')] class extends Component {
 
             <div>
                 <button type="submit"
-                        class="w-full btn bg-blue-600 hover:bg-blue-700 text-white">
+                        class="w-full btn bg-blue-400 hover:bg-blue-700 text-white">
                     Entrar
                 </button>
             </div>
