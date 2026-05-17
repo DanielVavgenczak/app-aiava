@@ -26,3 +26,6 @@ yarn-error.log
 /docker/Dockerfile.dev
 /docs
 CHECKLIST.md
+bootstrap/cache/*
+public/vendor/*
+composer.lock
