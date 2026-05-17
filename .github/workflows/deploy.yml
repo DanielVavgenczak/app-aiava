@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
-            cd /home/root/iava
+            cd /root/iava
 
             echo "🔄 Puxando alterações..."
             git pull origin main
