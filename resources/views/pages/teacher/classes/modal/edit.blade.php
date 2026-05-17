@@ -7,11 +7,13 @@ use Mary\Traits\Toast;
 
 new class extends Component {
     use Toast;
+
     #[Validate('required', message: 'O nome da classe é obrigatório!')]
     #[Validate('min:5', message: 'O nome da classe deve ter no minimo 5 caracteres')]
     public string $classe_name = '';
     public bool $open = false;
     public ?Classe $classe = null;
+
     #[Validate('required', message: 'Disciplina é obrigatória!')]
     public string $disciplineId = '';
     public array $disciplines = [];
@@ -64,7 +66,6 @@ new class extends Component {
     public function resetForm()
     {
         $this->disciplineId = '';
-        $this->class_name = '';
         $this->open = false;
     }
 

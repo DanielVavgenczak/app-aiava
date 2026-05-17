@@ -363,7 +363,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                 <a
                                     href="{{ route('teacher.classes.show', $classe) }}"
                                     wire:navigate
-                                    class="btn btn-sm bg-blue-600 text-white hover:bg-blue-700 border-0"
+                                    class="btn btn-sm bg-blue-200 text-gray-700 hover:bg-blue-400 border-0"
                                     title="Acessar turma"
                                 >
                                     <x-mary-icon name="o-eye" class="w-4 h-4" />
@@ -372,7 +372,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
                                 {{-- Editar --}}
                                 <button
-                                    x-on:click="$dispatch('edit-classe-modal',{id: '{{ $classe->id }}'})"
+                                    x-on:click="$dispatch('edit-classe-modal',{id: @js($classe->id)})"
                                     class="btn btn-sm bg-green-200 text-gray-700 hover:bg-green-400 border-0"
                                     title="Editar turma"
                                 >
@@ -383,7 +383,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                 {{-- Excluir --}}
                                 <button
                                     wire:click="deleteClasse({{ $classe->id }})"
-                                    class="btn btn-sm bg-red-600 text-white hover:bg-red-700 border-0"
+                                    class="btn btn-sm bg-red-200 text-gray-700 hover:bg-red-400 border-0"
                                     title="Excluir turma"
                                 >
                                     <x-mary-icon name="o-trash" class="w-4 h-4" />
