@@ -1,3 +1,4 @@
+services:
   app:
     build:
       context: ..
@@ -26,3 +27,31 @@
       - iava_network
     depends_on:
       - app
+
+  database:
+    image: postgres:16
+    container_name: iava_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: iava
+      POSTGRES_USER: iava_user
+      POSTGRES_PASSWORD: iava_password_123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - iava_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: iava_redis
+    restart: unless-stopped
+    networks:
+      - iava_network
+
+volumes:
+  postgres_data:
+  storage_data:
+
+networks:
+  iava_network:
+    driver: bridge
