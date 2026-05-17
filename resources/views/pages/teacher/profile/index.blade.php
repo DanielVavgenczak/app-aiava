@@ -23,7 +23,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                     class="w-20 h-20 rounded-full" alt="{{ Auth::guard('teacher')->user()->fullName() }}"/>
             @else
                 <div class="flex flex-col items-center justify-center gap-3">
-                    <livewire:user-avatar
+                    <livewire:global.user-avatar
                         initiais="{{ Auth::guard('teacher')->user()->initialLetterToAvatar() }}"/>
                         <h3 class="text-base text-gray-600">{{ Auth::guard('teacher')->user()->fullName() }}</h3>
                 </div>
