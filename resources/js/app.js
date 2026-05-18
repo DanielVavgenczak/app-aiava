@@ -1,6 +1,6 @@
 import './bootstrap';
 import { driver } from 'driver.js';
-//import Alpine from 'alpinejs';
+import Alpine from 'alpinejs';
 import { focus } from '@alpinejs/focus';
 import 'driver.js/dist/driver.css';
 import './tours/tour';
@@ -14,3 +14,4 @@ import './libs/mask';
 import './notification';
 window.drivertour = driver;
 //Alpine.plugin(focus);
+console.log("call")
