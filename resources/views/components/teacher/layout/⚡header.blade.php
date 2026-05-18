@@ -92,7 +92,7 @@ new class extends Component {
                         class="h-8 w-auto transition-transform group-hover:scale-110"
                     />
                     <p class="text-xs text-gray-500">
-                        {{ $userType === 'teacher' ? 'Painel do Professor teacher here testeteste' : 'Painel do Aluno' }}
+                        {{ $userType === 'teacher' ? 'Painel do Professor' : 'Painel do Aluno' }}
                     </p>
                 </div>
             </a>
