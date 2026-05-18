@@ -17,6 +17,8 @@ RUN echo "upload_max_filesize = 100M\npost_max_size = 100M\nmemory_limit = 512M\
 WORKDIR /var/www/html
 COPY . /var/www/html
 
+RUN mkdir -p bootstrap/cache && chmod -R 775 bootstrap/cache
+
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN npm install && npm run build
 
