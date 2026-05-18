@@ -118,7 +118,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                 <x-mary-icon name="o-home" class="w-4 h-4" />
             </a>
             <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-blue-700 font-medium">Disciplinas</span>
+            <span class="text-gray-600 font-medium">Disciplinas</span>
         </div>
     </div>
 
