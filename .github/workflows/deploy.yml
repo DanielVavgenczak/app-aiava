@@ -31,7 +31,7 @@ jobs:
             docker compose -f docker/docker-compose.prod.yml run --rm app php artisan config:cache
 
             # Health check que FALHA o deploy se o site não responder 200/302
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost)
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://iava_nginx)
             if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "302" ]; then
               echo "❌ Site não respondeu corretamente: HTTP $HTTP_CODE"
               exit 1
