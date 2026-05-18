@@ -136,12 +136,8 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     {{-- Breadcrumb --}}
     <div class="mb-6">
         <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('teacher.index') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
-                <x-mary-icon name="o-home" class="w-4 h-4" />
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-blue-700">
-                Disciplinas
+            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
+                <x-mary-icon name="o-academic-cap" class="w-4 h-4" />
             </a>
             <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
             <a href="{{ route('teacher.classes') }}" wire:navigate class="text-gray-500 hover:text-blue-700">

@@ -22,6 +22,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     #[Computed]
     public function disciplines()
     {
+        $this->js('console.log("Carregando disciplinas...")');
         return Discipline::where('teacher_id', auth()->guard('teacher')->id())
             ->orderBy('title')
             ->get();
@@ -136,7 +137,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             <span class="text-blue-700 font-medium">Turmas</span>
         </div>
     </div>
-
+    contagem: {{ $this->disciplines->count() }}
     {{-- Header com Título e Ação --}}
     <div class="mb-6">
         <div class="flex items-center justify-between">

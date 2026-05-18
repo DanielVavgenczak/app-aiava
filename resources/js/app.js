@@ -1,7 +1,7 @@
-import Alpine from 'alpinejs';
 import './bootstrap';
 import { driver } from 'driver.js';
 import { focus } from '@alpinejs/focus';
+import Alpine from 'alpinejs';
 import 'driver.js/dist/driver.css';
 import './tours/tour';
 import './upload-chunck';
