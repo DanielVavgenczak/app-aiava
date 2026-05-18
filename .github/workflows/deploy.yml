@@ -27,10 +27,11 @@ jobs:
 
             sleep 15
 
-            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan migrate --force --no-interaction || true
-            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan config:cache || true
-            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan route:cache || true
-            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan view:cache || true
+            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan key:generate --force
+            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan migrate --force --no-interaction
+            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan config:cache
+            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan route:cache
+            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan view:cache
 
             NGINX_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' iava_nginx)
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$NGINX_IP || echo "000")
