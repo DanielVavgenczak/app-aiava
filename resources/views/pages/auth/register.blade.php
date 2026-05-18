@@ -51,7 +51,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 href="{{ route('login') }}" wire:navigate>
                 {{ __('Já possui uma conta?') }}
             </a>
-            <button type="submit" class="btn btn-sm bg-blue-700 capitalize text-gray-50 tracking-wide">
+            <button type="submit" class="btn btn-sm bg-blue-400 capitalize text-gray-50 tracking-wide">
                 registrar
             </button>
         </div>
