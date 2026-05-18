@@ -5,7 +5,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev libicu-dev libzip-dev libssl-dev \
     nodejs npm ffmpeg supervisor \
     && rm -rf /var/lib/apt/lists/* \
-    && npm install -g yarn
 
 RUN docker-php-ext-install -j$(nproc) pdo pdo_pgsql mbstring exif pcntl bcmath gd zip intl
 RUN pecl install redis && docker-php-ext-enable redis
@@ -19,7 +18,7 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction
-RUN yarn install && yarn build
+RUN npm install && npm run build
 
 RUN mkdir -p /etc/supervisor/conf.d
 COPY docker/supervisor.conf /etc/supervisor/conf.d/iava.conf
