@@ -8,7 +8,7 @@ services:
     working_dir: /var/www/html
     env_file:
       - ../.env
-    user: "1001:1001"          # ← DIFERENÇA 1: Seu UID local (remove em prod)
+    # user: "1001:1001"          # ← DIFERENÇA 1: Seu UID local (remove em prod)
     volumes:
       - ..:/var/www/html       # ← DIFERENÇA 2: Bind mount para dev (remove em prod)
       - storage_data:/var/www/html/storage

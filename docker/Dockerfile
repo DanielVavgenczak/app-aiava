@@ -3,7 +3,7 @@ FROM php:8.5-fpm
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl libpng-dev libonig-dev libxml2-dev zip unzip \
     libpq-dev libicu-dev libzip-dev libssl-dev \
-    nodejs npm ffmpeg \
+    nodejs npm ffmpeg supervisor \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g yarn
 
@@ -18,7 +18,13 @@ RUN echo "upload_max_filesize = 100M\npost_max_size = 100M\nmemory_limit = 512M\
 WORKDIR /var/www/html
 COPY . /var/www/html
 
-# Evita 500 por permissão no bind mount (local apenas)
-RUN chmod -R 777 storage bootstrap/cache
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN yarn install && yarn build
 
-CMD ["php-fpm"]
+RUN mkdir -p /etc/supervisor/conf.d
+COPY docker/supervisor.conf /etc/supervisor/conf.d/iava.conf
+
+RUN chown -R www-data:www-data storage bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache
+
+CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
