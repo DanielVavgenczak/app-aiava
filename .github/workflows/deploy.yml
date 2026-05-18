@@ -2,12 +2,11 @@ name: Deploy IAVA
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: 🚀 Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -15,29 +14,26 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: 22
           script: |
+            set -e
             cd /root/iava
 
-            echo "🔄 Puxando alterações..."
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
 
-            echo "📦 Instalando dependências PHP..."
-            composer install --no-dev --optimize-autoloader
+            docker compose -f docker/docker-compose.prod.yml down --remove-orphans
+            docker compose -f docker/docker-compose.prod.yml build --no-cache
+            docker compose -f docker/docker-compose.prod.yml up -d
 
-            echo "📦 Instalando dependências Node..."
-            npm ci
-            npm run build
+            sleep 15
 
-            echo "🗄️ Rodando migrations..."
-            php artisan migrate --force
+            docker compose -f docker/docker-compose.prod.yml run --rm app php artisan migrate --force --no-interaction
+            docker compose -f docker/docker-compose.prod.yml run --rm app php artisan config:cache
 
-            echo "🧹 Limpando cache..."
-            php artisan optimize:clear
-            php artisan optimize
-
-            echo "🔄 Reiniciando serviços..."
-            sudo systemctl restart iava-queue
-            sudo systemctl restart iava-reverb
-
-            echo "✅ Deploy concluído!"
+            # Health check que FALHA o deploy se o site não responder 200/302
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost)
+            if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "302" ]; then
+              echo "❌ Site não respondeu corretamente: HTTP $HTTP_CODE"
+              exit 1
+            fi
+            echo "✅ Deploy validado: HTTP $HTTP_CODE"
