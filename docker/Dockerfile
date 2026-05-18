@@ -27,4 +27,9 @@ COPY docker/supervisor.conf /etc/supervisor/conf.d/iava.conf
 RUN chown -R www-data:www-data storage bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
 
+RUN php artisan vendor:publish --tag=livewire:assets --force
+RUN cp -r public/build storage/ 2>/dev/null || true
+RUN cp -r public/vendor storage/ 2>/dev/null || true
+RUN cp -r public/images storage/ 2>/dev/null || true
+
 CMD ["/usr/bin/supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
