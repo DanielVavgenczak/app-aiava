@@ -33,7 +33,6 @@ jobs:
             # Health check que FALHA o deploy se o site não responder 200/302
             NGINX_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' iava_nginx)
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$NGINX_IP)
-
             if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "302" ]; then
               echo "❌ Site não respondeu corretamente: HTTP $HTTP_CODE"
               exit 1
