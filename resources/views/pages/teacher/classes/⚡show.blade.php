@@ -177,6 +177,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             {{-- Botão Adicionar --}}
             <button
                 @click="$wire.addStudent"
+                id="student-register"
                 class="btn bg-white text-blue-600 hover:bg-blue-50 border-0 shadow-lg"
             >
                 <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
@@ -237,6 +238,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                     <input
                         type="text"
                         wire:model.live.debounce.300ms="search"
+                        id="student-filter"
                         placeholder="Buscar por nome ou email..."
                         class="input input-bordered w-full pl-10 !outline-none focus:border-gray-200 focus:ring-gray-200"
                     />
@@ -319,11 +321,13 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         @if($this->students->count() > 0)
             {{-- Grid de Alunos --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6" id="student-list">
                 @foreach ($this->students as $student)
                     <div
-                        class="group bg-white border-2 border-gray-200 rounded-xl p-5 hover:shadow-xl hover:border-blue-400 transition-all duration-200"
+                        class="group bg-white border-2 border-gray-200 rounded-xl p-5 hover:shadow-xl hover:border-blue-400 transition-all duration-200 card-student"
                         wire:key="student-{{ $student->id }}"
+                        id="student-{{ $student->id }}"
+                        data-tour="{{ $student->id }}"
                     >
                         {{-- Header do Card --}}
                         <div class="flex items-start justify-between mb-4">
@@ -394,6 +398,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             {{-- Editar --}}
                             <button
                                 wire:click="editStudent({{ $student->id }})"
+                                id="student-btn-edit-{{ $student->id }}"
                                 class="btn btn-sm btn-ghost"
                                 title="Editar"
                             >
@@ -403,6 +408,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             {{-- Remover --}}
                             <button
                                 wire:click="removeStudent({{ $student->id }})"
+                                id="student-btn-delete-{{ $student->id }}"
                                 class="btn btn-sm btn-ghost text-red-600 hover:bg-red-50"
                                 title="Remover da turma"
                             >
@@ -427,7 +433,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                 </div>
 
                 @if($search || $statusFilter)
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhum aluno encontrado</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2" id="student-no-result">Nenhum aluno encontrado</h3>
                     <p class="text-gray-500 mb-6">
                         Não encontramos alunos com os filtros aplicados.
                     </p>
@@ -459,4 +465,40 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     <livewire:teacher.classe.new-student-modal />
     <livewire:teacher.classe.edit-student-modal />
     {{-- <livewire:teacher.classe.remove-student-modal /> --}}
+
+    <div x-data class="fixed inset-0 z-50 bg-gray-900/50" x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-d-200 p-6 flex flex-col gap-5">
+            <div class="flex items-center justify-between">
+                <h2 class="text-[14px] tracking-wide font-medium text-gray-700">
+                    Aqui você pode gerenciar os alunos da turma
+                </h2>
+                <x-mary-button
+                    class="btn btn-sm btn-ghost"
+                    x-on:click="$store.tourguide.cancelOptionsTourPage()">
+                    <x-mary-icon name="o-x-mark" class="w-4 text-gray-700"/>
+                </x-mary-button>
+            </div>
+            <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
+                <x-mary-button
+                    class="text-blue-600 border-[1px] border-blue-600 btn hover:text-gray-100"
+                    label="Registrar aluno"
+                    x-on:click="$store.tourguide.start('StartTourStudentRegister')" />
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Filtrar alunos"
+                    x-on:click="$store.tourguide.start('StartTourStudentFilter')" />
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Editar aluno"
+                    x-on:click="$store.tourguide.start('StartTourStudentEdit')" />
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Remover aluno"
+                    x-on:click="$store.tourguide.start('StartTourStudentDelete')" />
+            </div>
+        </div>
+        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
+    </div>
+
 </div>

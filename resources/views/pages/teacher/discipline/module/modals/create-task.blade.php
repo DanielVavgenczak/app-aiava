@@ -532,7 +532,8 @@ new class extends Component {
     class="fixed inset-0 z-50  bg-white"
     x-trao.noscroll="$wire.open_create_task"
     x-cloak>
-    <div class="sticky px-5 top-0 flex items-center justify-between w-full  border-gray-300 border-b-[1px] h-16 ">
+    <div class="sticky px-5 top-0 flex items-center justify-between w-full  border-gray-300 border-b-[1px] h-16 "
+        id="create-task-header-{{ $disciplineId }}">
         <h2 class="text-[15px] font-semibold text-gray-700">Criar atividade / avaliação</h2>
         <x-mary-button icon="o-x-mark" class="btn btn-sm btn-ghost" wire:click="close" />
     </div>
@@ -546,7 +547,8 @@ new class extends Component {
             <!-- endscrooll -->
             <div class="mb-6">
                 <!-- Com ícone interno -->
-                <label class="flex items-center gap-2 cursor-pointer">
+                <label class="flex items-center gap-2 cursor-pointer"
+                    id="create-task-avaliative-{{ $disciplineId }}">
                     <input
                         type="checkbox"
                         class="hidden peer"
@@ -568,6 +570,7 @@ new class extends Component {
 
             @if($this->validIsAvaliative)
             <div class="flex gap-2 mb-6 transition ease-in-out duration-700"
+                id="create-task-value-activity-{{ $disciplineId }}"
                       x-data="{
                         note: $wire.entangle('valueOfActivity').live,
                         mensagem: '',
@@ -753,7 +756,7 @@ new class extends Component {
                                         type="button"
                                         wire:click="addOptionRadio"
                                         id="create-question-option-add-{{ $disciplineId }}"
-                                        class="btn btn-md bg-pink-700 text-blue-50">
+                                        class="btn btn-md bg-blue-400 hover:bg-blue-500 text-gray-50">
                                         <x-mary-icon name="o-plus" />
                                     </button>
                                 </div>
@@ -913,7 +916,7 @@ new class extends Component {
                           this.note = `${numeroInteiro},${decimal}`;
                       }
 
-                    }">
+                    }" id="create-task-question-value-{{ $disciplineId }}">
                         <div class="flex flex-col gap-1">
                             <label
                                 for="note_to_question_input"
@@ -948,22 +951,23 @@ new class extends Component {
                 </div>
                 <div class="mt-4 self-end">
                     <button
-                        class="btn btn-md btn-ghost text-gray-600">
+                        class="btn btn-md btn-ghost text-gray-600"
+                        id="create-task-cancel-question-{{ $disciplineId }}">
                         Cancelar
                     </button>
                     <button
                         type="submit"
                         x-on:click.prevent="$wire.addQuestion"
                         id="create-question-button-radio-{{ $disciplineId }}"
-                        class="btn btn-md bg-pink-700 text-blue-50">
-                        Criar questão
+                                                        class="btn btn-md bg-blue-400 hover:bg-blue-500 text-gray-50">
+                                                        Criar questão
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Preview das Questões -->
-        <div class="bg-white w-2/3">
+        <div class="bg-white w-2/3" id="create-task-preview-panel-{{ $disciplineId }}">
             <!-- and input note of activity -->
             <div class="relative h-full">
                     @if ($valueOfActivity > 0)
@@ -1001,7 +1005,7 @@ new class extends Component {
                     <div class="flex items-center justify-between p-5">
                         <div class="flex items-center gap-2">
                         @if(count($questions) > 0)
-                            <div>
+                            <div id="create-task-question-count-{{ $disciplineId }}">
                                 <span class="text-sm capitalize font-medium tracking-wider">questões</span>
                                 <div class="badge badge-md badge-ghost">
                                     {{ count($questions) }}
@@ -1152,12 +1156,14 @@ new class extends Component {
                                                 </div>
                                                 @endif
                                                 <button wire:click="startEditingQuestion({{ $qIndex }})"
-                                                    type="button" class="btn btn-sm  bg-gray-100">
+                                                    type="button" class="btn btn-sm  bg-gray-100"
+                                                    data-tour="edit-question">
                                                     <x-mary-icon name="o-pencil-square" class="w-4 h-4 text-gray-600" />
                                                     <span class="capitalize text-gray-600">editar</span>
                                                 </button>
                                                 <button wire:click="removeQuestion({{ $qIndex }})"
-                                                    type="button" class="btn btn-sm  bg-gray-100">
+                                                    type="button" class="btn btn-sm  bg-gray-100"
+                                                    data-tour="remove-question">
                                                     <x-mary-icon name="o-trash" class="w-4 h-4 text-gray-600" />
                                                     <span class="capitalize text-gray-600">remover</span>
                                                 </button>
@@ -1258,13 +1264,15 @@ new class extends Component {
                                     <button
                                         type="button"
                                         wire:click="cancelCreation"
+                                        id="create-task-cancel-btn-{{ $disciplineId }}"
                                         class="btn btn-md bg-ghost text-gray-600">
                                         Cancelar
                                     </button>
                                     <button
                                         type="button"
                                         wire:click="save"
-                                        class="btn btn-md bg-pink-700 capitalize text-blue-50">
+                                        id="create-task-save-btn-{{ $disciplineId }}"
+                                        class="btn btn-md bg-blue-400 hover:bg-blue-500 capitalize text-gray-50">
                                         criar questionário
                                     </button>
                                     {{-- <div

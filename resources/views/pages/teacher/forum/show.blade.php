@@ -210,7 +210,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                     <button
                         id="forum-show-new-topic"
                         @click="$wire.openNewTopicModal"
-                        class="btn btn-md bg-blue-700 text-white border-0"
+                        class="btn btn-md bg-blue-400 text-white border-0"
                     >
                         <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                         Novo Tópico
@@ -278,7 +278,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                                 @php
                                                     $name = $topic->owner->full_name ?? $topic->owner->first_name
                                                 @endphp
-                                                    <livewire:user-avatar-forum-list initiais="{{ $name }}"/>
+                                                    <livewire:global.user-avatar-forum-list initiais="{{ $name }}"/>
 
                                                 <div>
                                                     <p class="text-sm font-medium {{ $isTeacher ? 'text-blue-700' : 'text-green-700' }}">
@@ -364,7 +364,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                 {{-- ==================== ABA: MEUS TÓPICOS ==================== --}}
                 <x-mary-tab name="mine-tap">
                     <x-slot:label>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2" id="my-topics-created">
                             <x-mary-icon name="o-user-circle" class="w-4 h-4" />
                             <span>Meus Tópicos</span>
                             <x-mary-badge
@@ -493,29 +493,25 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
             shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
            <div class="flex justify-between items-center">
-               <h2 class="text-lg font-normal text-gray-700">Opções do Fórum</h2>
+               <h2 class="text-sn font-bold text-gray-700">Opções do Fórum</h2>
                 <div class="flex justify-end">
                     <x-mary-button icon="o-x-mark"
-                        class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                        class="bg-white border-none btn-square hover:none hover:bg-blue-400 hover:text-gray-100"
                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
             </div>
             <div class="grid grid-cols-3 gap-2">
               <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Criar um novo tópico"
+                    label="Criar tópico"
                     x-on:click="$store.tourguide.start('StartTourTeacherForumShowNewTopic')" />
               <x-mary-button
-                    class="font-medium text-green-600 border-[1px] border-green-600 btn hover:bg-green-600 hover:text-gray-100"
-                    label="Selecionar um tópico e acessar"
-                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowSelectTopic')" />
-              <x-mary-button
-                    class="font-medium text-purple-600 border-[1px] border-purple-600 btn hover:bg-purple-600 hover:text-gray-100"
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                     label="Selecionar meus tópicos"
                     x-on:click="$store.tourguide.start('StartTourTeacherForumShowMyTopics')" />
             </div>
         </div>
-        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
     </div>
 
     <livewire:teacher.forum.modal-new-topic-forum />

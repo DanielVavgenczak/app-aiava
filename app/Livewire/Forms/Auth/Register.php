@@ -3,9 +3,11 @@
 namespace App\Livewire\Forms\Auth;
 
 use App\Models\Teacher\Teacher;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
+use Illuminate\Support\Facades\Log;
 
 class Register extends Form
 {
@@ -34,16 +36,30 @@ class Register extends Form
 
     public function store()
     {
-        //dd('batebdo aqui');
         $this->validate();
+        try {
+            Teacher::create([
+                'first_name' => $this->first_name,
+                'last_name' => $this->last_name,
+                'email' => $this->email,
+                'password' => Hash::make($this->password),
+            ]);
+            $this->reset();
+            session()->flash('status-registed', 'Cadastro efetuado com sucesso!');
 
-        Teacher::create([
-            'first_name' => $this->first_name,
-            'last_name' => $this->last_name,
-            'email' => $this->email,
-            'password' => Hash::make($this->password),
-        ]);
-
-        $this->reset();
+            return true;
+        } catch (UniqueConstraintViolationException $error) {
+            if (str_contains($error->getMessage(), 'teachers_email_unique')) {
+                $this->addError('email', 'O e-mail ja foi cadastrado!');
+                return false;
+            }
+        } catch (\Exception $error) {
+            Log::error("Erro ao cadastrar professor: " . $error->getMessage(), [
+                'email' => $this->email,
+                'trace' => $error->getTraceAsString()
+            ]);
+            $this->addError('email', 'Erro inesperado. Tente novamente mais tarde.');
+            return false;
+        }
     }
 }

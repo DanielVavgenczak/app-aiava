@@ -368,7 +368,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                               <x-mary-button
                                   class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                                   label="Criar uma tarefa"
-                                  x-on:click="$store.tourguide.startCreateTaskLesson()" />
+                                   x-on:click="$store.tourguide.start('StartTourCreateActivitTask')" />
                               {{-- <x-mary-button
                                   class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
                                   label="Editar uma aula"

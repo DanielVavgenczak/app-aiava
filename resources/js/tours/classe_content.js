@@ -203,7 +203,7 @@ export async function StartTourStudentAccess()
                         showButtons: [""],
                     },
                     onHighlighted: async (el) => {
-                        const studentCount = el.querySelectorAll("tr.card-student")
+                        const studentCount = el.querySelectorAll("div.card-student")
                         let studentSelected = null
                         if (!studentCount || studentCount.length === 0) {
                             return;
@@ -296,7 +296,7 @@ export async function StartTourStudentEdit()
                         showButtons: [""],
                     },
                     onHighlighted: async (el) => {
-                        const studentCount = el.querySelectorAll("tr.card-student")
+                        const studentCount = el.querySelectorAll("div.card-student")
                         let studentSelected = null
                         if (!studentCount || studentCount.length === 0) {
                             return;
@@ -458,7 +458,7 @@ export async function StartTourStudentDelete()
                         showButtons: [""],
                     },
                     onHighlighted: async (el) => {
-                        const studentCount = el.querySelectorAll("tr.card-student")
+                        const studentCount = el.querySelectorAll("div.card-student")
                         let studentSelected = null
                         if (!studentCount || studentCount.length === 0) {
                             return;

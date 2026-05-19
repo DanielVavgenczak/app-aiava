@@ -1,4 +1,5 @@
 import { ContinueCreateAcessClasseTour } from "./teacher/classe/createAndAccess";
+import { ContinueRegisterStudentTour } from "./teacher/classe/RegisterStudent";
 import { AddButtonActions, configDriver
  } from "./utils";
 
@@ -519,5 +520,80 @@ export async function StartTourClasseAccess()
         })
         return await driverObj.drive();
     })
+ }
+
+
+/**
+ * Tour contextual: detecta turmas sem alunos e guia o professor
+ * a acessá-las e cadastrar os primeiros alunos.
+ *
+ * Fluxo:
+ *   1. Encontra a primeira turma com data-students-count="0"
+ *   2. Destaca a turma
+ *   3. Clica em "Acessar"
+ *   4. Redireciona para a página da turma
+ *   5. Inicia o tour de cadastro de alunos (com loop)
+ */
+export async function StartTourClasseEmptyStudents() {
+  let store = Alpine.store("tourguide");
+  store.openMai = false;
+
+  return new Promise(async (resolve) => {
+    const emptyClass = document.querySelector(
+      '.card-classe[data-students-count="0"]',
+    );
+    if (!emptyClass) {
+      store.openMai = true;
+      return resolve();
+    }
+
+    const dataId = emptyClass.getAttribute("data-tour");
+    if (!dataId) return resolve();
+
+    const driverObj = drivertour({
+      ...configDriver,
+      steps: [
+        {
+          element: `#classe-${dataId}`,
+          popover: {
+            description:
+              "Esta turma ainda não possui alunos. Vou te guiar para adicionar os primeiros alunos agora.",
+            side: "bottom",
+            align: "start",
+            showButtons: [""],
+          },
+          onHighlighted: async (el) => {
+            await new Promise((r) => setTimeout(r, 3000));
+            el.style.zIndex = "200000000";
+            await driverObj.moveNext();
+          },
+        },
+        {
+          element: `#classe-access-${dataId}`,
+          popover: {
+            description:
+              "Vou clicar em 'Acessar' para entrar na turma e cadastrar os alunos.",
+            side: "bottom",
+            align: "start",
+            showButtons: [""],
+          },
+          onHighlighted: async (el) => {
+            await new Promise((r) => setTimeout(r, 2000));
+            const btnAccess = document.querySelector(
+              `#classe-access-${dataId}`,
+            );
+            if (!btnAccess) return;
+            await btnAccess.click();
+            el.style.zIndex = "0";
+            await driverObj.destroy();
+            await new Promise((r) => setTimeout(r, 1500));
+            await ContinueRegisterStudentTour();
+            if (resolve) resolve();
+          },
+        },
+      ],
+    });
+    await driverObj.drive();
+  });
 }
 

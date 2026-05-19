@@ -21,8 +21,19 @@ class Login extends Form
     public string $password = '';
     public bool $remember = false;
 
-    public function authenticate(): string
+    /**
+     * Authenticate user across multiple guards.
+     *
+     * Attempts authentication first as teacher, then as student.
+     * Implements rate limiting to prevent brute-force attacks.
+     *
+     * @return string The authenticated guard type ('teacher'|'student') or 'unauthorized'
+     *
+     * @throws \Illuminate\Validation\ValidationException When validation fails
+     */
+    public function authenticateuniquepagelogin(): string
     {
+        $this->validate();
         $this->ensureIsNotRateLimited();
 
         // Tenta autenticar como professor primeiro
@@ -42,13 +53,9 @@ class Login extends Form
             RateLimiter::clear($this->throttleKey());
             return 'student';
         }
-
         // Se nenhum deu certo, incrementa tentativas e lança erro
         RateLimiter::hit($this->throttleKey());
-
-        throw ValidationException::withMessages([
-            'form.email' => trans('auth.failed'),
-        ]);
+        return 'unauthorized';
     }
 
     /**

@@ -137,7 +137,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             <span class="text-blue-700 font-medium">Turmas</span>
         </div>
     </div>
-    contagem: {{ $this->disciplines->count() }}
     {{-- Header com Título e Ação --}}
     <div class="mb-6">
         <div class="flex items-center justify-between">
@@ -149,6 +148,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             @if($this->disciplines->count() > 0)
                 <button
                     @click="$wire.createClasse"
+                    id="classe-create"
                     class="btn bg-gradient-to-r from-blue-600 to-blue-700 text-white border-0 hover:from-blue-700 hover:to-blue-500 shadow-sm"
                 >
                     <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
@@ -293,7 +293,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     </div>
 
     {{-- Lista de Turmas --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" id="classe-list">
         @if($this->classes->count() > 0)
             {{-- Header da Tabela --}}
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
@@ -325,8 +325,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             <div class="divide-y divide-gray-200">
                 @foreach ($this->classes as $classe)
                     <div
-                        class="group px-6 py-4 hover:bg-blue-50 transition-colors"
+                        class="group px-6 py-4 hover:bg-blue-50 transition-colors card-classe"
                         wire:key="classe-{{ $classe->id }}"
+                        id="classe-{{ $classe->id }}"
+                        data-tour="{{ $classe->id }}"
+                        data-students-count="{{ $classe->students->count() }}"
                     >
                         <div class="grid grid-cols-12 gap-4 items-center">
                             {{-- Nome da Turma --}}
@@ -364,6 +367,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                 <a
                                     href="{{ route('teacher.classes.show', $classe) }}"
                                     wire:navigate
+                                    id="classe-access-{{ $classe->id }}"
                                     class="btn btn-sm bg-blue-200 text-gray-700 hover:bg-blue-400 border-0"
                                     title="Acessar turma"
                                 >
@@ -374,6 +378,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                 {{-- Editar --}}
                                 <button
                                     x-on:click="$dispatch('edit-classe-modal',{id: @js($classe->id)})"
+                                    id="classe-edit-{{ $classe->id }}"
                                     class="btn btn-sm bg-green-200 text-gray-700 hover:bg-green-400 border-0"
                                     title="Editar turma"
                                 >
@@ -384,6 +389,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                 {{-- Excluir --}}
                                 <button
                                     wire:click="deleteClasse({{ $classe->id }})"
+                                    id="classe-delete-{{ $classe->id }}"
                                     class="btn btn-sm bg-red-200 text-gray-700 hover:bg-red-400 border-0"
                                     title="Excluir turma"
                                 >
@@ -466,5 +472,60 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
         @endif
     </div>
     <livewire:teacher.classe.modal-new-classe />
+
+    <div x-data class="fixed inset-0 z-50 bg-gray-900/50" x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-d-200 p-6 flex flex-col gap-5">
+            <div class="flex items-center justify-between">
+                <h2 class="text-[14px] tracking-wide font-medium text-gray-700">
+                    Aqui você pode gerenciar suas turmas
+                </h2>
+                <x-mary-button
+                    class="btn btn-sm btn-ghost"
+                    x-on:click="$store.tourguide.cancelOptionsTourPage()">
+                    <x-mary-icon name="o-x-mark" class="w-4 text-gray-700"/>
+                </x-mary-button>
+            </div>
+            <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
+                <x-mary-button
+                    class="text-blue-600 border-[1px] border-blue-600 btn hover:text-gray-100"
+                    label="Criar turma"
+                    x-on:click="$store.tourguide.start('StartTourClasseCreate')" />
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Editar turma"
+                    x-on:click="$store.tourguide.start('StartTourClasseEdit')" />
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Excluir turma"
+                    x-on:click="$store.tourguide.start('StartTourClasseDelete')" />
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Acessar turma"
+                    x-on:click="$store.tourguide.start('StartTourClasseAccess')" />
+                <x-mary-button
+                    class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                    label="Turma sem alunos"
+                    x-on:click="$store.tourguide.start('StartTourClasseEmptyStudents')" />
+            </div>
+        </div>
+        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
+    </div>
+
+    @script
+    <script>
+    document.addEventListener("livewire:initialized", () => {
+        if (sessionStorage.getItem("tour-empty-class-auto")) return;
+        const emptyClasses = document.querySelectorAll('.card-classe[data-students-count="0"]');
+        if (emptyClasses.length > 0) {
+            sessionStorage.setItem("tour-empty-class-auto", "1");
+            setTimeout(() => {
+                const store = Alpine.store("tourguide");
+                if (store) store.start("StartTourClasseEmptyStudents");
+            }, 1500);
+        }
+    });
+    </script>
+    @endscript
 
 </div>

@@ -16,19 +16,17 @@ class FormTeacherLogin extends Form
     public string $password = '';
 
     public function authenticate()
-{
-    $this->validate();
-    if (Auth::guard('teacher')->attempt([
-        'email' => $this->email,
-        'password' => $this->password
-    ], true)) {
-        $teacher = Teacher::where('email', $this->email)->first();
-        session()->put('teacher_id', $teacher->id);
-        session()->regenerate();
+    {
+        // $this->validate();
+        // if (Auth::guard('teacher')->attempt([
+        //     'email' => $this->email,
+        //     'password' => $this->password
+        // ], true)) {
+        //     $teacher = Teacher::where('email', $this->email)->first();
+        //     session()->put('teacher_id', $teacher->id);
+        //     session()->regenerate();
+        // }
+
+        // $this->addError('email', 'As credenciais fornecidas não correspondem aos nossos registros.');
     }
-
-    $this->addError('email', 'As credenciais fornecidas não correspondem aos nossos registros.');
-}
-
-
 }

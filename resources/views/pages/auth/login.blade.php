@@ -3,18 +3,32 @@
 use Livewire\Component;
 use Livewire\Attributes\{Layout};
 use App\Livewire\Forms\Auth\Login;
+use Mary\Traits\Toast;
 
 new #[Layout('layouts.guest')] class extends Component {
+    use Toast;
 
     public Login $form;
+    public function mount(){
+        if(session('status-registed')) {
+          $this->toast('success', session('status-registed'));
+        }
+    }
     public function login()
     {
-        $type = $this->form->authenticate();
-        // TODO: adicionar taost e deixar isso mais limpo e performatico
-        if ($type === 'teacher') {
-            return $this->redirect(route('teacher.discipline'));
-        }
-        return $this->redirect(route('student.discipline'));
+        return match($this->form->authenticateuniquepagelogin()) {
+        'teacher' => (function() {
+              return $this->redirect(route('teacher.discipline'), navigate: true);
+        })(),
+        'student' => $this->redirect(route('student.discipline')),
+            default => $this->tapToast(),
+        };
+
+    }
+
+    private function tapToast()
+    {
+        $this->error('Acesso negado: E-mail ou senha inválidos.',  timeout: 5000);
     }
 
 }; ?>
@@ -22,10 +36,10 @@ new #[Layout('layouts.guest')] class extends Component {
 <div>
         <div class="w-full text-center">
             <img src="/images/aiava-logo.png" class="w-32 mx-auto" />
-            <h5 class="text-xl font-bold text-gray-600">Login</h5>
+            <h5 class="text-xl font-bold mt-3 text-gray-600">Login</h5>
         </div>
         <form wire:submit="login" class="mt-8 space-y-6">
-            <div class="rounded-md shadow-sm -space-y-px">
+            <div class="rounded-md  -space-y-px">
                 <div>
                     <x-mary-input
                         label="E-mail"

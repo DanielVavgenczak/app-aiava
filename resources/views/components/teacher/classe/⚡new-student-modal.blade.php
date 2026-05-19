@@ -196,7 +196,7 @@ new class extends Component {
             <div class="col-span-1" id="student-input-add">
                 <button class="btn  bg-blue-700 text-gray-50" type="button" id="student-input-add-to-list">
                   <x-mary-icon name="o-plus" class="w-5 h-5" @click="$wire.addStudent"/>
-                </button:>
+                </button>
             </div>
         </div>
         @if (count($students) > 0)
@@ -229,7 +229,6 @@ new class extends Component {
                             estudantes</span>
                     </div>
                 </div>
-            </div>
             </div>
         @endif
     </form>

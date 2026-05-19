@@ -13,5 +13,3 @@ import './libs/mask';
 
 import './notification';
 window.drivertour = driver;
-//Alpine.plugin(focus);
-console.log("call")

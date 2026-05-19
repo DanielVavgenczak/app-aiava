@@ -12,6 +12,7 @@ new #[Layout('layouts::teacher')] class extends Component {
     public string $sortBy = 'recent'; // recent, oldest, name
     public int $perPage = 12;
 
+
     #[Computed]
     public function disciplines()
     {
@@ -118,7 +119,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                 <x-mary-icon name="o-home" class="w-4 h-4" />
             </a>
             <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-gray-600 font-medium">Disciplinassss</span>
+            <span class="text-gray-600 font-medium">Disciplinas</span>
         </div>
     </div>
 
@@ -387,25 +388,25 @@ new #[Layout('layouts::teacher')] class extends Component {
             <div class="grid grid-cols-4 gap-2">
               <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Criar uma disciplina"
+                    label="Criar disciplina"
                     x-on:click="$store.tourguide.start('StartTourCreateDiscipline')" />
 
                 <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-blue-100"
-                    label="Editar uma disciplina"
+                    label="Editar  disciplina"
                     x-on:click="$store.tourguide.start('StartTourEditDiscipline')" />
 
                  <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Filtrar uma disciplina"
+                    label="Filtrar disciplina"
                     x-on:click="$store.tourguide.start('StartTourSearchDiscipline')" />
                  <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Gerenciar conteúdo de uma disciplina"
+                    label="Gerenciar conteúdo"
                     x-on:click="$store.tourguide.start('StartTourManagerDisciplineContent')" />
                 <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Deletar uma disciplina"
+                    label="Deletar disciplina"
                     x-on:click="$store.tourguide.start('StartTourDeleteDiscipline')" />
                 </div>
         </div>
@@ -415,3 +416,8 @@ new #[Layout('layouts::teacher')] class extends Component {
     {{-- Modal de Criação --}}
     <livewire:teacher.discipline.modals.modal-new-discipline />
 </div>
+<script>
+   Livewire.on('teacher::login', (event) => {
+    console.log('em baixo',event.type);
+});
+</script>

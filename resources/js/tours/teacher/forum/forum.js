@@ -172,6 +172,46 @@ export async function StartTourTeacherForumInteract() {
         }, 3000);
     };
 
+
+    if (disciplines.length === 1) {
+        const driverObj = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element: "#forum-discipline-card",
+                popover: {
+                    description: "Como você possue apenas 1 disciplina.",
+                    side: "bottom",
+                    align: "start",
+                    showButtons:[""]
+                },
+                onHighlighted: async () => {
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    await driverObj.moveNext();
+                }
+            },
+            {
+                element: "#forum-access-btn",
+                popover: {
+                    description: "Vamos acessa-la diretamente",
+                    showButtons:[""]
+                },
+                onHighlighted: async () => {
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    const btnaccess = document.querySelector("#forum-access-btn");
+                    await btnaccess.click();
+                    await driverObj.destroy();
+                }
+
+            }
+        ]
+        });
+
+        return await driverObj.drive();
+            console.log("Aqui bem grande  vai slicar sozinho", disciplines.length);
+            return;
+    }
+
     // ==========================================
     // EVENTOS DE CLIQUE NOS CARDS
     // ==========================================
@@ -182,6 +222,8 @@ export async function StartTourTeacherForumInteract() {
     // ==========================================
     const driverObj = drivertour({
         ...configDriver,
+
+
         steps: [
             {
                 element: "#forum-discipline-grid",
@@ -202,7 +244,7 @@ export async function StartTourTeacherForumInteract() {
 }
 
 export async function StartTourTeacherForumInteractss() {
-
+    console.log("nem funciona mais")
     store.openMai = false;
 
     const cards = document.querySelectorAll('#forum-discipline-grid > div');
@@ -541,53 +583,50 @@ export async function StartTourTeacherForumShowSelectTopic() {
 }
 
 export async function StartTourTeacherForumShowMyTopics() {
+
+    // TODO: refatorar depois criar uma function para reaproveitar
+    document.body.style.cursor = 'not-allowed';
+    document.body.style.pointerEvents = 'none';
     store.openMai = false;
 
     const driverObj = drivertour({
         ...configDriver,
+
         steps: [
             {
-                element: "#forum-show-breadcrumb",
+                disableActiveInteraction:true,
+                allowKeyboardControl:false,
+                stageCursor:'not-allowed',
+                element: "#my-topics-created",
                 popover: {
-                    description: "Você está na página de tópicos de uma disciplina do fórum.",
-                    side: "bottom",
-                    align: "start",
-                },
-            },
-            {
-                element: "#forum-show-tabs",
-                popover: {
-                    description: "Aqui você pode alternar entre 'Todos os Tópicos' e 'Meus Tópicos' para filtrar as discussões.",
-                    side: "bottom",
-                    align: "center",
-                    onHighlighted: async () => {
-                        await new Promise(r => setTimeout(r, 2000));
-                        const tabBtns = document.querySelectorAll('[role="tab"]');
-                        for (const btn of tabBtns) {
-                            if (btn.textContent.includes('Meus Tópicos')) {
-                                btn.click();
-                                break;
-                            }
-                        }
-                        await driverObj.moveNext();
-                    },
-                },
-            },
-            {
-                element: "#forum-show-my-topics",
-                popover: {
-                    description: "Aqui você encontra apenas os tópicos que criou. É possível editá-los ou excluí-los diretamente.",
+                    description: "Aqui está os tópicos que criou. É possível editá-los ou excluí-los diretamente.",
                     side: "top",
                     align: "center",
-                    onPopoverRender: (popover) => {
-                        const actions = AddButtonActions(popover, "Finalizar Tour");
-                        actions.addEventListener("click", async () => {
-                            await driverObj.destroy();
-                            store.openMai = true;
-                        });
-                    },
+                    showButtons: [""],
                 },
+                onHighlighted: async (el) => {
+                    //document.body.style.cursor = 'not-allowed';
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    await el.click();
+                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    await driverObj.moveNext();
+                }
             },
+            {
+                disableActiveInteraction:true,
+                stageCursor:'not-allowed',
+                element: "#forum-show-my-topics",
+                popover: {
+                    description: "Topicos que você registrou.",
+                    side: "top",
+                    align: "center",
+                },
+                onHighlighted: async (el) => {
+
+                    document.body.style.cursor = '';
+                    document.body.style.pointerEvents = '';
+                }
+            }
         ],
     });
 

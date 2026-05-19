@@ -41,19 +41,20 @@ document.addEventListener("alpine:init", () => {
             {
                 exact:true,
                 isDynamic: false,
-                path: "/professor/classes",
+                path: "/professor/turmas",
                 tourModule: () => import("./classe_list"),
                 tours: [
                     "StartTourClasseCreate",
                     "StartTourClasseDelete",
                     "StartTourClasseEdit",
                     "StartTourClasseAccess",
+                    "StartTourClasseEmptyStudents",
                 ],
             },
             {
                 exact: false,
                 isDynamic: true,
-                path: "/professor/classes",
+                path: "/professor/turmas",
                 tourModule: () => import("./classe_content"),
                 tours: [
                     "StartTourStudentRegister",

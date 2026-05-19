@@ -178,7 +178,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
     <div class="mb-6" id="teacher-messages-header-{{ Auth::guard('teacher')->id() }}">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Chat com Alu</h1>
+                <h1 class="text-3xl font-bold text-gray-900">Chat com Alunos</h1>
                 <p class="text-gray-600 mt-1">Converse com seus alunos em tempo real</p>
             </div>
         </div>

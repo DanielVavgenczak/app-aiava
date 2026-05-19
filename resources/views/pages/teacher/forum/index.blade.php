@@ -70,19 +70,19 @@ new #[Layout('layouts::teacher')] class extends Component {
                 @foreach ($disciplines as $discipline)
                     <div
                         @if($loop->first) id="forum-discipline-card" @endif
-                        class="group relative bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl p-4 hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition-all duration-300"
+                        class="group relative bg-gradient-to-br from-gray-50 to-white border-[1px] border-gray-200 rounded-xl p-4 hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition-all duration-300"
                         wire:key="forum-discipline-{{ $discipline->id }}"
                     >
 
                         {{-- Ícone --}}
                         <div class="flex justify-center mb-3">
-                            <div class="w-14 h-14 bg-gradient-to-br from-blue-700 to-blue-500 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
+                            <div class="w-14 h-14 bg-blue-400 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                                 <x-mary-icon name="o-academic-cap" class="w-7 h-7 text-white" />
                             </div>
                         </div>
 
                         {{-- Título --}}
-                        <h3 class="text-center text-sm font-bold text-gray-900 mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-blue-700 transition-colors">
+                        <h3 class="text-center text-sm font-bold text-gray-700 mb-2 line-clamp-2 min-h-[2.5rem] group-hover:text-blue-700 transition-colors">
                             {{ $discipline->title }}
                         </h3>
 
@@ -100,7 +100,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                             @if($loop->first) id="forum-access-btn" @endif
                             href="{{ route('teacher.forum.show', $discipline->id) }}"
                             wire:navigate
-                            class="btn btn-sm btn-block bg-gradient-to-r from-blue-700 to-blue-500 text-white border-0 hover:from-blue-700 hover:to-blue-500 group-hover:shadow-lg transition-all"
+                            class="btn btn-sm btn-block bg-blue-400 text-white border-0 hover:blue-blue-500 group-hover:shadow-lg transition-all"
                         >
                             <x-mary-icon name="o-arrow-right-circle" class="w-4 h-4" />
                             Acessar

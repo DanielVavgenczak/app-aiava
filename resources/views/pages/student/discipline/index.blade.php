@@ -1,10 +1,13 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\Layout;
+use Livewire\Attributes\{Layout, On};
 use App\Models\Teacher\{Discipline};
+use Mary\Traits\Toast;
 
 new #[Layout('layouts::student')] class extends Component {
+    use Toast;
+
     public $teacher_id;
     public Discipline $discipline;
 
@@ -12,6 +15,8 @@ new #[Layout('layouts::student')] class extends Component {
     {
         $this->getDiscipline();
     }
+
+
     protected function getDiscipline()
     {
         $this->discipline = Discipline::with([
@@ -72,3 +77,4 @@ new #[Layout('layouts::student')] class extends Component {
 </div>
 </div>
 </div>
+
