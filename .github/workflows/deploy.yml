@@ -18,6 +18,7 @@ jobs:
             set -e
             cd /root/iava
 
+            git remote set-url origin git@github.com:DanielVavgenczak/app-aiava.git
             git fetch origin main
             git reset --hard origin/main
 
