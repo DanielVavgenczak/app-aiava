@@ -33,6 +33,12 @@ jobs:
             docker compose -f docker/docker-compose.prod.yml exec -T app php artisan route:cache
             docker compose -f docker/docker-compose.prod.yml exec -T app php artisan view:cache
 
+
+            docker compose -f docker/docker-compose.prod.yml exec -T app cp -r /var/www/html/public/build /var/www/html/storage/
+            docker compose -f docker/docker-compose.prod.yml exec -T app cp -r /var/www/html/public/vendor /var/www/html/storage/
+
+
+
             NGINX_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' iava_nginx)
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://$NGINX_IP || echo "000")
             echo "✅ Deploy concluído: HTTP $HTTP_CODE"

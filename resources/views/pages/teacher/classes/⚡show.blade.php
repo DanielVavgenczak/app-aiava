@@ -329,7 +329,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6" id="student-list">
                 @foreach ($this->students as $student)
                     <div
-                        class="group bg-white border-2 border-gray-200 rounded-xl p-5 hover:shadow-xl hover:border-blue-400 transition-all duration-200 card-student"
+                        class="group bg-white border-2 border-gray-200 rounded-xl p-5 hover:shadow-xl hover:border-blue-100 transition-all duration-200 card-student"
                         wire:key="student-{{ $student->id }}"
                         id="student-{{ $student->id }}"
                         data-tour="{{ $student->id }}"
@@ -344,10 +344,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                         <img
                                             src="{{ asset('storage/' . $student->profile->avatar) }}"
                                             alt="{{ $student->first_name }}"
-                                            class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-400 transition-colors"
+                                            class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-100 transition-colors"
                                         />
                                     @else
-                                        <div class="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-gray-200 group-hover:border-blue-400 transition-colors">
+                                        <div class="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-gray-200 group-hover:border-blue-100 transition-colors">
                                             {{ substr($student->firstName(), 0, 1) }}{{ substr($student->lastName(), 0, 1) }}
                                         </div>
                                     @endif
