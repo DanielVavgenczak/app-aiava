@@ -329,7 +329,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6" id="student-list">
                 @foreach ($this->students as $student)
                     <div
-                        class="group bg-white border-2 border-gray-200 rounded-xl p-5 hover:shadow-xl hover:border-blue-100 transition-all duration-200 card-student"
+                        class="group bg-white border-[1px] border-gray-100 rounded-xl p-5 hover:shadow-sm hover:border-blue-100 transition-all duration-200 card-student"
                         wire:key="student-{{ $student->id }}"
                         id="student-{{ $student->id }}"
                         data-tour="{{ $student->id }}"
