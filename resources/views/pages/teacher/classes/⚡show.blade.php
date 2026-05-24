@@ -13,7 +13,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     public string $search = '';
     public string $statusFilter = ''; // active, inactive, all
     public string $sortBy = 'name'; // name, email, recent, status
-    public int $perPage = 5;
+    public int $perPage = 10;
 
     public function mount(Classe $classe): void
     {
@@ -41,12 +41,14 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             $query->where('status', 'inactive');
         }
 
+         // 🔁 Ordenação: primeiro alfabética crescente (A→Z), depois o filtro do usuário
+        $query->orderBy('full_name', 'asc');
         // Ordenação
         match($this->sortBy) {
             'full_name' => $query->orderBy('full_name', 'asc'),
             'email' => $query->orderBy('email', 'asc'),
             'recent' => $query->orderBy('created_at', 'desc'),
-            'status' => $query->orderBy('status', 'desc'),
+            'status' => $query->orderBy('status', 'asc'),
             default => $query->orderBy('full_name', 'asc'),
         };
 
@@ -107,6 +109,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     public function refresh($type, $message): void
     {
         match($type) {
+            'created' => $this->success($message),
             'add' => $this->success($message),
             'edit' => $this->success($message),
             'remove' => $this->error($message),
@@ -115,6 +118,9 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
         $this->classe->refresh();
     }
+
+
+    public function update(){}
 
     public function updatedSearch(): void
     {
@@ -149,12 +155,12 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     </div>
 
     {{-- Header da Turma --}}
-    <div class="bg-gradient-to-r from-blue-700 to-blue-500 rounded-xl shadow-sm p-8 mb-6 text-white">
+    <div class="bg-blue-400 rounded-xl shadow-sm p-8 mb-6 text-white">
         <div class="flex items-start justify-between">
             <div class="flex items-start gap-4">
                 {{-- Ícone --}}
                 <div class="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
-                    <x-mary-icon name="o-user-group" class="w-8 h-8 text-blue-900" />
+                    <x-mary-icon name="o-user-group" class="w-8 h-8 text-blue-400" />
                 </div>
 
                 {{-- Info --}}
@@ -178,7 +184,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             <button
                 @click="$wire.addStudent"
                 id="student-register"
-                class="btn bg-white text-blue-600 hover:bg-blue-50 border-0 shadow-lg"
+                class="btn bg-white text-blue-400 hover:bg-blue-50 border-0 shadow-lg"
             >
                 <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                 Adicionar Aluno
@@ -295,7 +301,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
         @if($search || $statusFilter)
             <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
                 <span class="text-sm text-gray-600">Filtros ativos:</span>
-
                 @if($search)
                     <span class="badge badge-primary gap-2">
                         Busca: "{{ $search }}"
@@ -342,13 +347,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                             class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-400 transition-colors"
                                         />
                                     @else
-                                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg border-2 border-gray-200 group-hover:border-blue-400 transition-colors">
-                                            {{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name ?? '', 0, 1) }}
+                                        <div class="w-12 h-12 bg-blue-300 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-gray-200 group-hover:border-blue-400 transition-colors">
+                                            {{ substr($student->firstName(), 0, 1) }}{{ substr($student->lastName(), 0, 1) }}
                                         </div>
                                     @endif
-
-                                    {{-- Status Badge --}}
-                                    <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white {{ $student->status === 'active' ? 'bg-green-500' : 'bg-gray-400' }}"></span>
                                 </div>
 
                                 {{-- Nome --}}
@@ -481,24 +483,23 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             </div>
             <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
                 <x-mary-button
-                    class="text-blue-600 border-[1px] border-blue-600 btn hover:text-gray-100"
+                    class="text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-500 hover:text-gray-100"
                     label="Registrar aluno"
                     x-on:click="$store.tourguide.start('StartTourStudentRegister')" />
                 <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-500 hover:text-gray-100"
                     label="Filtrar alunos"
                     x-on:click="$store.tourguide.start('StartTourStudentFilter')" />
                 <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    class="font-medium text-blue-500 border-[1px] border-blue-500 btn hover:bg-blue-500 hover:text-gray-100"
                     label="Editar aluno"
                     x-on:click="$store.tourguide.start('StartTourStudentEdit')" />
                 <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    class="font-medium text-blue-500 border-[1px] border-blue-500 btn hover:bg-blue-500 hover:text-gray-100"
                     label="Remover aluno"
                     x-on:click="$store.tourguide.start('StartTourStudentDelete')" />
             </div>
         </div>
-        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
     </div>
-
 </div>

@@ -6,7 +6,6 @@ export async function ContinueRegisterStudentTour() {
   return new Promise(async (resolve) => {
     const btnStudentRegister = document.querySelector("button#student-register");
     if (!btnStudentRegister) return resolve();
-
     const modalAlreadyOpen = document.querySelector(
       "#student-form",
     )?.closest('[wire\\:model="open"]');
@@ -20,7 +19,7 @@ export async function ContinueRegisterStudentTour() {
           {
             element: `#${btnStudentRegister.id}`,
             popover: {
-              description: `Vou clicar no botão "Adicionar Aluno" para abrir o formulário de cadastro.`,
+              description: `Clicando em "+ Adicionar Aluno"`,
               showButtons: [""],
             },
             onHighlighted: async (el) => {
@@ -40,6 +39,16 @@ export async function ContinueRegisterStudentTour() {
 
 async function runAddCycle(resolve) {
   const store = Alpine.store("tourguide");
+  const actionsEl = document.querySelector('#student-input-actions');
+  if (actionsEl) {
+    const cancelBtn = actionsEl.querySelector('#student-input-cancel');
+    const saveBtn = actionsEl.querySelector('#student-input-register');
+    if (cancelBtn) cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+    if (saveBtn) saveBtn.replaceWith(saveBtn.cloneNode(true));
+  }
+
+  const addBtn = document.querySelector('#add-student-to-list-register');
+  if (addBtn) addBtn.replaceWith(addBtn.cloneNode(true));
   const driverObj = drivertour({
     ...configDriver,
     steps: [
@@ -93,58 +102,36 @@ async function runAddCycle(resolve) {
         },
       },
       {
-        element: `#student-input-phone`,
+        element: `#add-student-to-list-register`,
         popover: {
-          description:
-            "Caso queira, insira o telefone do aluno (opcional). Depois clique em Próximo.",
-          onPopoverRender: (popover) => {
-            const back = AddButtonActions(popover, "Voltar ao início");
-            back.addEventListener("click", () => {
-              Livewire.dispatch("student-register-cancel");
-              driverObj.destroy();
-              store.openMai = true;
-            });
-          },
-        },
-      },
-      {
-        element: `#student-input-add`,
-        popover: {
-          description:
-            "Clique no botão '+' para adicionar este aluno à lista de cadastro.",
-          onPopoverRender: (popover) => {
-            popover.footerButtons.innerHTML = "";
-            const back = AddButtonActions(popover, "Voltar ao início");
-            back.addEventListener("click", () => {
-              Livewire.dispatch("student-register-cancel");
-              driverObj.destroy();
-              store.openMai = true;
-            });
-          },
+          description:"Clique no botão ' + Adicionar aluno' à lista de cadastro.",
+          showButtons: [""],
         },
         onHighlighted: async (el) => {
-          const btnAdd = el.querySelector("#student-input-add-to-list");
-          if (!btnAdd) return;
-          btnAdd.addEventListener("click", async () => {
-            await new Promise((r) => setTimeout(r, 500));
-            await driverObj.moveNext();
-          });
-        },
+            console.log("por veio aqui", el);
+            //const addStudent = el.querySelector("#action-add-student");
+            if(!el) return
+            el.addEventListener("click", async () => {
+                await new Promise((r) => setTimeout(r, 1000));
+                console.log("clicou");
+                await driverObj.moveNext();
+            });
+        }
       },
       {
-        element: `#student-input-list`,
+        element: `#student-register-list`,
         popover: {
           description:
-            "Aluno adicionado à lista! Deseja adicionar outro aluno ou já entendeu o processo de como funciona?",
+            "Aluno adicionado! Deseja que mostre novamente?",
           onPopoverRender: (popover) => {
             popover.footerButtons.innerHTML = "";
-            const addMore = AddButtonActions(popover, "Não entendi");
+            const addMore = AddButtonActions(popover, "Sim");
             addMore.addEventListener("click", async () => {
               await driverObj.destroy();
               await runAddCycle(resolve);
             });
 
-            const understood = AddButtonActions(popover, "Entendi");
+            const understood = AddButtonActions(popover, "Não");
             understood.addEventListener("click", async () => {
               await driverObj.moveNext();
             });
@@ -158,39 +145,31 @@ async function runAddCycle(resolve) {
           },
         },
       },
-      {
-        element: `#student-input-list`,
-        popover: {
-          description:
-            "Veja abaixo a lista completa de alunos adicionados. Você pode remover algum clicando no ícone da lixeira, se necessário.",
-          onPopoverRender: (popover) => {
-            const back = AddButtonActions(popover, "Voltar ao início");
-            back.addEventListener("click", () => {
-              Livewire.dispatch("student-register-cancel");
-              driverObj.destroy();
-              store.openMai = true;
-            });
-          },
-        },
-      },
+
       {
         element: `#student-input-actions`,
+        showButtons: [],
         popover: {
           description:
-            'Clique em "Cancelar" para descartar tudo ou em "Registrar" para salvar todos os alunos da turma.',
+            'Caso você ainda queira adicionar alunos, clique em "Quero inserir mais alunos. <br> Se não, clique em "Registrar"',
           onPopoverRender: (popover) => {
-            const back = AddButtonActions(popover, "Voltar ao início");
-            back.addEventListener("click", () => {
-              Livewire.dispatch("student-register-cancel");
-              driverObj.destroy();
-              store.openMai = true;
+            const nextBtn = popover.nextButton;
+            const prevBtn = popover.previousButton;
+            if (nextBtn) nextBtn.style.display = 'none';
+            if (prevBtn) prevBtn.style.display = 'none';
+            const insertMore = AddButtonActions(popover, "Quer inserir mais alunos?");
+            insertMore.addEventListener("click", async () => {
+              //Livewire.dispatch("student-register-cancel");
+              //driverObj.destroy();
+              //store.openMai = true;
+                await driverObj.destroy();
+                await runAddCycle(resolve);
             });
           },
         },
         onHighlighted: async (el) => {
           const cancel = el.querySelector("#student-input-cancel");
           const save = el.querySelector("#student-input-register");
-
           if (cancel) {
             cancel.addEventListener("click", async () => {
               Livewire.dispatch("student-register-cancel");
@@ -203,7 +182,7 @@ async function runAddCycle(resolve) {
             save.addEventListener("click", async () => {
               Livewire.dispatch("student-register-cancel");
               await driverObj.destroy();
-              store.openMai = true;
+              store.openMai = false;
               if (resolve) resolve();
             });
           }

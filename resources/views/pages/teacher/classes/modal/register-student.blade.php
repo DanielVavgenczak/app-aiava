@@ -105,17 +105,6 @@ new class extends Component {
         $this->reset('studentName', 'studentEmail', 'studentPhone', 'students');
         $this->open = false;
     }
-    // protected function validateMultiple($fields)
-    // {
-    //     $validate = [];
-    //     foreach ($fields as $field) {
-    //       $validateData = $this->validateOnly($field);
-    //       $validate[key($validateData)] = current($validateData);
-    //       $this->js("console.log('Validation init:', " . json_encode($validate) . ");");
-    //     }
-    //     $this->js("console.log('Validation complete:', " . json_encode($validate) . ");");
-    //     return $validate;
-    // }
 }; ?>
 
 <x-mary-modal wire:model="open" title="Aluno" subtitle="Registrar um novo Aluno" box-class="w-11/12  max-w-6xl">
@@ -152,7 +141,7 @@ new class extends Component {
               </div>
               @enderror
             </div>
-            <div class="col-span-3" id="student-input-phone">
+            {{-- <div class="col-span-3" id="student-input-phone">
                 <div class="flex flex-col gap-1">
                   <label class="text-sm font-bold text-gray-600" for="input-student-input-phone">Telefone do aluno (*opcional)</label>
                   <input
@@ -163,7 +152,7 @@ new class extends Component {
                   wire:model="studentPhone"/>
                 </div>
 
-            </div>
+            </div> --}}
             <div class="col-span-1" id="student-input-add">
                 <button class="btn  bg-pink-700 text-gray-50" type="button" id="student-input-add-to-list">
                   <x-mary-icon name="o-plus" class="w-5 h-5" wire:click="addStudent"/>
