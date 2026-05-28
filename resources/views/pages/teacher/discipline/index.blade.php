@@ -416,8 +416,3 @@ new #[Layout('layouts::teacher')] class extends Component {
     {{-- Modal de Criação --}}
     <livewire:teacher.discipline.modals.modal-new-discipline />
 </div>
-<script>
-   Livewire.on('teacher::login', (event) => {
-    console.log('em baixo',event.type);
-});
-</script>

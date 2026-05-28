@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Teacher\Classes;
 
-use App\Models\Discipline;
+use App\Models\Teacher\Discipline;
 use App\Models\Teacher\{Classe};
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -67,17 +67,17 @@ class Index extends Component
     #[On('action-event-classe')]
     public function refresh($type)
     {
-        match($type){
+        match ($type) {
             'delete' => $this->handlerAfterActionWithToast($type, 'Classe deletada com sucesso!'),
-            'create' => $this->handlerAfterActionWithToast($type,'Classe criada com sucesso!'),
-            'update' => $this->handlerAfterActionWithToast($type,'Classe editada com sucesso!'),
+            'create' => $this->handlerAfterActionWithToast($type, 'Classe criada com sucesso!'),
+            'update' => $this->handlerAfterActionWithToast($type, 'Classe editada com sucesso!'),
             default => $this->loadClasses(),
         };
     }
 
     protected function handlerAfterActionWithToast(string $type, string $message)
     {
-        if($type !== 'delete') {
+        if ($type !== 'delete') {
             $this->success($message, timeout: 4000);
             $this->loadClasses();
             return;
@@ -85,5 +85,4 @@ class Index extends Component
         $this->error($message, timeout: 4000);
         return;
     }
-
 }

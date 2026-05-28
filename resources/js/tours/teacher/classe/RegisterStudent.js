@@ -89,6 +89,7 @@ async function runAddCycle(resolve) {
               alert("Por favor, insira um email válido.");
               return;
             }
+
             await driverObj.moveNext();
           },
           onPopoverRender: (popover) => {
@@ -102,24 +103,33 @@ async function runAddCycle(resolve) {
         },
       },
       {
-        element: `#add-student-to-list-register`,
+        element: "#add-student-to-list-register",
         popover: {
           description:"Clique no botão ' + Adicionar aluno' à lista de cadastro.",
-          showButtons: [""],
+          showButtons: ["previous"],
         },
         onHighlighted: async (el) => {
-            console.log("por veio aqui", el);
-            //const addStudent = el.querySelector("#action-add-student");
             if(!el) return
-            el.addEventListener("click", async () => {
+             const newEl = el.cloneNode(true);
+            el.replaceWith(newEl);
+              newEl.addEventListener("click", async () => {
+                await new Promise((r) => setTimeout(r, 500));
+                  const errorInput = document.querySelector("#input-student-input-email-error");
+                  if(errorInput &&errorInput.textContent.trim() !== "") {
+                    alert("Esse email ja esta cadastrado em nosso sistema.");
+                    return;
+                  }
+                    // Aguarda a lista de alunos ser renderizada pelo Livewire
                 await new Promise((r) => setTimeout(r, 1000));
-                console.log("clicou");
-                await driverObj.moveNext();
+                const list = document.querySelector("#student-register-list");
+                if (list) {
+                   await driverObj.moveNext();
+                }
             });
         }
       },
       {
-        element: `#student-register-list`,
+        element: "#student-register-list",
         popover: {
           description:
             "Aluno adicionado! Deseja que mostre novamente?",
@@ -162,8 +172,9 @@ async function runAddCycle(resolve) {
               //Livewire.dispatch("student-register-cancel");
               //driverObj.destroy();
               //store.openMai = true;
-                await driverObj.destroy();
-                await runAddCycle(resolve);
+                //await driverObj.destroy();
+                //await runAddCycle(resolve);
+                await driverObj.moveNext();
             });
           },
         },
@@ -188,6 +199,28 @@ async function runAddCycle(resolve) {
           }
         },
       },
+      {
+        element: "#student-input-register",
+        showButtons: [""],
+        disableActiveInteraction:true,
+        allowKeyboardControl:false,
+        stageCursor:'not-allowed',
+
+        popover: {
+            description: "Lembre-se de clicar no botão 'Registrar' para finalizar o cadastro.",
+            onPopoverRender: (popover) => {
+                const nextBtn = popover.nextButton;
+                const prevBtn = popover.previousButton;
+                if (nextBtn) nextBtn.style.display = 'none';
+                if (prevBtn) prevBtn.style.display = 'none';
+                //console.log("Quando chegar aqui vamos destruir o driver");
+            }
+        },
+        onHighlighted: async (el) => {
+            await new Promise((r) => setTimeout(r, 3000));
+            await driverObj.destroy();
+        }
+      }
     ],
   });
 

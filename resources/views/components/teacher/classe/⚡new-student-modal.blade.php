@@ -148,7 +148,7 @@ new class extends Component {
                     placeholder="E-mail do aluno" id="input-student-input-email"
                     wire:model="studentEmail"/>
                 @error("studentEmail")
-                    <span class="text-xs text-red-500">{{ $message }}</span>
+                    <span class="text-xs text-red-500" id="input-student-input-email-error">{{ $message }}</span>
                 @enderror
             </div>
 
@@ -186,12 +186,13 @@ new class extends Component {
                 id="student-input-cance"
                 class="btn btn-sm btn-ghost tracking-wider capitalize"
                     x-on:click="$wire.cancel()">cancelar</button>
-                <button type="submit"
+                <button
+                type="submit"
                 id="student-input-register"
                 class="btn btn-sm bg-blue-400 capitalize text-gray-50 tracking-wider"
-                    wire:click.prevent="storeStudent"
-                    wire:loading.class="opacity-50"
-                    wire:target="storeStudent">registrar</button>
+                wire:click.prevent="storeStudent"
+                wire:loading.class="opacity-50"
+                wire:target="storeStudent">registrar</button>
             </div>
 
             <div wire:loading wire:target="storeStudent" class="flex justify-center mt-4">

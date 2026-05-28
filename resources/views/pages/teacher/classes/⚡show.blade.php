@@ -85,12 +85,12 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
     public function editStudent($studentId): void
     {
-        $this->dispatch('teacher::edit-student', studentId: $studentId);
+        $this->dispatch('teacher::edit-student-form', id: $studentId);
     }
 
     public function removeStudent($studentId): void
     {
-        $this->dispatch('teacher::remove-student', studentId: $studentId);
+        $this->dispatch('teacher::remove-student', id: $studentId);
     }
 
     public function toggleStatus($studentId): void
@@ -100,7 +100,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             $student->update([
                 'status' => $student->status === 'active' ? 'inactive' : 'active'
             ]);
-
             $this->success('Status do aluno atualizado!');
         }
     }
@@ -109,6 +108,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     public function refresh($type, $message): void
     {
         match($type) {
+            'update' => $this->success($message),
             'created' => $this->success($message),
             'add' => $this->success($message),
             'edit' => $this->success($message),
@@ -399,7 +399,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
                             {{-- Editar --}}
                             <button
-                                wire:click="editStudent({{ $student->id }})"
+                                wire:click="editStudent('{{ $student->id }}')"
                                 id="student-btn-edit-{{ $student->id }}"
                                 class="btn btn-sm btn-ghost"
                                 title="Editar"
@@ -409,7 +409,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
                             {{-- Remover --}}
                             <button
-                                wire:click="removeStudent({{ $student->id }})"
+                                wire:click="removeStudent('{{ $student->id }}')"
                                 id="student-btn-delete-{{ $student->id }}"
                                 class="btn btn-sm btn-ghost text-red-600 hover:bg-red-50"
                                 title="Remover da turma"
@@ -418,6 +418,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             </button>
                         </div>
                     </div>
+
+                    {{-- Modal de Edição --}}
+                    <livewire:teacher.classe.edit-student-modal :student="$student" :key="'edit-student-'.$student->id"/>
+                    <livewire:teacher.classe.delete-student-modal :student="$student" :key="'remove-student-'.$student->id"/>
                 @endforeach
             </div>
 
@@ -465,7 +469,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
     {{-- Modais --}}
     <livewire:teacher.classe.new-student-modal />
-    <livewire:teacher.classe.edit-student-modal />
+    {{-- <livewire:teacher.classe.edit-student-modal /> --}}
     {{-- <livewire:teacher.classe.remove-student-modal /> --}}
 
     <div x-data class="fixed inset-0 z-50 bg-gray-900/50" x-show="$store.tourguide.openMai">
