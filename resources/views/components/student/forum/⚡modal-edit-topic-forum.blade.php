@@ -19,13 +19,17 @@ new class extends Component {
     #[Validate('nullable|string|max:1000')]
     public string $description = '';
 
+    public function getCurrentUser()
+    {
+        return Auth::guard('teacher')->user() ?? Auth::guard('student')->user();
+    }
+
     #[On('student::open-edit-topic-forum')]
     public function openModal($topicId): void
     {
         $this->topic = ForumTopic::find($topicId);
 
-        // ✅ Verifica se é dono do tópico
-        if ($this->topic && $this->topic->owner_id === Auth::guard('student')->id()) {
+        if ($this->topic && $this->getCurrentUser()?->can('update', $this->topic)) {
             $this->title = $this->topic->title;
             $this->description = $this->topic->description ?? '';
             $this->open = true;
@@ -38,7 +42,7 @@ new class extends Component {
     {
         $this->validate();
 
-        if (!$this->topic || $this->topic->owner_id !== Auth::guard('student')->id()) {
+        if (!$this->topic || !$this->getCurrentUser()?->can('update', $this->topic)) {
             $this->error('Você não tem permissão para editar este tópico.');
             return;
         }

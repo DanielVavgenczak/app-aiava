@@ -182,16 +182,10 @@ new #[Layout(name: 'layouts::student')] class extends Component
 ?>
 
 <div class="h-[calc(100vh-8rem)]">
-    {{-- Breadcrumb --}}
-    <div class="mb-6">
-        <div class="flex items-center gap-2 text-sm p-4">
-            <a href="{{ route('student.discipline') }}" wire:navigate class="text-gray-500 hover:text-green-700 transition-colors">
-                <x-mary-icon name="o-academic-cap" class="w-4 h-4" />
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-green-700 font-medium">Chat</span>
-        </div>
-    </div>
+    <livewire:global.breadcrumb :items="[
+        ['label' => 'Disciplinas', 'route' => 'student.discipline', 'icon' => 'o-academic-cap'],
+        ['label' => 'Chat'],
+    ]" color="green" />
 
     {{-- Header --}}
     <div class="mb-6" id="student-messages-header-{{ Auth::guard('student')->id() }}">
@@ -242,7 +236,7 @@ new #[Layout(name: 'layouts::student')] class extends Component
 
                                 @if ($this->teacher->profile?->avatar)
                                     <img src="{{ asset('storage/' . $this->teacher->profile->avatar) }}"
-                                        class="w-10 h-10 rounded-full" alt="{{ $this->teacher->full_name ?? $this->teacher->first_name }}"/>
+                                        class="w-10 h-10 rounded-full object-cover" alt="{{ $this->teacher->full_name ?? $this->teacher->first_name }}"/>
 
                                 @else
                                     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">

@@ -4,6 +4,7 @@ namespace App\Livewire\Forms\Auth;
 
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -51,6 +52,12 @@ class Login extends Form
             $this->remember
         )) {
             RateLimiter::clear($this->throttleKey());
+
+            $student = Auth::guard('student')->user();
+            if ($student && Hash::check('123456', $student->password)) {
+                session()->put('must_change_password', true);
+            }
+
             return 'student';
         }
         // Se nenhum deu certo, incrementa tentativas e lança erro

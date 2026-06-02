@@ -11,7 +11,7 @@ new #[Layout('layouts::teacher')] class extends Component {
     public $user;
     public $open = false;
 
-    #[Validate('image|max:51200')]
+    #[Validate('image|max:2048')]
     public $avatar;
     public $image = '';
 
@@ -79,8 +79,11 @@ new #[Layout('layouts::teacher')] class extends Component {
         <form wire:submit="uploadImage">
             <div class="my-4">
                 <div>
-                    <x-mary-file wire:model="avatar" accept="image/png, image/jpeg, image/jpg">
-                        <img src="{{ asset($image) }}" alt="" class="h-32" />
+                    <x-mary-file wire:model="avatar" accept="image/png, image/jpeg, image/jpg"
+                        crop-after-change
+                        crop-mime-type="image/jpeg"
+                        :crop-config="['aspectRatio' => 1, 'autoCropArea' => 1, 'viewMode' => 1]">
+                        <img src="{{ asset($image) }}" alt="" class="h-32 object-cover rounded-full" />
                     </x-mary-file>
                 </div>
             </div>

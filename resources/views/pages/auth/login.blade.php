@@ -20,7 +20,15 @@ new #[Layout('layouts.guest')] class extends Component {
         'teacher' => (function() {
               return $this->redirect(route('teacher.discipline'), navigate: true);
         })(),
-        'student' => $this->redirect(route('student.discipline')),
+        'student' => (function() {
+                  if (session('must_change_password')) {
+                      $this->warning(
+                          'Você está usando a senha padrão. Por segurança, altere sua senha no perfil.',
+                          timeout: 8000
+                      );
+                  }
+                  return $this->redirect(route('student.discipline'));
+        })(),
             default => $this->tapToast(),
         };
 

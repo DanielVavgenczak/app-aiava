@@ -1,9 +1,7 @@
-import { StartTourDisciplineCreateContent } from "./teacher/discipline/content";
-
+//import { StartTourDisciplineCreateContent } from "./teacher/discipline/content";
 document.addEventListener("alpine:init", () => {
     Alpine.store("tourguide", {
         openMai: false,
-        continueTour: false,
         loading: false,
         pages: [
             {
@@ -67,20 +65,6 @@ document.addEventListener("alpine:init", () => {
             {
                 exact: true,
                 isDynamic: false,
-                path: "/aluno/panel",
-                tourModule: () => import("./student/panel"),
-                tours: ["StartTourStudentPanel"],
-            },
-            {
-                exact: true,
-                isDynamic: false,
-                path: "/student/mensagens",
-                tourModule: () => import("./student/messages"),
-                tours: ["StartTourStudentMessages"],
-            },
-            {
-                exact: true,
-                isDynamic: false,
                 path: "/professor/mensagens",
                 tourModule: () => import("./teacher/messages"),
                 tours: ["StartTourTeacherMessages"],
@@ -103,19 +87,97 @@ document.addEventListener("alpine:init", () => {
                     "StartTourTeacherForumShowMyTopics",
                 ],
             },
+
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/professor/perfil",
+                tourModule: () => import("./teacher/profile"),
+                tours: ["StartTourTeacherProfile"],
+            },
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/aluno/perfil",
+                tourModule: () => import("./student/profile"),
+                tours: ["StartTourStudentProfile"],
+            },
+            // painel do estudante
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/aluno/disciplina",
+                tourModule: () => import("./student/discipline"),
+                tours: ["StartTourStudentDiscipline"],
+            },
+            // painel do estudante
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/aluno/disciplina",
+                tourModule: () => import("./student/discipline"),
+                tours: ["StartTourStudentDiscipline"],
+            },
+            {
+                exact: false,
+                isDynamic: true,
+                path: "/aluno/disciplina",
+                tourModule: () => import("./student/discipline"),
+                tours: [
+                    "StartTourStudentDiscipline",
+                    "StartTourStudentDisciplineShow",
+                    "StartTourStudentDisciplineShowActivitie",
+                ],
+            },
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/aluno/forum",
+                tourModule: () => import("./student/forum"),
+                tours: ["StartTourStudentForum"],
+            },
+            {
+                exact: false,
+                isDynamic: true,
+                path: "/aluno/forum",
+                tourModule: () => import("./student/forum"),
+                tours: [
+                    "StartTourStudentForumShow",
+                    "StartTourStudentForumShowNewTopic",
+                    "StartTourStudentForumShowSelectTopic",
+                    "StartTourStudentForumShowMyTopics",
+                ],
+            },
+            {
+                exact: false,
+                isDynamic: true,
+                path: "/aluno/forum/replies",
+                tourModule: () => import("./student/forum"),
+                tours: ["StartTourStudentForumReplies"],
+            },
+            // {
+            //     exact: true,
+            //     isDynamic: false,
+            //     path: "/student/mensagens",
+            //     tourModule: () => import("./student/messages"),
+            //     tours: ["StartTourStudentMessages"],
+            // },
+
         ],
 
         cancelOptionsTourPage() {
             this.openMai = false;
         },
         async initTour() {
+            console.log("init tour");
             this.loading = true;
             const currentPath = window.location.pathname.trim();
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
             for (const page of this.pages) {
-                 //console.log("Verificando página para tour:", page.path, "Current path:", currentPath);
+                //console.log("Verificando página para tour:", page.path, "Current path:", currentPath);
                 if (page.exact && currentPath === page.path) {
+                    console.log("Iniciando tour...", currentPath);
                     //console.log("Iniciando tour...", currentPath);
                     this.openMai = true;
                     try {
@@ -137,7 +199,6 @@ document.addEventListener("alpine:init", () => {
                         } catch (error) {
                             console.error("Erro ao carregar tour dinâmico:", error);
                             return null;
-                        } finally {
                             this.loading = false;
                         }
                     }
@@ -160,4 +221,5 @@ document.addEventListener("alpine:init", () => {
             }
         },
     });
+
 });

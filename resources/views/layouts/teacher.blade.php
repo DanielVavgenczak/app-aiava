@@ -16,7 +16,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Catamaran:wght@100..900&display=swap" rel="stylesheet">
 
     <!-- Scripts -->
-
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
@@ -25,7 +24,8 @@
     <div class="flex flex-col bg-gray-50 min-w-min" x-data>
          <livewire:teacher.layout.header />
          <livewire:teacher.layout.menu />
-        <main class="relative h-screen p-2 transition-all duration-300 ease-in-out top-[100px]"
+        <main
+            class="relative h-screen p-2 transition-all duration-300 ease-in-out top-[100px]"
             x-bind:class="$store.expandedSidebar.expanded ? 'w-[calc(100%-16.666667%)] left-[16.666667%]' :
                 'w-[calc(100%-5rem)] left-20'">
             {{ $slot }}
@@ -33,7 +33,6 @@
         <x-mary-button
             class="fixed z-[999] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50"
             x-on:click="$store.tourguide.initTour()"
-            id="ativation-mai"
             x-show="!$store.tourguide.openMai">
             <img
                 src="{{ asset('images/rb-aiava.png') }}"

@@ -93,6 +93,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
         $this->dispatch('teacher::remove-student', id: $studentId);
     }
 
+    public function viewStudent($studentId): void
+    {
+        $this->dispatch('teacher::view-student', id: $studentId);
+    }
+
     public function toggleStatus($studentId): void
     {
         $student = Student::find($studentId);
@@ -139,20 +144,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 }; ?>
 
 <div>
-    {{-- Breadcrumb --}}
-    <div class="mb-6">
-        <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
-                <x-mary-icon name="o-academic-cap" class="w-4 h-4" />
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <a href="{{ route('teacher.classes') }}" wire:navigate class="text-gray-500 hover:text-blue-700">
-                Turmas
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-blue-700 font-medium">{{ $classe->name }}</span>
-        </div>
-    </div>
+    <livewire:global.breadcrumb :items="[
+        ['label' => 'Disciplinas', 'route' => 'teacher.discipline', 'icon' => 'o-academic-cap'],
+        ['label' => 'Turmas', 'route' => 'teacher.classes'],
+        ['label' => $classe->name],
+    ]" />
 
     {{-- Header da Turma --}}
     <div class="bg-blue-400 rounded-xl shadow-sm p-8 mb-6 text-white">
@@ -396,7 +392,15 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                 <x-mary-icon name="{{ $student->status === 'active' ? 'o-x-circle' : 'o-check-circle' }}" class="w-4 h-4" />
                                 {{ $student->status === 'active' ? 'Desativar' : 'Ativar' }}
                             </button>
-
+                            {{-- View actividade de estudante --}}
+                            <button
+                                wire:click="viewStudent('{{ $student->id }}')"
+                                id="student-btn-view-{{ $student->id }}"
+                                class="btn btn-sm btn-ghost"
+                                title="Ver"
+                            >
+                                <x-mary-icon name="o-eye" class="w-4 h-4" />
+                            </button>
                             {{-- Editar --}}
                             <button
                                 wire:click="editStudent('{{ $student->id }}')"
@@ -422,6 +426,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                     {{-- Modal de Edição --}}
                     <livewire:teacher.classe.edit-student-modal :student="$student" :key="'edit-student-'.$student->id"/>
                     <livewire:teacher.classe.delete-student-modal :student="$student" :key="'remove-student-'.$student->id"/>
+                    <livewire:teacher.classe.student-detail :student="$student" :key="'view-student-'.$student->id"/>
                 @endforeach
             </div>
 

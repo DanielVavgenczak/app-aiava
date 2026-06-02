@@ -3,7 +3,7 @@
 use App\Http\Controllers\Teacher\LessonUploadController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('aluno')->middleware('isStudent')->group(function () {
+Route::prefix('aluno')->middleware('teacherOrStudent')->group(function () {
 
     Route::livewire('/disciplina', 'pages::student.discipline.index')
         ->name('student.discipline');

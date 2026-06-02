@@ -13,14 +13,17 @@ new class extends Component {
     public bool $open = false;
     public ?ForumTopic $topic = null;
 
+    public function getCurrentUser()
+    {
+        return Auth::guard('teacher')->user() ?? Auth::guard('student')->user();
+    }
+
     #[On('student::delete-topic-forum')]
     public function openModal($topicId): void
     {
-        $this->js("console.log('Evendo deletado')");
         $this->topic = ForumTopic::find($topicId);
 
-        // ✅ Verifica se é dono
-        if ($this->topic && $this->topic->owner_id === Auth::guard('student')->id()) {
+        if ($this->topic && $this->getCurrentUser()?->can('delete', $this->topic)) {
             $this->open = true;
         } else {
             $this->error('Você não tem permissão para excluir este tópico.');
@@ -29,7 +32,7 @@ new class extends Component {
 
     public function delete(): void
     {
-        if (!$this->topic || $this->topic->owner_id !== Auth::guard('student')->id()) {
+        if (!$this->topic || !$this->getCurrentUser()?->can('delete', $this->topic)) {
             $this->error('Você não tem permissão para excluir este tópico.');
             return;
         }

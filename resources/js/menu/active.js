@@ -6,8 +6,6 @@ document.addEventListener('alpine:init', () => {
             window.addEventListener('popstate', () => {
                 this.currentPath = window.location.pathname;
             });
-            console.log(" quem está chamando isso daqui ", window.location.pathname)
-
             // Atualiza currentPath após navegação com Livewire
             document.addEventListener('livewire:navigated', () => {
                 this.currentPath = window.location.pathname;

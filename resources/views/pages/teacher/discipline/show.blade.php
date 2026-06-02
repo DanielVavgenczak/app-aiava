@@ -157,22 +157,11 @@ new #[Layout('layouts::teacher')] class extends Component {
 }; ?>
 <div>
 
-    <div class="py-4">
-        <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-pink-700 transition-colors">
-                <x-mary-icon name="o-academic-cap" class="w-4 h-4" />
-            </a>
-
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-             <span class="text-gray-500 hover:text-pink-700 transition-colors">
-                {{ $discipline->title }}
-            </span>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-gray-500 hover:text-pink-700">
-                Aulas
-            </span>
-        </div>
-    </div>
+    <livewire:global.breadcrumb :items="[
+        ['label' => 'Disciplinas', 'route' => 'teacher.discipline', 'icon' => 'o-academic-cap'],
+        ['label' => $discipline->title],
+        ['label' => 'Aulas'],
+    ]" color="pink" />
     <!-- modal new module -->
     <div x-data="{ openCollapseId: null }" class="p-5 bg-white" data-tour="{{ $discipline->id }}">
         <div class="h-screen">

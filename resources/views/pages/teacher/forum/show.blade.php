@@ -6,6 +6,7 @@ use Livewire\WithPagination;
 use App\Models\Teacher\{Discipline};
 use App\Models\Forum\ForumTopic;
 use Mary\Traits\Toast;
+use Illuminate\Support\Facades\Auth;
 
 new #[Layout(name: 'layouts::teacher')] class extends Component {
     use Toast;
@@ -20,10 +21,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     public string $activeTab = 'all';
 
     public int $perPage = 5;
-
-    // ✅ Estados para CRUD
-    public bool $showDeleteModal = false;
-    public $topicToDelete = null;
 
     public function mount(string $id): void
     {
@@ -64,51 +61,21 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
         );
     }
 
-    // ✅ Editar tópico
     public function editTopic($topicId): void
     {
-        $this->dispatch('open-edit-topic-modal', topicId: $topicId);
+        $this->dispatch('teacher::open-edit-topic-forum', topicId: $topicId);
     }
 
-    // ✅ Confirmar deleção
-    public function confirmDelete($topicId): void
+    public function deleteTopic($topicId): void
     {
-        $this->topicToDelete = ForumTopic::find($topicId);
-        $this->showDeleteModal = true;
-    }
-
-    // ✅ Deletar tópico
-    public function deleteTopic(): void
-    {
-        if ($this->topicToDelete) {
-            // Verifica se é dono
-            if ($this->topicToDelete->owner_id === auth()->guard('teacher')->id()) {
-                $this->topicToDelete->delete();
-                $this->showDeleteModal = false;
-                $this->topicToDelete = null;
-
-                $this->loadDisciplineData();
-                $this->resetPage();
-
-                $this->success('Tópico excluído com sucesso!');
-            } else {
-                $this->error('Você não tem permissão para excluir este tópico.');
-            }
-        }
-    }
-
-    // ✅ Cancelar deleção
-    public function cancelDelete(): void
-    {
-        $this->showDeleteModal = false;
-        $this->topicToDelete = null;
+        $this->dispatch('teacher::delete-topic-forum', topicId: $topicId);
     }
 
     #[Computed]
     public function allTopics()
     {
         return ForumTopic::where('discipline_id', $this->disciplineID)
-            ->with(['classe', 'owner'])
+            ->with(['classe', 'owner', 'discipline'])
             ->orderBy('created_at', 'DESC')
             ->paginate($this->perPage, pageName: 'allPage');
     }
@@ -150,20 +117,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 }; ?>
 
 <div>
-    {{--  TODO: implementar um componente para essa porra aqui --}}
-    <div class="py-4" id="forum-show-breadcrumb">
-        <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-blue-400 transition-colors">
-                <x-mary-icon name="o-home" class="w-4 h-4" />
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <a href="{{ route('teacher.forum') }}" wire:navigate class="text-gray-500 hover:text-blue-400">
-                Fórum
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-blue-400 font-medium">{{ $discipline->title }}</span>
-        </div>
-    </div>
+    <livewire:global.breadcrumb :items="[
+        ['label' => 'Disciplinas', 'route' => 'teacher.discipline', 'icon' => 'o-home'],
+        ['label' => 'Fórum', 'route' => 'teacher.forum'],
+        ['label' => $discipline->title],
+    ]" tour-id="forum-show-breadcrumb" />
 
     {{-- Conteúdo Principal --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -237,10 +195,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                     <div class="space-y-3 mt-4" id="forum-show-all-topics">
                         @forelse ($this->allTopics as $topic)
                             @php
-                                $isMyTopic = str_ends_with($topic->owner_type, 'Student')
-                                    && $topic->owner_id === auth()->guard('student')->id();
+                                $isMyTopic = $topic->owner_id === auth()->guard('teacher')->id()
+                                    && str_ends_with($topic->owner_type, 'Teacher');
                                 $isTeacher = str_ends_with($topic->owner_type, 'Teacher');
                                 $isNew = $topic->created_at->diffInMinutes(now()) < 60;
+                                $canDelete = auth()->guard('teacher')->user()?->can('delete', $topic) ?? false;
                             @endphp
 
                             <div
@@ -315,8 +274,9 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                     </div>
 
                                     {{-- Ações (aparecem no hover) --}}
-                                    @if($isMyTopic)
+                                    @if($isMyTopic || $canDelete)
                                         <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            @if($isMyTopic)
                                             <button
                                                 wire:click="editTopic({{ $topic->id }})"
                                                 class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50"
@@ -324,10 +284,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                             >
                                                 <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                             </button>
+                                            @endif
                                             <button
-                                                @click="$dispatch('student::delete-topic-modal', topicId: {{ $topic->id }})"
-                                                class="btn btn-sm btn-ghost text-red-600 hover:bg-red-50"
-                                                title="Excluir"
+                                                @click="$dispatch('teacher::delete-topic-forum', {topicId: '{{ $topic->id }}'})"
+                                                class="btn btn-sm {{ $canDelete && !$isMyTopic ? 'bg-red-500 text-white hover:bg-red-700' : 'btn-ghost text-red-600 hover:bg-red-50' }}"
+                                                title="{{ $canDelete && !$isMyTopic ? 'Excluir (moderação)' : 'Excluir' }}"
                                             >
                                                 <x-mary-icon name="o-trash" class="w-4 h-4" />
                                             </button>
@@ -377,6 +338,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                         @forelse ($this->myTopics as $topic)
                             @php
                                 $isNew = $topic->created_at->diffInMinutes(now()) < 60;
+                                $canDelete = auth()->guard('teacher')->user()?->can('delete', $topic) ?? false;
                             @endphp
 
                             <div
@@ -437,7 +399,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                     {{-- Ações Visíveis --}}
                                     <div class="flex items-center gap-2">
                                         <button
-                                            x-on:click="$dispatch('student::open-edit-topic-forum', { topicId: '{{ $topic->id }}' })"
+                                            wire:click="editTopic({{ $topic->id }})"
                                             class="btn btn-sm bg-blue-500 text-white hover:bg-blue-700 border-0"
                                             title="Editar"
                                         >
@@ -445,9 +407,9 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                             <span class="hidden sm:inline">Editar</span>
                                         </button>
                                         <button
-                                            x-on:click="$dispatch('student::delete-topic-forum', {topicId: '{{ $topic->id }}'})"
+                                            @click="$dispatch('teacher::delete-topic-forum', {topicId: '{{ $topic->id }}'})"
                                             class="btn btn-sm bg-red-400 text-white hover:bg-red-700 border-0"
-                                            title="Excluir"
+                                            title="{{ $canDelete ? 'Excluir' : 'Sem permissão' }}"
                                         >
                                             <x-mary-icon name="o-trash" class="w-4 h-4" />
                                             <span class="hidden sm:inline">Excluir</span>
@@ -515,8 +477,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     </div>
 
     <livewire:teacher.forum.modal-new-topic-forum />
-
-    {{-- Modals (Criar e Editar)
-    <livewire:student.modal-edit-topic-forum />
-    <livewire:student.modal-delete-topic-forum  /> --}}
+    <livewire:teacher.forum.modal-edit-topic-forum />
+    <livewire:teacher.forum.modal-delete-topic-forum />
 </div>

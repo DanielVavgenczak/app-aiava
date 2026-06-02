@@ -28,6 +28,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'teacherOrStudent' => App\Http\Middleware\TeacherOrStudent::class,
         ]);
     })
+    ->withProviders([
+        App\Providers\AuthServiceProvider::class,
+    ])
     // ->withBroadcasting(
     //     __DIR__ . '/../routes/channels.php',
     //     ['middleware' => ['web']],

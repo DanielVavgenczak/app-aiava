@@ -6,6 +6,7 @@ use Livewire\WithPagination;
 use App\Models\Teacher\{Discipline};
 use App\Models\Forum\ForumTopic;
 use Mary\Traits\Toast;
+use Illuminate\Support\Facades\Auth;
 
 new #[Layout(name: 'layouts::student')] class extends Component {
     use Toast;
@@ -77,12 +78,11 @@ new #[Layout(name: 'layouts::student')] class extends Component {
         $this->showDeleteModal = true;
     }
 
-    // ✅ Deletar tópico
+    // ✅ Deletar tópico (usa policy)
     public function deleteTopic(): void
     {
         if ($this->topicToDelete) {
-            // Verifica se é dono
-            if ($this->topicToDelete->owner_id === auth()->guard('student')->id()) {
+            if ($this->getCurrentUser()?->can('delete', $this->topicToDelete)) {
                 $this->topicToDelete->delete();
                 $this->showDeleteModal = false;
                 $this->topicToDelete = null;
@@ -104,11 +104,21 @@ new #[Layout(name: 'layouts::student')] class extends Component {
         $this->topicToDelete = null;
     }
 
+    private function getCurrentUser()
+    {
+        return Auth::guard('teacher')->user() ?? Auth::guard('student')->user();
+    }
+
+    private function getCurrentGuard(): string
+    {
+        return Auth::guard('teacher')->check() ? 'teacher' : 'student';
+    }
+
     #[Computed]
     public function allTopics()
     {
         return ForumTopic::where('discipline_id', $this->disciplineID)
-            ->with(['classe', 'owner'])
+            ->with(['classe', 'owner', 'discipline'])
             ->orderBy('created_at', 'DESC')
             ->paginate($this->perPage, pageName: 'allPage');
     }
@@ -116,11 +126,20 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     #[Computed]
     public function myTopics()
     {
-        $studentId = auth()->guard('student')->id();
+        $user = $this->getCurrentUser();
+        $guard = $this->getCurrentGuard();
+
+        if (!$user) {
+            return collect();
+        }
+
+        $ownerType = $guard === 'teacher'
+            ? '%Teacher%'
+            : '%Student%';
 
         return ForumTopic::where('discipline_id', $this->disciplineID)
-            ->where('owner_type', 'LIKE', '%Student%')
-            ->where('owner_id', $studentId)
+            ->where('owner_type', 'LIKE', $ownerType)
+            ->where('owner_id', $user->id)
             ->with(['classe', 'owner'])
             ->orderBy('created_at', 'DESC')
             ->paginate($this->perPage, pageName: 'myPage');
@@ -135,11 +154,20 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     #[Computed]
     public function myTopicsCount()
     {
-        $studentId = auth()->guard('student')->id();
+        $user = $this->getCurrentUser();
+        $guard = $this->getCurrentGuard();
+
+        if (!$user) {
+            return 0;
+        }
+
+        $ownerType = $guard === 'teacher'
+            ? '%Teacher%'
+            : '%Student%';
 
         return ForumTopic::where('discipline_id', $this->disciplineID)
-            ->where('owner_type', 'LIKE', '%Student%')
-            ->where('owner_id', $studentId)
+            ->where('owner_type', 'LIKE', $ownerType)
+            ->where('owner_id', $user->id)
             ->count();
     }
 
@@ -150,26 +178,16 @@ new #[Layout(name: 'layouts::student')] class extends Component {
 }; ?>
 
 <div>
-    {{-- Breadcrumb --}}
-    {{--  TODO: implementar um componente para essa porra aqui --}}
-    <div class="py-4">
-        <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('student.forum.index') }}" wire:navigate class="text-gray-500 hover:text-pink-700 transition-colors">
-                <x-mary-icon name="o-home" class="w-4 h-4" />
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <a href="{{ route('student.forum.index') }}" wire:navigate class="text-gray-500 hover:text-pink-700">
-                Fórum
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-pink-700 font-medium">{{ $discipline->title }}</span>
-        </div>
-    </div>
+    <livewire:global.breadcrumb :items="[
+        ['label' => 'Disciplinas', 'route' => 'student.discipline', 'icon' => 'o-home'],
+        ['label' => 'Fórum', 'route' => 'student.forum.index'],
+        ['label' => $discipline->title],
+    ]" color="pink" tour-id="forum-show-breadcrumb" />
 
     {{-- Conteúdo Principal --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         {{-- Header Melhorado --}}
-        <div class="p-6 border-b border-gray-200 ">
+        <div class="p-6 border-b border-gray-200" id="forum-show-header">
             <div class="flex items-center justify-between">
                 <div class="flex items-start gap-4">
                     {{-- Info da Disciplina referenciando com o forum --}}
@@ -189,7 +207,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                 </div>
 
                 {{-- Controles --}}
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3" id="forum-show-controls">
                     {{-- Seletor de itens --}}
                     <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
                         <x-mary-icon name="o-view-columns" class="w-4 h-4 text-gray-500" />
@@ -207,6 +225,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
 
                     {{-- Botão Novo Tópico --}}
                     <button
+                        id="forum-show-new-topic"
                         @click="$wire.openNewTopicModal"
                         class="btn btn-md bg-blue-700 text-white border-0"
                     >
@@ -218,7 +237,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
         </div>
 
         {{-- Abas --}}
-        <div class="p-6">
+        <div class="p-6" id="forum-show-tabs">
             <x-mary-tabs wire:model="selectedTab">
                 {{-- ==================== ABA: TODOS OS TÓPICOS ==================== --}}
                 <x-mary-tab name="all-tap">
@@ -232,17 +251,20 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                         </div>
                     </x-slot:label>
 
-                    <div class="space-y-3 mt-4">
+                    <div class="space-y-3 mt-4" id="forum-show-all-topics">
                         @forelse ($this->allTopics as $topic)
                             @php
-                                $isMyTopic = str_ends_with($topic->owner_type, 'Student')
-                                    && $topic->owner_id === auth()->guard('student')->id();
+                                $currentUser = Auth::guard('teacher')->user() ?? Auth::guard('student')->user();
+                                $currentGuard = Auth::guard('teacher')->check() ? 'teacher' : 'student';
+                                $isMyTopic = $topic->owner_id === ($currentUser?->id ?? '')
+                                    && str_ends_with($topic->owner_type, $currentGuard === 'teacher' ? 'Teacher' : 'Student');
                                 $isTeacher = str_ends_with($topic->owner_type, 'Teacher');
                                 $isNew = $topic->created_at->diffInMinutes(now()) < 60;
+                                $canDelete = $currentUser?->can('delete', $topic) ?? false;
                             @endphp
 
                             <div
-                                class="group relative bg-white border border-gray-100 rounded-sm p-5 hover:shadow-sm hover:border-blue-300 transition-all duration-200 {{ $isMyTopic ? 'ring-[1px] ring-blue-200' : '' }}"
+                                class="group relative bg-white border border-gray-100 rounded-sm p-5 hover:shadow-sm hover:border-blue-300 transition-all duration-200 topic-item {{ $isMyTopic ? 'ring-[1px] ring-blue-200' : '' }}"
                                 wire:key="all-topic-{{ $topic->id }}"
                             >
                                 {{-- Badge "Novo" flutuante --}}
@@ -278,7 +300,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                                 @endphp
 
                                                 @if($topic->owner->profile?->avatar)
-                                                    <img src="{{ asset('storage/' . $topic->owner->profile->avatar) }}" class="w-10 h-10 rounded-full" alt="{{ $name }}"/>
+                                                    <img src="{{ asset('storage/' . $topic->owner->profile->avatar) }}" class="w-10 h-10 rounded-full object-cover" alt="{{ $name }}"/>
 
                                                 @else
                                                     <livewire:user-avatar-forum-list initiais="{{ $name }}"/>
@@ -321,8 +343,9 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                     </div>
 
                                     {{-- Ações (aparecem no hover) --}}
-                                    @if($isMyTopic)
+                                    @if($isMyTopic || $canDelete)
                                         <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            @if($isMyTopic)
                                             <button
                                                 wire:click="editTopic({{ $topic->id }})"
                                                 class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50"
@@ -330,10 +353,11 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                             >
                                                 <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                             </button>
+                                            @endif
                                             <button
                                                 @click="$dispatch('student::delete-topic-modal', topicId: {{ $topic->id }})"
-                                                class="btn btn-sm btn-ghost text-red-600 hover:bg-red-50"
-                                                title="Excluir"
+                                                class="btn btn-sm {{ $canDelete && !$isMyTopic ? 'bg-red-500 text-white hover:bg-red-700' : 'btn-ghost text-red-600 hover:bg-red-50' }}"
+                                                title="{{ $canDelete && !$isMyTopic ? 'Excluir (moderação)' : 'Excluir' }}"
                                             >
                                                 <x-mary-icon name="o-trash" class="w-4 h-4" />
                                             </button>
@@ -368,7 +392,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                 {{-- ==================== ABA: MEUS TÓPICOS ==================== --}}
                 <x-mary-tab name="mine-tap">
                     <x-slot:label>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2" id="my-topics-created">
                             <x-mary-icon name="o-user-circle" class="w-4 h-4" />
                             <span>Meus Tópicos</span>
                             <x-mary-badge
@@ -377,7 +401,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                         </div>
                     </x-slot:label>
 
-                    <div class="space-y-3 mt-4">
+                    <div class="space-y-3 mt-4" id="forum-show-my-topics">
                         @forelse ($this->myTopics as $topic)
                             @php
                                 $isNew = $topic->created_at->diffInMinutes(now()) < 60;
@@ -489,6 +513,34 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     </div>
 
 
+
+    {{-- Tour Modal --}}
+    <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2
+            -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
+            shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+           <div class="flex justify-between items-center">
+               <h2 class="text-sn font-bold text-gray-700">Opções do Fórum</h2>
+                <div class="flex justify-end">
+                    <x-mary-button icon="o-x-mark"
+                        class="bg-white border-none btn-square hover:none hover:bg-blue-400 hover:text-gray-100"
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Criar tópico"
+                    x-on:click="$store.tourguide.start('StartTourStudentForumShowNewTopic')" />
+              <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Selecionar meus tópicos"
+                    x-on:click="$store.tourguide.start('StartTourStudentForumShowMyTopics')" />
+            </div>
+        </div>
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
+    </div>
 
     {{-- Modals (Criar e Editar) --}}
     <livewire:student.forum.modal-new-topic-forum />

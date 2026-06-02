@@ -37,18 +37,15 @@ new #[Layout('layouts::student')] class extends Component {
 }; ?>
 
 <div>
-    {{-- Breadcrumb --}}
-    <header class="py-5">
-        <a href="{{ route('student.discipline') }}" wire:navigate class="inline-flex items-center gap-2 text-gray-600 hover:text-pink-700">
-            <x-mary-icon name="o-arrow-left" class="w-4" />
-            <span class="uppercase tracking-wider text-xs font-semibold">voltar</span>
-        </a>
-    </header>
+    <livewire:global.breadcrumb :items="[
+        ['label' => 'Disciplinas', 'route' => 'student.discipline', 'icon' => 'o-academic-cap'],
+        ['label' => $discipline->title],
+    ]" color="pink" tour-id="discipline-show-breadcrumb" />
 
     {{-- Conteúdo --}}
     <div class="p-5 bg-white rounded-lg shadow">
         {{-- ✅ Verifica se discipline existe --}}
-            <div class="py-4 border-b border-gray-200">
+            <div class="py-4 border-b border-gray-200" id="discipline-show-header">
                 <h2 class="text-gray-800 tracking-wide text-lg font-semibold">
                     {{ $discipline->title }}
                 </h2>
@@ -61,8 +58,9 @@ new #[Layout('layouts::student')] class extends Component {
         @if($modules->count() > 0)
             <div class="flex gap-4 w-full mt-6">
                 {{-- Sidebar com Módulos --}}
-                <div class="w-1/4">
+                <div class="w-1/4" id="discipline-show-modules-sidebar">
                     @foreach ($modules as $module)
+                        <div id="module-{{ $module->id }}">
                         <x-mary-collapse separator>
                             <x-slot:heading>
                                 <span class="text-gray-800 tracking-wider text-[15px] font-medium">
@@ -77,6 +75,7 @@ new #[Layout('layouts::student')] class extends Component {
                                         @foreach ($module->lessons as $lesson)
                                             <li>
                                                 <button
+                                                    class="transition-colors w-full flex items-center gap-2 py-4 px-3 text-left"
                                                     @click="
                                                         activeLesson = activeLesson === '{{ $lesson->id }}' ? null : '{{ $lesson->id }}';
                                                         $dispatch('stundent-lesson-streaming-block', { lesson_id: '{{ $lesson->id }}' });
@@ -85,7 +84,6 @@ new #[Layout('layouts::student')] class extends Component {
                                                         'bg-blue-200 text-blue-700 border-l-4 border-blue-700': activeLesson === '{{ $lesson->id }}',
                                                         'hover:bg-gray-100 text-gray-700': activeLesson !== '{{ $lesson->id }}'
                                                     }"
-                                                    class="transition-colors w-full flex items-center gap-2 py-4 px-3 text-left"
                                                 >
                                                     <x-mary-icon name="o-play" class="w-4 h-4" />
                                                     <span class="font-normal tracking-wider">{{ $lesson->title }}</span>
@@ -115,10 +113,11 @@ new #[Layout('layouts::student')] class extends Component {
                                 @endif
                             </x-slot:content>
                         </x-mary-collapse>
+                        </div>
 
                         {{-- Modal de Tarefas --}}
                         @if ($module->activitTasks->count() > 0)
-                            <livewire:pages.student.discipline.lesson.show-task-lesson
+                            <livewire:pages::student.discipline.lesson.show-task-lesson
                                 :key="'student-task-' . $module->id"
                             />
                         @endif
@@ -126,7 +125,7 @@ new #[Layout('layouts::student')] class extends Component {
                 </div>
 
                 {{-- Player de Vídeo --}}
-                <div class="w-3/4">
+                <div class="w-3/4" id="discipline-show-video-player">
                     <livewire:pages::student.discipline.lesson.show-video-lesson />
                 </div>
             </div>
@@ -141,6 +140,34 @@ new #[Layout('layouts::student')] class extends Component {
             </div>
         @endif
     </div>
+    {{-- Tour Modal --}}
+    <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2
+            -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
+            shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+           <div class="flex justify-between items-center">
+               <h2 class="text-sn font-bold text-gray-700">Opções da Disciplina</h2>
+                <div class="flex justify-end">
+                    <x-mary-button icon="o-x-mark"
+                        class="bg-white border-none btn-square hover:none hover:bg-blue-400 hover:text-gray-100"
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <x-mary-button
+                    class="btn-md font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-100"
+                    label="Visão geral da Disciplina"
+                    x-on:click="$store.tourguide.start('StartTourStudentDisciplineShow')" />
+                <x-mary-button
+                    class="btn-md font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-100"
+                    label="Acessar atividade"
+                    x-on:click="$store.tourguide.start('StartTourStudentDisciplineShowActivitie')" />
+            </div>
+        </div>
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
+    </div>
+</div>
 
     @script
     <script>
@@ -165,4 +192,4 @@ new #[Layout('layouts::student')] class extends Component {
         });
     </script>
     @endscript
-</div>
+

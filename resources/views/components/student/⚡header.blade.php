@@ -64,6 +64,15 @@ new class extends Component {
     }"
     class="fixed z-40 top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm backdrop-blur-sm bg-opacity-95"
 >
+    @php
+        $mustChange = session('must_change_password');
+    @endphp
+    @if ($mustChange && $userType === 'student')
+        <div class="bg-yellow-50 border-b border-yellow-200 px-4 py-2 text-sm text-yellow-800 flex items-center justify-center gap-2">
+            <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5 inline" />
+            <span>Você está usando a senha padrão. <a href="{{ route('student.profile') }}" wire:navigate class="underline font-semibold">Clique aqui</a> para alterar sua senha.</span>
+        </div>
+    @endif
     <div class="h-20 px-4 lg:px-6 flex items-center justify-between gap-4">
         {{-- Left Section: Logo e Menu Toggle --}}
         <div class="flex items-center gap-4">

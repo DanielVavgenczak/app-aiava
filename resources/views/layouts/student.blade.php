@@ -19,7 +19,7 @@
     @livewireStyles
 </head>
 
-<body class="bg-gray-100 dark:bg-slate-900">
+<body>
     <x-mary-toast />
     <div class="flex flex-col bg-gray-100 min-w-min" x-data>
         <livewire:student.header />
@@ -29,10 +29,9 @@
         'w-[calc(100%-5rem)] left-20'">
         {{ $slot }}
         </main>
-               <x-mary-button
+        <x-mary-button
             class="fixed z-[999] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50"
             x-on:click="$store.tourguide.initTour()"
-            id="ativation-mai"
             x-show="!$store.tourguide.openMai">
             <img
                 src="{{ asset('images/rb-aiava.png') }}"
@@ -41,6 +40,5 @@
             />
         </x-mary-button>
     </div>
-@livewireScripts
 </body>
 </html>

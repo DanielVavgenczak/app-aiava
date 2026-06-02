@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\Forum\{ForumTopic, ForumReplie as ForumReply};
 use Mary\Traits\Toast;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 new #[Layout('layouts::teacher')] class extends Component {
     use Toast, WithPagination;
@@ -14,7 +15,9 @@ new #[Layout('layouts::teacher')] class extends Component {
     public string $topicId;
     public ?ForumTopic $topic = null;
     public int $perPage = 2;
-    public array $visibleChildrenCount = []; // Novo estado para controlar quantas sub-respostas mostrar por resposta
+    public array $visibleChildrenCount = [];
+    public bool $showDeleteModal = false;
+    public ?string $deleteReplyId = null;
 
     public function mount(string $id): void
     {
@@ -26,6 +29,54 @@ new #[Layout('layouts::teacher')] class extends Component {
             $replyId = $item['reply']->id;
             $this->visibleChildrenCount[$replyId] = 2; // Mostra 2 inicialmente
         }
+    }
+
+    /**
+     * Verifica se pode deletar uma resposta (autor ou teacher moderador)
+     */
+    public function canDeleteReply(ForumReply $reply): bool
+    {
+        return Auth::guard('teacher')->user()?->can('delete', $reply) ?? false;
+    }
+
+    /**
+     * Confirma deleção de resposta
+     */
+    public function confirmDeleteReply($replyId): void
+    {
+        $this->deleteReplyId = $replyId;
+        $this->showDeleteModal = true;
+    }
+
+    /**
+     * Executa deleção de resposta
+     */
+    public function executeDeleteReply(): void
+    {
+        $reply = ForumReply::find($this->deleteReplyId);
+
+        if (!$reply || !Auth::guard('teacher')->user()?->can('delete', $reply)) {
+            $this->error('Você não tem permissão para excluir esta resposta.');
+            $this->showDeleteModal = false;
+            $this->deleteReplyId = null;
+            return;
+        }
+
+        $reply->delete();
+        $this->showDeleteModal = false;
+        $this->deleteReplyId = null;
+
+        unset($this->allReplies);
+        unset($this->replies);
+        unset($this->repliesWithChildren);
+
+        $this->dispatch('reply-event', type: 'delete', message: 'Resposta excluída com sucesso!');
+    }
+
+    public function cancelDeleteReply(): void
+    {
+        $this->showDeleteModal = false;
+        $this->deleteReplyId = null;
     }
 
     /**
@@ -139,11 +190,6 @@ new #[Layout('layouts::teacher')] class extends Component {
         $this->dispatch('teacher::open-edit-reply-modal', replyId: $replyId);
     }
 
-    public function deleteReply($replyId): void
-    {
-        $this->dispatch('teacher::open-delete-reply-modal', replyId: $replyId);
-    }
-
     public function replyToReply($parentReplyId): void
     {
         $reply = ForumReply::find($parentReplyId);
@@ -187,27 +233,17 @@ new #[Layout('layouts::teacher')] class extends Component {
 };?>
 
 <div>
-    {{-- Breadcrumb --}}
-    <div class="mb-6">
-        <div class="flex items-center gap-2 text-sm">
-            <a href="{{ route('teacher.discipline') }}" wire:navigate class="text-gray-500 hover:text-blue-700 transition-colors">
-                <x-mary-icon name="o-academic-cap" class="w-4 h-4" />
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <a href="{{ route('teacher.forum') }}" wire:navigate class="text-gray-500 hover:text-blue-700">
-                Fóruns
-            </a>
-            @if($topic)
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <a href="{{ route('teacher.forum.show', $topic->discipline_id) }}" wire:navigate
-                class="text-gray-500 hover:text-blue-700">
-                {{ $topic->discipline->title }}
-            </a>
-            <x-mary-icon name="o-chevron-right" class="w-3 h-3 text-gray-400" />
-            <span class="text-blue-700 font-medium">{{ Str::limit($topic->title, 30) }}</span>
-            @endif
-        </div>
-    </div>
+    @php
+        $breadcrumbItems = [
+            ['label' => 'Disciplinas', 'route' => 'teacher.discipline', 'icon' => 'o-academic-cap'],
+            ['label' => 'Fóruns', 'route' => 'teacher.forum'],
+        ];
+        if ($topic) {
+            $breadcrumbItems[] = ['label' => $topic->discipline->title, 'route' => 'teacher.forum.show', 'params' => ['id' => $topic->discipline_id]];
+            $breadcrumbItems[] = ['label' => Str::limit($topic->title, 30)];
+        }
+    @endphp
+    <livewire:global.breadcrumb :items="$breadcrumbItems" />
 
     @if($topic)
     {{-- Header do Tópico --}}
@@ -308,15 +344,17 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 </div>
                             </div>
 
-                            @if($reply->isMyReply(auth()->guard('teacher')->id(), 'teacher'))
+                            @if($reply->isMyReply(auth()->guard('teacher')->id(), 'teacher') || $this->canDeleteReply($reply))
                             <div class="flex items-center gap-2">
+                                @if($reply->isMyReply(auth()->guard('teacher')->id(), 'teacher'))
                                 <button wire:click="editReply('{{ $reply->id }}')"
                                     class="btn btn-sm bg-blue-100 text-blue-600" title="Editar">
                                     <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                 </button>
+                                @endif
 
-                                <button wire:click="deleteReply('{{ $reply->id }}')"
-                                    class="btn btn-sm bg-red-100 text-red-600" title="Excluir">
+                                <button wire:click="confirmDeleteReply('{{ $reply->id }}')"
+                                    class="btn btn-sm {{ $this->canDeleteReply($reply) && !$reply->isMyReply(auth()->guard('teacher')->id(), 'teacher') ? 'bg-red-500 text-white' : 'bg-red-100 text-red-600' }}" title="{{ $this->canDeleteReply($reply) && !$reply->isMyReply(auth()->guard('teacher')->id(), 'teacher') ? 'Excluir (moderação)' : 'Excluir' }}">
                                     <x-mary-icon name="o-trash" class="w-4 h-4" />
                                 </button>
                             </div>
@@ -374,13 +412,15 @@ new #[Layout('layouts::teacher')] class extends Component {
                                                 <span class="text-xs text-gray-500">{{ $subReply->created_at->diffForHumans() }}</span>
                                             </div>
 
-                                            @if($subReply->isMyReply(auth()->guard('teacher')->id(), 'teacher'))
+                                            @if($subReply->isMyReply(auth()->guard('teacher')->id(), 'teacher') || $this->canDeleteReply($subReply))
                                             <div class="flex items-center gap-1">
+                                                @if($subReply->isMyReply(auth()->guard('teacher')->id(), 'teacher'))
                                                 <button wire:click="editReply('{{ $subReply->id }}')" class="btn btn-xs bg-gray-100 text-blue-600">
                                                     <x-mary-icon name="o-pencil" class="w-3 h-3" />
                                                 </button>
+                                                @endif
 
-                                                <button wire:click="deleteReply('{{ $subReply->id }}')" class="btn btn-xs btn-ghost text-red-600">
+                                                <button wire:click="confirmDeleteReply('{{ $subReply->id }}')" class="btn btn-xs {{ $this->canDeleteReply($subReply) && !$subReply->isMyReply(auth()->guard('teacher')->id(), 'teacher') ? 'bg-red-500 text-white' : 'btn-ghost text-red-600' }}">
                                                     <x-mary-icon name="o-trash" class="w-3 h-3" />
                                                 </button>
                                             </div>
@@ -479,6 +519,43 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     <livewire:teacher.forum.modal-replie-topic />
     <livewire:teacher.forum.modal-replie-to-replie-topic />
+
+    {{-- Modal de confirmação de exclusão de resposta --}}
+    <x-mary-modal wire:model="showDeleteModal" persistent class="backdrop-blur-sm">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <x-mary-icon name="o-exclamation-triangle" class="h-10 w-10 text-red-600" />
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-900 mb-2">
+                Excluir Resposta?
+            </h3>
+
+            <p class="text-gray-600 mb-6">
+                Tem certeza que deseja excluir esta resposta? Esta ação não pode ser desfeita.
+            </p>
+
+            <div class="flex gap-3 justify-center">
+                <button wire:click="cancelDeleteReply" class="btn btn-ghost">
+                    <x-mary-icon name="o-x-mark" class="w-5 h-5" />
+                    Cancelar
+                </button>
+
+                <button wire:click="executeDeleteReply"
+                    class="btn bg-red-600 text-white hover:bg-red-700 border-0"
+                    wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="executeDeleteReply">
+                        <x-mary-icon name="o-trash" class="w-5 h-5" />
+                        Sim, Excluir
+                    </span>
+                    <span wire:loading wire:target="executeDeleteReply" class="flex items-center gap-2">
+                        <span class="loading loading-spinner loading-sm"></span>
+                        Excluindo...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </x-mary-modal>
 </div>
 {{-- ```
 
