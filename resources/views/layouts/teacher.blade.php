@@ -9,7 +9,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>IAva - Painel do professor</title>
-    <link rel="icon" type="image/jpeg" href="{{ asset('images/fai.jpeg') }}" />
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/fai.png') }}" />
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

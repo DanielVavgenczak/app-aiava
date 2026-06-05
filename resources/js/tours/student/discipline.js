@@ -12,7 +12,8 @@ export async function StartTourStudentDiscipline() {
             {
                 element: "#discipline-card",
                 popover: {
-                    description: "Vamos acessar a disciplina em que você foi cadastrado.",
+                    description:
+                        "Vamos acessar a disciplina em que você foi cadastrado.",
                     side: "bottom",
                     align: "center",
                 },
@@ -21,17 +22,20 @@ export async function StartTourStudentDiscipline() {
                     el.click();
                     await new Promise((r) => setTimeout(r, 5000));
                     await driverObj.moveNext();
-                }
-
+                },
             },
             {
                 element: "#discipline-access-btn",
                 popover: {
-                    description: "Vou clicar em 'Acessar' para entrar na disciplina e ver todas as aulas e atividades.",
+                    description:
+                        "Vou clicar em 'Acessar' para entrar na disciplina e ver todas as aulas e atividades.",
                     side: "top",
                     align: "center",
                     onPopoverRender: (popover) => {
-                        const actions = AddButtonActions(popover, "Finalizar Tour");
+                        const actions = AddButtonActions(
+                            popover,
+                            "Finalizar Tour",
+                        );
                         actions.addEventListener("click", async () => {
                             await driverObj.destroy();
                             store.openMai = true;
@@ -43,7 +47,7 @@ export async function StartTourStudentDiscipline() {
                     el.click();
                     await new Promise((r) => setTimeout(r, 2000));
                     await driverObj.destroy();
-                }
+                },
             },
         ],
     });
@@ -60,7 +64,8 @@ export async function StartTourStudentDisciplineShow() {
             {
                 element: "#discipline-show-modules-sidebar",
                 popover: {
-                    description: "Esta é a lista de módulos/aulas. Clique em cada módulo para expandir e ver as aulas disponíveis.",
+                    description:
+                        "Esta é a lista de módulos/aulas. Clique em cada módulo para expandir e ver as aulas disponíveis.",
                     side: "right",
                     align: "center",
                 },
@@ -68,11 +73,15 @@ export async function StartTourStudentDisciplineShow() {
             {
                 element: "#discipline-show-video-player",
                 popover: {
-                    description: "Área do player de vídeo. Selecione uma aula na lista ao lado para assistir o conteúdo.",
+                    description:
+                        "Área do player de vídeo. Selecione uma aula na lista ao lado para assistir o conteúdo.",
                     side: "left",
                     align: "center",
                     onPopoverRender: (popover) => {
-                        const actions = AddButtonActions(popover, "Finalizar Tour");
+                        const actions = AddButtonActions(
+                            popover,
+                            "Finalizar Tour",
+                        );
                         actions.addEventListener("click", async () => {
                             await driverObj.destroy();
                             store.openMai = true;
@@ -88,169 +97,162 @@ export async function StartTourStudentDisciplineShow() {
 
 export async function StartTourStudentDisciplineShowActivitie() {
     store.openMai = false;
-
     const sidebar = document.getElementById("discipline-show-modules-sidebar");
     if (!sidebar) return;
-
     const moduleWrappers = sidebar.querySelectorAll('[id^="module-"]');
     const modulesWithActivity = [];
-
-    moduleWrappers.forEach((mod) => {
-        const buttons = mod.querySelectorAll('button');
-        const hasActivity = Array.from(buttons).some(
-            (btn) => btn.textContent.trim() === "Atividade"
-        );
-        if (hasActivity) modulesWithActivity.push(mod);
-    });
-
-    if (modulesWithActivity.length === 0) {
-        startNoActivityTour();
+    if (moduleWrappers.length === 1) {
+        console.log("vai diretor");
         return;
     }
-
-    async function startModuleActivityTour(index) {
-        const mod = modulesWithActivity[index];
-        const isLast = index === modulesWithActivity.length - 1;
-
-        const heading = mod.querySelector(".collapse-title");
-        const activityBtn = Array.from(mod.querySelectorAll("button")).find(
-            (btn) => btn.textContent.trim() === "Atividade"
-        );
-
-        if (!heading || !activityBtn) {
-            if (!isLast) {
-                await startModuleActivityTour(index + 1);
-            } else {
-                startNoActivityTour();
-            }
-            return;
-        }
-
-        const checkbox = mod.querySelector('input[type="checkbox"]');
-        if (checkbox && !checkbox.checked) {
-            heading.click();
-            await new Promise((r) => setTimeout(r, 600));
-        }
-
-        const innerDriver = drivertour({
-            ...configDriver,
-            steps: [
-                {
-                    element: heading,
-                    popover: {
-                        title: "Módulo com atividade",
-                        description:
-                            "Este módulo possui uma atividade disponível! Clique para expandi-lo.",
-                        side: "right",
-                        align: "center",
-                    },
-                    onHighlighted: async () => {
-                        if (checkbox && !checkbox.checked) {
-                            heading.click();
-                            await new Promise((r) => setTimeout(r, 800));
-                        }
-                        await innerDriver.moveNext();
-                    },
+    const driveInLessons = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element: null,
+                popover: {
+                    description:
+                        "Interagindo com a ferramenta por favor aguarde...",
+                    side: "right",
+                    showButtons: [""],
                 },
-                {
-                    element: activityBtn,
-                    popover: {
-                        title: "Atividade encontrada!",
-                        description:
-                            'Clique no botão "Atividade" para abrir e responder às questões.',
-                        side: "left",
-                        align: "center",
-                        onPopoverRender: (popover) => {
-                            if (!isLast) {
-                                const tryAnother = AddButtonActions(
-                                    popover,
-                                    "Tentar outro módulo"
-                                );
-                                tryAnother.addEventListener("click", async () => {
-                                    await innerDriver.destroy();
-                                    if (checkbox && checkbox.checked) {
-                                        heading.click();
-                                        await new Promise((r) => setTimeout(r, 400));
-                                    }
-                                    await startModuleActivityTour(index + 1);
-                                });
-                            }
+                onHighlighted: async (el) => {
+                    await new Promise((r) => setTimeout(r, 1500));
+                    await driveInLessons.moveNext();
+                },
+            },
+            {
+                element: sidebar,
+                popover: {
+                    description: "Selecione a aula que deseja ver a atividade.",
+                    side: "right",
+                    showButtons: [""],
+                },
+                onHighlighted: async (el) => {
+                    await new Promise((r) => setTimeout(r, 1000));
+                    const lessonsContent = el.querySelectorAll(`.lesson-card`);
+                    let lessonSelected = false;
+                    if (lessonsContent.length === 1) {
+                        console.log("vai diretor aqui mano");
+                        return;
+                    }
 
-                            const finishBtn = AddButtonActions(popover, "Finalizar");
-                            finishBtn.addEventListener("click", async () => {
-                                await innerDriver.destroy();
-                                store.openMai = true;
+                    lessonsContent.forEach((mod) => {
+                        mod.style.zIndex = "200000000";
+                        mod.addEventListener("click", async (event) => {
+                            if (lessonSelected) return;
+                            event.preventDefault();
+                            lessonSelected = true;
+                            lessonsContent.forEach((otherLesson) => {
+                                if (mod !== otherLesson) {
+                                    otherLesson.style.zIndex = "0";
+                                }
                             });
-                        },
-                    },
-                    onHighlighted: async (el) => {
-                        await new Promise((r) => setTimeout(r, 1200));
-                        el.click();
-                        await new Promise((r) => setTimeout(r, 1500));
-                        await innerDriver.destroy();
-                        highlightOpenedDrawer();
-                    },
-                },
-            ],
-        });
 
-        innerDriver.drive();
-    }
+                            const moduleID = mod.getAttribute("data-tour");
+                            // Destrói o tour atual
+                            await driveInLessons.destroy();
+                            let updatedDriverObj;
+                            const secondStep = [
+                                {
+                                    element: `#accordion-module-${moduleID}`,
+                                    disableActiveInteraction:true,
+                                    popover: {
+                                        description: `Interagindo com a ferramenta por favor aguarde...`,
+                                        side: "bottom",
+                                        align: "start",
+                                        showButtons: [""],
+                                    },
+                                    onHighlighted: async (el) => {
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, 1000),
+                                        );
+                                        el.style.zIndex = "0";
+                                        await driveInLessons.moveNext();
+                                    },
+                                },
+                                {
+                                    element: `#open-accordion-block-${moduleID}`,
+                                    disableActiveInteraction:true,
+                                    popover: {
+                                        description: `Interagindo com a ferramenta por favor aguarde...`,
+                                        showButtons: [""],
+                                    },
+                                    onHighlighted: async (el) => {
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, 1500),
+                                        );
+                                        await el.click();
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, 2000),
+                                        );
+                                        const tasksLists = await document.querySelector(`#content-activitie-lesson-${moduleID}`);
+                                        if (!tasksLists) {
+                                            alert("Parece que essa aula ainda não possue nenhuma atividade");
+                                            await el.click();
+                                            await driveInLessons.destroy();
+                                            store.openMai = true;
+                                            return;
+                                        }
+                                        await driveInLessons.moveNext();
+                                    },
+                                },
+                                {
+                                    element: `#content-activitie-lesson-${moduleID}`,
+                                    disableActiveInteraction:false,
+                                    popover: {
+                                        description: `Clique na atividade que deseja abrir`,
+                                        showButtons: [""],
+                                    },
+                                    onHighlighted: async (el) => {
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, 500),
+                                        );
 
-    function highlightOpenedDrawer() {
-        const drawer = document.getElementById("discipline-show-activity-drawer");
-        if (!drawer) return;
+                                        console.log("ELE DEVE BATER BEM AQUI DRENTI", el);
+                                        const taskOpen =
+                                            document.querySelector(
+                                                ".opening-task",
+                                            );
+                                        if (!taskOpen) {
+                                            alert(
+                                                "Opa parece que algo deu errado como servidor",
+                                            );
+                                            return;
+                                        }
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, 1500),
+                                        );
 
-        const finishDriver = drivertour({
-            ...configDriver,
-            steps: [
-                {
-                    element: drawer,
-                    popover: {
-                        title: "Atividade aberta!",
-                        description:
-                            "Agora você pode responder às questões. Selecione suas respostas e clique em 'Enviar' quando terminar.",
-                        side: "left",
-                        align: "center",
-                        onPopoverRender: (popover) => {
-                            const btn = AddButtonActions(popover, "Concluir");
-                            btn.addEventListener("click", () => {
-                                finishDriver.destroy();
+                                        await updatedDriverObj.moveNext();
+                                    },
+                                },
+                                {
+                                    element: `.opening-task`,
+                                    popover: {
+                                        description: `Aqui é onde a atividade será exibida. Explore o conteúdo e interaja com a atividade proposta pelo professor.`,
+                                        showButtons: [""],
+                                    },
+                                    onHighlighted: async (el) => {
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, 2500),
+                                        );
+                                        await updatedDriverObj.destroy();
+                                    },
+                                },
+                            ];
+                            updatedDriverObj = drivertour({
+                                ...configDriver,
+                                steps: secondStep,
                             });
-                        },
-                    },
+                            // Inicia o novo tour
+                            await updatedDriverObj.drive();
+                        });
+                    });
                 },
-            ],
-        });
-        finishDriver.drive();
-    }
-
-    function startNoActivityTour() {
-        const driverObj = drivertour({
-            ...configDriver,
-            steps: [
-                {
-                    element: sidebar,
-                    popover: {
-                        title: "Nenhuma atividade disponível",
-                        description:
-                            "No momento não há atividades cadastradas nesta disciplina. " +
-                            "Assim que o professor adicionar uma atividade, você poderá acessá-la por aqui.",
-                        side: "right",
-                        align: "center",
-                        onPopoverRender: (popover) => {
-                            const btn = AddButtonActions(popover, "Finalizar");
-                            btn.addEventListener("click", () => {
-                                driverObj.destroy();
-                                store.openMai = true;
-                            });
-                        },
-                    },
-                },
-            ],
-        });
-        driverObj.drive();
-    }
-
-    await startModuleActivityTour(0);
+            },
+        ],
+    });
+    await driveInLessons.drive();
+    return;
 }

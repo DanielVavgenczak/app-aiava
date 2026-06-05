@@ -527,6 +527,12 @@ export async function StartTourManagerDisciplineContent(){
                         const disciplines = el.querySelectorAll("div.discipline-card");
                         let disciplineSelected = false;
                         if (!disciplines || disciplines.length === 0) return;
+                        /**
+                         * Caso tenha mais de uma dia a disciplina então então
+                         * abriremos um tour 'Aguarde interagindo com a ferramenta'
+                         * depois selecionamos, toda a sidebar com todas as disciplinas
+                         * e esperamos o usuário clicar na disciplina que deseja gerenciar.
+                         */
                         disciplines.forEach((discipline) => {
                             discipline.style.zIndex = "200000000";
                             discipline.addEventListener('click', async (event) => {

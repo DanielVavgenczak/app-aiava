@@ -209,6 +209,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 x-show="true"
                                 id="accordion-{{ $module->id }}"
                                 data-tour="{{ $module->id }}">
+                                <!-- Click open -->
                                 <div class="flex items-center" id="accordion-module-{{ $module->id }}">
                                     <x-mary-dropdown wire:key="module-options-{{ $module->id }}">
                                         <x-slot:trigger>
@@ -223,7 +224,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                             x-on:click="$wire.openModalEditModule('{{ $module->id }}')"
                                             icon="o-pencil-square" />
                                         <x-mary-menu-item
-                                            id="content-les-delete-b
+                                            id="content-les-delete-b"
                                             class="btn-to-delete"
                                             title="Deletar"
                                             icon="o-trash"
@@ -241,7 +242,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                             <x-mary-icon name="o-chevron-down" />
                                         </button>
                                     </div>
-                                </div>
+                                </div><!-- End Click open -->
                                 <div class="flex flex-col gap-3 p-4 bg-gray-100"
                                     x-show="openCollapseId === '{{ $module->id }}'" x-collapse>
                                     <button id="block-open-new-block-{{ $module->id }}"
@@ -276,16 +277,16 @@ new #[Layout('layouts::teacher')] class extends Component {
                             </div>
                             @if ($module->activitTasks->count() > 0)
                                 @foreach ($module->activitTasks as $activit)
-                                    <div class="flex gap-3 px-10 py-2 cursor-pointer bg-pink-50 hover:bg-gray-300"
+                                    <div id="tasks-list-{{ $activit->id }}" class="task-card  flex gap-3 px-10 py-2 cursor-pointer bg-pink-50 hover:bg-gray-300"
                                         x-on:click="$wire.openTaskShow('{{ $activit->id }}')">
                                         <div class="flex items-center gap-3 ">
                                             <div class="p-2 rounded-sm">
                                                 <x-mary-icon name="o-document-duplicate"
-                                                    class="w-4 h-4 text-pink-600" />
+                                                    class="w-4 h-4 text-blue-500" />
                                             </div>
                                             <span
-                                                class="text-xs font-light tracking-wide text-pink-600 uppercase">
-                                                atividade
+                                                class="text-xs font-semibold tracking-wide text-blue-500 uppercase">
+                                                atividade <span class="text-xs font-normal text-gray-500">({{ $activit->created_at->diffForHumans() }} )</span>
                                             </span>
                                         </div>
                                     </div>
@@ -294,6 +295,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 <!-- drawer task module -->
                             @endif
                             <livewire:teacher.discipline.module.edit :$module :key="'module-edit-' . $module->id"/>
+                            <livewire:teacher.discipline.module.delete :$module :key="'module-delete-' . $module->id"/>
                         @endforeach
                     @else
                         <div wire:key="no-modules" class="absolute w-full h-screen bg-white">

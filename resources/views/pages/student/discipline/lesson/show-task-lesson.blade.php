@@ -77,11 +77,14 @@ new class extends Component {
     }
 };
 ?>
-<x-mary-drawer id="discipline-show-activity-drawer" wire:model="show" class="w-11/12 mx-auto" with-close-button close-on-escape>
+<x-mary-drawer wire:model="show" class="w-11/12 mx-auto task-student-open"  with-close-button close-on-escape>
     <!-- Cabeçalho -->
     <button class="btn-close absolute right-4 top-4 cursor-pointer" wire:click="cancelTask">
         <x-mary-icon name="o-x-mark" class="w-6 h-6 text-gray-600 hover:text-gray-800" />
     </button>
+    <x-slot:content class="aqui-deixa">
+
+    </x-slot:content>
     <header class="flex items-center justify-between p-5 w-full">
         <h2 class="text-lg font-semibold text-gray-800">Atividade</h2>
         {{-- <div class="flex flex-col items-center bg-gray-100 p-2 rounded">
@@ -91,7 +94,7 @@ new class extends Component {
             </span>
         </div> --}}
     </header>
-    <div class="w-11/12 mx-auto">
+    <div class="w-11/12 mx-auto opening-task">
         @if ($activitask)
             <div class="flex flex-col gap-6">
                 @foreach ($activitask->tasks as $task)
@@ -124,7 +127,7 @@ new class extends Component {
 
             <div class="actions mt-10 flex justify-end gap-3 absolute bottom-4">
                 <button x-on:click="$wire.cancelTask" class="btn btn-ghost btn-sm">cancelar</button>
-                <button x-on:click="$wire.submitAnswers" class="bg-blue-400 text-blue-500 btn btn-sm">Enviar</button>
+                <button x-on:click="$wire.submitAnswers" class="bg-blue-400 text-blue-50 btn btn-sm">Enviar</button>
             </div>
         @endif
     </div>

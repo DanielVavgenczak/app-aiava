@@ -11,12 +11,19 @@ new class extends Component {
     public string $id = '';
     public ?Module $module = null;
 
-    #[On('open-delete-module')]
-    public function openModal($id)
+
+    public function mount(Module $module)
     {
-        if ($this->id === $id) {
+        $this->fill($module);
+        $this->title = $module->title;
+    }
+
+    #[On('open-delete-module')]
+    public function open($id)
+    {
+        $this->js("console.log('chamando para o delete')");
+           if ($this->module->id === $id) {
             $this->open = true;
-            $this->module = Module::findOrFail($id);
         }
     }
 
@@ -94,14 +101,14 @@ new class extends Component {
     }
 }; ?>
 <x-mary-modal wire:model="open">
-    @if ($module)
+    para deetar
+    {{-- @if ($module)
         <div class="flex flex-col items-center justify-center gap-3" wire:loading.remove>
             <x-mary-icon name="o-trash" class="text-red-500 w-10 h-10" />
             <p class="text-sm text-red-500 tracking-wide font-normal">
                 Deletar a aula: {{ $module->title ?? 'Aula não disponível' }}
             </p>
         </div>
-        {{-- Modal: botões de ação --}}
         <div class="flex justify-end gap-2 items-center mt-3.5" id="module-delete-actions-{{ $module->id ?? '' }}"
             wire:loading.remove>
             <button type="button" class="btn btn-sm btn-ghost" wire:click="cancelEdit">
@@ -114,11 +121,10 @@ new class extends Component {
             </button>
         </div>
     @endif
-    {{-- Modal: estado de carregamento ao deletar --}}
     <div class="flex flex-col items-center w-full gap-2 p-5 text-center" wire:loading wire:target="deleteModule">
         <div class="mb-2">
             <x-mary-loading class="progress-error w-7 h-7" />
         </div>
         <p class="text-xs tracking-wider text-pink-600">Deletando</p>
-    </div>
+    </div> --}}
 </x-mary-modal>

@@ -32,7 +32,7 @@ new class extends Component {
                 'title' => $this->title,
             ]);
             $this->open = false;
-            $this->dispatch('teacher::module-event', type: 'update', msg: 'Módulo editado com sucesso!');
+            $this->dispatch('teacher::module-event', type: 'update', msg: 'Aula edita com sucesso!');
             $this->reset('title');
         } catch (\Exception $e) {
             if (!empty($e->getMessage())) {
@@ -61,7 +61,7 @@ new class extends Component {
                     id="module-edit-cancel-{{ $module->id }}">
                     Cancelar
                 </button>
-                <button class="bg-blue-700 btn btn-sm text-gray-50" type="submit"
+                <button class="bg-blue-400 btn btn-sm text-gray-50" type="submit"
                     id="module-edit-send-{{ $module->id }}">
                     Editar
                 </button>
@@ -69,9 +69,9 @@ new class extends Component {
         </div>
         <div wire:loading class="flex flex-col justify-center w-full text-center">
             <div class="mb-2">
-                <x-mary-loading class="text-pink-600 loading-dots" />
+                <x-mary-loading class="text-blue-600 loading-dots" />
             </div>
-            <span class="text-xs text-pink-600">Editando</span>
+            <span class="text-xs text-blue-600">Editando</span>
         </div>
     </form>
 </x-mary-modal>

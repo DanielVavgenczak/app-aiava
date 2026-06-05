@@ -40,10 +40,10 @@ new #[Layout('layouts::student')] class extends Component {
     <livewire:global.breadcrumb :items="[
         ['label' => 'Disciplinas', 'route' => 'student.discipline', 'icon' => 'o-academic-cap'],
         ['label' => $discipline->title],
-    ]" color="pink" tour-id="discipline-show-breadcrumb" />
+    ]" color="blue" tour-id="discipline-show-breadcrumb" />
 
     {{-- Conteúdo --}}
-    <div class="p-5 bg-white rounded-lg shadow">
+    <div class="p-5 bg-white rounded-lg shadow" x-data="{ openCollapseId: null }">
         {{-- ✅ Verifica se discipline existe --}}
             <div class="py-4 border-b border-gray-200" id="discipline-show-header">
                 <h2 class="text-gray-800 tracking-wide text-lg font-semibold">
@@ -60,23 +60,40 @@ new #[Layout('layouts::student')] class extends Component {
                 {{-- Sidebar com Módulos --}}
                 <div class="w-1/4" id="discipline-show-modules-sidebar">
                     @foreach ($modules as $module)
-                        <div id="module-{{ $module->id }}">
-                        <x-mary-collapse separator>
-                            <x-slot:heading>
-                                <span class="text-gray-800 tracking-wider text-[15px] font-medium">
-                                    {{ $module->title }}
+                        <div
+                            class="w-full bg-white border-[1px] border-gray-200 px-3 py-2 accordion lesson-card"
+                            wire:key="module-{{ $module->id }}"
+                            x-data="{ isExpanded: false }"
+                            x-show="true"
+                            id="accordion-{{ $module->id }}"
+                            data-tour="{{ $module->id }}">
+                            <!-- Click open -->
+                            <div class="flex items-center py-2 px-2" id="accordion-module-{{ $module->id }}">
+                                <div></div>
+                                <div
+                                id="content-lesson-add-new-block-{{ $module->id }}"
+                                class="flex items-center justify-between w-full cursor-pointer open-collapse-btn">
+                                <span class="text-[14px] font-normal tracking-wide text-gray-700 capitalize relative left-[2%]">
+                                  {{ $module->title }}
                                 </span>
-                            </x-slot:heading>
-
-                            <x-slot:content>
+                                <button class="bg-white cursor-pointer"
+                                     id="open-accordion-block-{{ $module->id }}"
+                                            x-on:click="openCollapseId === '{{ $module->id }}' ? openCollapseId = null : openCollapseId = '{{ $module->id }}'; isExpanded = !isExpanded">
+                                            <x-mary-icon name="o-chevron-down" class="text-gray-500 w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                           <div
+                            class="flex flex-col gap-3 p-4 bg-gray-100"
+                            x-show="openCollapseId === '{{ $module->id }}'" x-collapse>
                                 {{-- Lições --}}
                                 @if ($module->lessons->count() > 0)
                                     <ul x-data="{ activeLesson: null }" class="lesson-student-list">
                                         @foreach ($module->lessons as $lesson)
-                                            <li>
+                                            <li class="hover:bg-blue-400 ">
                                                 <button
-                                                    class="transition-colors w-full flex items-center gap-2 py-4 px-3 text-left"
-                                                    @click="
+                                                    class="cursor-pointer w-full flex items-center gap-2 py-4 px-3 text-left"
+                                                    x-on:click="
                                                         activeLesson = activeLesson === '{{ $lesson->id }}' ? null : '{{ $lesson->id }}';
                                                         $dispatch('stundent-lesson-streaming-block', { lesson_id: '{{ $lesson->id }}' });
                                                     "
@@ -85,34 +102,35 @@ new #[Layout('layouts::student')] class extends Component {
                                                         'hover:bg-gray-100 text-gray-700': activeLesson !== '{{ $lesson->id }}'
                                                     }"
                                                 >
-                                                    <x-mary-icon name="o-play" class="w-4 h-4" />
-                                                    <span class="font-normal tracking-wider">{{ $lesson->title }}</span>
+                                                    <x-mary-icon name="o-play" class="w-4 h-4 text-blue-500" />
+                                                    <span class="font-bold tracking-wider text-xs uppercase text-blue-500">{{ $lesson->title }}</span>
                                                 </button>
                                             </li>
                                         @endforeach
                                     </ul>
                                 @else
                                     <p class="text-gray-600 tracking-wider text-sm py-2">
-                                        Nenhuma lição neste módulo
+                                        Nenhuma atividade neste módulo
                                     </p>
                                 @endif
 
                                 {{-- Atividades --}}
                                 @if ($module->activitTasks->count() > 0)
-                                    <div class="mt-2 space-y-2">
+                                    <div class="mt-2 space-y-2 tasks-list-to-student bg-white" id="content-activitie-lesson-{{ $module->id }}">
                                         @foreach ($module->activitTasks as $activitTask)
-                                            <button
-                                                @click="$dispatch('student-event-open-task', { id: '{{ $activitTask->id }}' })"
-                                                class="w-full flex items-center gap-2 px-4 py-3 hover:bg-blue-50 text-blue-600 font-semibold text-sm tracking-wider transition-colors rounded"
-                                            >
-                                                <x-mary-icon name="o-document-text" class="w-4 h-4" />
-                                                Atividade
-                                            </button>
+                                                <button
+                                                    id="open-activity-{{ $activitTask->id }}"
+                                                    data-tour-activity="{{ $activitTask->id }}"
+                                                     x-on:click="$dispatch('student-event-open-task', { id: '{{ $activitTask->id }}' })"
+                                                    class="tasks-open border-[1px] border-gray-300 w-full flex items-center gap-2 px-4 py-3 hover:bg-blue-50 text-blue-600 font-semibold text-xs uppercase tracking-wider transition-colors rounded"
+                                                >
+                                                    <x-mary-icon name="o-document-text" class="w-4 h-4" />
+                                                    Atividade <span class="text-xs font-normal text-gray-500">({{ $activitTask->created_at->diffForHumans() }} )</span>
+                                                </button>
                                         @endforeach
                                     </div>
                                 @endif
-                            </x-slot:content>
-                        </x-mary-collapse>
+                            </div>
                         </div>
 
                         {{-- Modal de Tarefas --}}

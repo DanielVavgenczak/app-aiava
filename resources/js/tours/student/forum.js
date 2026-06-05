@@ -3,7 +3,7 @@ const store = Alpine.store("tourguide");
 
 export async function StartTourStudentForum() {
 
-     document.body.style.cursor = 'not-allowed';
+    document.body.style.cursor = 'not-allowed';
     document.body.style.pointerEvents = 'none';
 
     store.openMai = false;
