@@ -59,7 +59,7 @@ new class extends Component {
 <x-mary-modal wire:model="open" title="Nova aula" subtitle="Crie uma nova aula"
     data-tour="new-lesson-{{ $disciplineId }}">
     <div>
-        <form wire:submit.prevent="save">
+        <form wire:submit.prevent="save" id="new-lesson-and-block">
             <div class="my-3" id="lesson-title">
               <input
                 type="text"

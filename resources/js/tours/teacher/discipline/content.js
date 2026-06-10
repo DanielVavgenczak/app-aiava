@@ -1,6 +1,6 @@
 import { AddButtonActions, configDriver } from "../../utils";
 import { ContinueUploadBlock } from "./lesson";
-export { StartEditLesson } from "./lesson";
+export { StartEditLesson, StartDeleteLesson } from "./lesson";
 
 // aqu
 Livewire.on("continue-created-content", async (event) => {
@@ -62,9 +62,9 @@ export async function StartTourDisciplineCreateContent(skipUpload = false) {
           },
         },
         {
-          element: `#lesson-title`,
+          element: `#new-lesson-and-block`,
           popover: {
-            description: "Escreva o Título da aula",
+            description: "Digite Título da aula",
             onNextClick: async (el) => {
               const title = el.querySelector(
                 `input.lesson-input-title`,
@@ -73,30 +73,8 @@ export async function StartTourDisciplineCreateContent(skipUpload = false) {
                 alert("por favor preencha o campo título");
                 return;
               }
-              await driverObj.moveNext();
+              // await driverObj.moveNext();
             },
-            onPopoverRender: (popover, { config, state }) => {
-              const btnPreviews = popover.previousButton;
-              if (btnPreviews) btnPreviews.style.display = "none";
-              const actions = AddButtonActions(
-                popover,
-                "Cancelar operação",
-              );
-              actions.addEventListener("click", () => {
-                Livewire.dispatch("tour-teacher::close-modal-new-lesson", {
-                  open: false,
-                });
-                driverObj.destroy();
-                store.openMai = true;
-              });
-            },
-          },
-        },
-        {
-          element: `#lesson-actions-buttons`,
-          popover: {
-            description:
-              "Clique em 'Registrar' para salvar a aula ou em 'Cancelar' para cancelar o cadastro.",
             onPopoverRender: (popover, { config, state }) => {
               const btnPreviews = popover.previousButton;
               const btnNext = popover.nextButton;
@@ -108,7 +86,7 @@ export async function StartTourDisciplineCreateContent(skipUpload = false) {
                 "Cancelar operação",
               );
               actions.addEventListener("click", () => {
-                Livewire.dispatch("open-modal-module", {
+                Livewire.dispatch("tour-teacher::close-modal-new-lesson", {
                   open: false,
                 });
                 driverObj.destroy();
@@ -127,10 +105,9 @@ export async function StartTourDisciplineCreateContent(skipUpload = false) {
             const btnCancel = el.querySelector(`#module-input-cancel`);
             const btnCreate = el.querySelector(`#module-input-create`);
 
-            await  btnCancel.addEventListener("click", toCloseActions);
-            await btnCreate.addEventListener("click", async () => {
+            btnCancel.addEventListener("click", toCloseActions);
+            btnCreate.addEventListener("click", async () => {
                await new Promise((resolve) => setTimeout(resolve, 1000));
-
               const errorTitle = document.querySelector("#title_module_error");
                 await new Promise((resolve) => setTimeout(resolve, 500));
                 if(errorTitle && errorTitle.textContent.trim() !== ""){

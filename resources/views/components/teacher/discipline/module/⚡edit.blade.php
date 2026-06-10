@@ -51,7 +51,7 @@ new class extends Component {
 
 <x-mary-modal wire:model="open" title="Editar {{ $module->title ?? 'aula' }}"
     subtitle="Edite o módulo: {{ $module->title ?? 'aula' }}">
-    <form wire:submit.prevent="update">
+    <form wire:submit.prevent="update" id="edit-module-{{ $module->id ?? '' }}">
         <div wire:loading.remove class="my-3" id="module-edit-title-{{ $module->id ?? '' }}">
             <x-mary-input for="title" :value="__('Titulo')" wire:model="title" class="!outline-none" />
         </div>

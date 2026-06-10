@@ -503,7 +503,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                     x-on:click="$store.tourguide.start('StartTourClasseEmptyStudents')" />
             </div>
         </div>
-        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
     </div>
 
     @script

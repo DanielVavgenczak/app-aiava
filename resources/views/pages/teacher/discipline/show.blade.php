@@ -232,12 +232,11 @@ new #[Layout('layouts::teacher')] class extends Component {
                                         <x-slot:trigger>
                                             <x-mary-button
                                                 icon="o-ellipsis-vertical"
-                                                id="tourguide-content-lesson-options"
-                                                class="btn  border-none btn-set-dropdown" />
+                                                class="btn border-none btn-set-dropdown" />
                                         </x-slot:trigger>
                                         <x-mary-menu-item
                                             title="Editar"
-                                            id="content-lesson-edit-btn"
+                                            class="content-lesson-edit-btn"
                                             x-on:click="$wire.openModalEditModule('{{ $module->id }}')"
                                             icon="o-pencil-square" />
                                         <x-mary-menu-item
@@ -362,20 +361,20 @@ new #[Layout('layouts::teacher')] class extends Component {
                   @if (!$openFormNewLesson)
                       <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
                           <x-mary-button
-                              class="text-blue-600 border-[1px] border-blue-600 btn  hover:text-gray-100"
+                              class="text-blue-400 border-[1px] border-blue-400 btn  hover:text-gray-100"
                               label="Criar nova aula"
                               x-on:click="$store.tourguide.start('StartTourDisciplineCreateContent')" />
                           @if ($discipline->modules->count() > 0)
                               <x-mary-button
-                                  class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                                  class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
                                   label="Adicionar bloco"
                                   x-on:click="$store.tourguide.start('StartTourDisciplineUploadBlockToLessonSelected')" />
                               <x-mary-button
-                                  class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                                  class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
                                   label="Deletar uma aula"
-                                  x-on:click="$store.tourguide.startTourbDeleteModule()" />
+                                  x-on:click="$store.tourguide.start('StartDeleteLesson')" />
                               <x-mary-button
-                                  class="font-medium text-blue-500 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
+                                  class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
                                   label="Criar uma tarefa"
                                    x-on:click="$store.tourguide.start('StartTourCreateActivitTask')" />
                               <x-mary-button

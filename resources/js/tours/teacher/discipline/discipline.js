@@ -30,7 +30,7 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#discipline-input-title`,
                 popover: {
-                    description: "Digite o título da disciplina",
+                    description: "Digite o nome da disciplina, e clique em 'Registrar'",
                     onPopoverRender: (popover, { config, state }) => {
                         // refatorar
                         const nextBtn = popover.nextButton;

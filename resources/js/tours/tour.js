@@ -34,7 +34,8 @@ document.addEventListener("alpine:init", () => {
                     "StartTourDisciplineCreateContentUploadBlock",
                     "StartTourDisciplineUploadBlockToLessonSelected",
                     "StartTourCreateActivitTask",
-                    "StartEditLesson"
+                    "StartEditLesson",
+                    "StartDeleteLesson"
                 ],
             },
             {
@@ -171,6 +172,9 @@ document.addEventListener("alpine:init", () => {
         },
         async startEditLesson() {
             await this.start('StartEditLesson');
+        },
+        async startDeleteLesson() {
+            await this.start('StartDeleteLesson');
         },
         async initTour() {
             console.log("init tour");
