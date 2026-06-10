@@ -1,8 +1,9 @@
 import { configDriver, AddButtonActions } from "../../utils";
 
 export async function ContinueUploadBlock(modules, dataId) {
+ let store = Alpine.store("tourguide");
   // Função utilitária para esperar um elemento estar presente no DOM
-  const waitForElement = (selector, timeout = 5000) => {
+ const waitForElement = (selector, timeout = 3000) => {
     return new Promise((resolve, reject) => {
       const element = document.querySelector(selector);
       if (element) {
@@ -34,47 +35,51 @@ export async function ContinueUploadBlock(modules, dataId) {
     {
       element: `#accordion-module-${dataId}`,
       popover: {
-        description: `Vou abrir essa aula`,
+        description: `Interagindo com a ferramenta...`,
         side: "bottom",
         align: "start",
         showButtons: [""],
       },
       onHighlighted: async (el) => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         await updateOnedDriverObj.moveNext();
       },
     },
     {
       element: `#open-accordion-block-${dataId}`,
       popover: {
-        description: `Vou clicar e abrir para listar os blocos`,
+        description: `Interagindo com a ferramenta...`,
         side: "bottom",
         align: "start",
         showButtons: [""],
       },
       onHighlighted: async (el) => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        const btnOpenAccordion = document.querySelector(`#open-accordion-block-${dataId}`);
-        await btnOpenAccordion.click();
-
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        //const btnOpenAccordion = document.querySelector(`#open-accordion-block-${dataId}`);
+        await el.click();
         // Aguarda o accordion expandir
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         await updateOnedDriverObj.moveNext();
       },
     },
     {
       element: `#block-open-new-block-${dataId}`,
       popover: {
-        description: `Vou clicar aqui para abrir a opção de adicionar um bloco`,
+        description: `Interagindo com a ferramenta...`,
         side: "right",
         align: "center",
         showButtons: [""],
       },
       onHighlighted: async (el) => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         await el.click();
-
-        // Aguarda o menu de opções abrir
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Aguarda o modal de upload renderizar antes de prosseguir
+        try {
+          await waitForElement(`#browser-file-${dataId}`, 2000);
+        } catch (error) {
+          console.error("Modal de upload não renderizou a tempo:", error);
+        }
         await new Promise((resolve) => setTimeout(resolve, 500));
         await updateOnedDriverObj.moveNext();
       },
@@ -87,106 +92,137 @@ export async function ContinueUploadBlock(modules, dataId) {
         align: "start",
         // showButtons: [""],
         onPopoverRender: (popover, { config, state }) => {
+            const nextBtn = popover.nextButton;
+            const prevBtn = popover.previousButton;
+            if (nextBtn) nextBtn.remove();  // remove do DOM
+            if (prevBtn) prevBtn.remove();
               const actions = AddButtonActions(
                 popover,
-                "Voltar ao início",
+                "Parar operação",
               );
-              actions.addEventListener("click", () => {
-                Livewire.dispatch("open-modal-module", {
+              actions.addEventListener("click", async () => {
+                Livewire.dispatch("tour-close-modal-upload_block", {
                   open: false,
                 });
-                driverObj.destroy();
+                await updateOnedDriverObj.destroy();
                 store.openMai = true;
               });
             }
       },
       onHighlighted: async (el) => {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        // Clica no ícone de vídeo
-        await el.click();
+        // Não clica programaticamente: browser bloqueia input.click()
+        // após um await (perde user activation).
+        // O step já instrui o usuário a clicar manualmente.
 
-        // 🔍 VALIDAÇÃO: Aguarda o modal de upload ser renderizado
-        try {
-          console.log("Aguardando modal de upload renderizar...");
+        const videoElement = document.querySelector(`#temp-video-preview-${dataId}`);
+        if (!videoElement) return;
 
-          // Espera pelo elemento do modal ou container de upload
-          const modalSelector = `#upload-video-modal-${dataId}`; // Ajuste para o seletor correto
-          const uploadContainerSelector = `#video-upload-container-${dataId}`; // Ajuste conforme necessário
+        if (videoElement.src && videoElement.src !== "") {
+          await updateOnedDriverObj.moveNext();
+          return;
+        }
 
-          // Tenta encontrar qualquer um dos elementos que indica que o modal está pronto
-          const modalElement = await Promise.race([
-            waitForElement(modalSelector, 8000),
-            waitForElement(uploadContainerSelector, 8000),
-            waitForElement(`#temp-video-preview-${dataId}`, 8000)
-          ]);
-
-          console.log("Modal renderizado com sucesso:", modalElement);
-
-          // Aguarda um pouco mais para garantir que todo o conteúdo do modal carregou
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          // Verifica se o elemento de preview existe
-          const videoElement = document.querySelector(`#temp-video-preview-${dataId}`);
-
-          if (!videoElement) {
-            console.error("Elemento de preview não encontrado mesmo após modal renderizar");
-            // Fallback: tenta avançar mesmo assim
-            await updateOnedDriverObj.moveNext();
-            return;
-          }
-
-          // Verifica se já tem src definido
-          if (videoElement.src && videoElement.src !== "") {
-            console.log("Vídeo já selecionado - avançando");
-            await updateOnedDriverObj.moveNext();
-            return;
-          }
-
-          // Cria um observador para detectar quando o src for alterado
-          const observer = new MutationObserver(async (mutations) => {
-            for (const mutation of mutations) {
-              if (
-                mutation.type === "attributes" &&
-                mutation.attributeName === "src"
-              ) {
-                if (
-                  videoElement.src &&
-                  videoElement.src !== ""
-                ) {
-                  console.log("Vídeo selecionado detectado - avançando");
-                  observer.disconnect();
-                  await updateOnedDriverObj.moveNext();
-                }
+        const observer = new MutationObserver(async (mutations) => {
+          for (const mutation of mutations) {
+            if (
+              mutation.type === "attributes" &&
+              mutation.attributeName === "src"
+            ) {
+              if (videoElement.src && videoElement.src !== "") {
+                observer.disconnect();
+                await new Promise((resolve) => setTimeout(resolve, 100));
+                console.log("Quando bater aqui ele vai sozinho para o todo")
+                await updateOnedDriverObj.moveNext();
               }
             }
-          });
+          }
+        });
 
-          // Configura o observador
-          observer.observe(videoElement, {
-            attributes: true,
-            attributeFilter: ["src"],
-          });
+        observer.observe(videoElement, {
+          attributes: true,
+          attributeFilter: ["src"],
+        });
 
-          // Timeout de segurança
-          setTimeout(() => {
-            observer.disconnect();
-            console.warn("Timeout aguardando seleção de vídeo");
-          }, 30000);
-
-        } catch (error) {
-          console.error("Erro ao aguardar modal:", error);
-          // Fallback: tenta avançar após timeout
-          await updateOnedDriverObj.moveNext();
-        }
+        // setTimeout(() => {
+        //   observer.disconnect();
+        //   console.warn("Timeout aguardando seleção de vídeo");
+        // }, 1000);
       },
     },
     {
-      element: `#temp-video-preview-${dataId}`,
+      element: `#temp-preview-${dataId}`,
       popover: {
-        description: `Caso o vídeo esteja correto, clique em "Próximo"`,
+        description: `Confira o vídeo e clique em "Enviar" para fazer o upload.`,
         side: "top",
         align: "start",
+        onPopoverRender: (popover, { config, state }) => {
+         const prevBtn = popover.previousButton;
+         const nextBtn = popover.nextButton;
+         if (nextBtn) nextBtn.remove();
+         if (prevBtn) prevBtn.remove();
+         const actions = AddButtonActions(popover, "Cancelar operação");
+         actions.addEventListener("click", async () => {
+            await updateOnedDriverObj.destroy();
+            store.openMai = true;
+          });
+        },
+      },
+      onHighlighted: async (el) => {
+        const btnSend = document.querySelector(
+          `#lesson-send-video-block-content-${dataId}`
+        );
+        if (!btnSend) return;
+
+        btnSend.addEventListener("click", async () => {
+          await new Promise((r) => setTimeout(r, 300));
+          await updateOnedDriverObj.moveNext();
+        });
+      },
+    },
+    {
+      element: `#progress-bar-container-${dataId}`,
+      popover: {
+        description: "Aguarde enquanto o vídeo é processado e enviado.",
+        showButtons: [""],
+        onPopoverRender: (popover, { config, state }) => {
+          const actions = AddButtonActions(popover, "Cancelar operação");
+          actions.addEventListener("click", async () => {
+            await updateOnedDriverObj.destroy();
+            store.openMai = true;
+          });
+        }
+      },
+      onHighlighted: async () => {
+        await new Promise((resolve) => {
+          let cleanup;
+          const handler = (event) => {
+            if (event.module_id == dataId) {
+              if (typeof cleanup === "function") cleanup();
+              window._lastLessonId = event.lesson_id;
+              steps[6].element = `button[data-lesson-id="${event.lesson_id}"]`;
+              steps[7].element = `#video-player-${event.lesson_id}`;
+              setTimeout(resolve, 1500);
+            }
+          };
+          cleanup = Livewire.on("after-video-upload", handler);
+          setTimeout(() => {
+            if (typeof cleanup === "function") cleanup();
+            resolve();
+          }, 3000);
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await updateOnedDriverObj.moveNext();
+      },
+    },
+    {
+      popover: {
+        description: "Este é o vídeo que foi adicionado à aula.",
+        side: "right",
+        align: "center",
+        showButtons: [""],
         onPopoverRender: (popover, { config, state }) => {
           const actions = AddButtonActions(popover, "Voltar ao início");
           actions.addEventListener("click", async () => {
@@ -195,74 +231,28 @@ export async function ContinueUploadBlock(modules, dataId) {
           });
         },
       },
-      onNextClick: async () => {
-        console.log("Avançando para enviar vídeo");
-      },
-    },
-    {
-      element: `#temp-preview-actions-${dataId}`,
-      popover: {
-        description: `Clique em 'Enviar' para enviar o vídeo`,
-        side: "top",
-        align: "start",
-        showButtons: [""]
-      },
-      onHighlighted: async (el) => {
-        const btnSendVideoBlock = el.querySelector(
-          `#lesson-send-video-block-content-${dataId}`
-        );
-        if (!btnSendVideoBlock) return;
-
-        btnSendVideoBlock.addEventListener("click", async () => {
-          await updateOnedDriverObj.moveNext();
-        });
-      },
-    },
-    {
-      element: `#progress-bar-container-${dataId}`,
-      popover: {
-        description: "Aguarde enquanto o vídeo é enviado",
-        side: "top",
-        align: "start",
-        showButtons: [""]
-      },
-      onHighlighted: async (el) => {
+      onHighlighted: async () => {
         await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        let successMessage = document.getElementById(`success-message-${dataId}`);
-
-        // Aguarda o elemento de sucesso aparecer (caso ainda não exista)
-        if (!successMessage) {
-          try {
-            successMessage = await waitForElement(`#success-message-${dataId}`, 10000);
-          } catch (error) {
-            console.error("Elemento de sucesso não encontrado:", error);
-            // Se não encontrar o elemento de sucesso, aguarda um tempo e finaliza
-            await new Promise((resolve) => setTimeout(resolve, 3000));
+        await updateOnedDriverObj.moveNext();
+      },
+    },
+    {
+      popover: {
+        description: "Este é o vídeo que foi adicionado e está sendo reproduzido.",
+        side: "top",
+        align: "center",
+        showButtons: [""],
+        onPopoverRender: (popover, { config, state }) => {
+          const actions = AddButtonActions(popover, "Voltar ao início");
+          actions.addEventListener("click", async () => {
             await updateOnedDriverObj.destroy();
-            return;
-          }
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (successMessage.style.display !== 'none') {
-              if (updateOnedDriverObj) {
-                updateOnedDriverObj.destroy();
-              }
-              observer.disconnect();
-            }
+            store.openMai = true;
           });
-        });
-
-        observer.observe(successMessage, {
-          attributes: true,
-          attributeFilter: ['style', 'class'],
-          childList: true,
-          subtree: true
-        });
+        },
+      },
+      onHighlighted: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await updateOnedDriverObj.destroy();
       },
     },
   ];
@@ -275,4 +265,94 @@ export async function ContinueUploadBlock(modules, dataId) {
 
   await updateOnedDriverObj.drive();
   return;
+}
+
+export async function StartEditLesson() {
+  let store = Alpine.store("tourguide");
+  store.openMai = false;
+
+  const modulesCard = document.querySelectorAll("div.module-card");
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  const steps = [
+    {
+      element: `#module-list-all`,
+      popover: {
+        description: `Clique na aula que deseja editar`,
+        showButtons: [""],
+        onPopoverRender: (popover, { config, state }) => {
+          const nextBtn = popover.nextButton;
+          const prevBtn = popover.previousButton;
+          if (nextBtn) nextBtn.remove();
+          if (prevBtn) prevBtn.remove();
+          const actions = AddButtonActions(popover, "Cancelar operação");
+          actions.addEventListener("click", async () => {
+            await updateOnedDriverObj.destroy();
+            store.openMai = true;
+          });
+        },
+      },
+      onHighlighted: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        let moduleSelected = false;
+
+        modulesCard.forEach((module) => {
+          module.style.zIndex = "200000000";
+          module.addEventListener("click", async (event) => {
+            if (moduleSelected) return;
+            event.preventDefault();
+            moduleSelected = true;
+
+            modulesCard.forEach((otherModule) => {
+              if (module !== otherModule) {
+                otherModule.style.zIndex = "0";
+              }
+            });
+
+            const moduleId = module.getAttribute("data-tour");
+
+            Livewire.dispatch("teacher::open-edit-module", {
+              module_id: moduleId,
+            });
+
+            steps[1].element = `#module-edit-title-${moduleId}`;
+
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            await updateOnedDriverObj.moveNext();
+          });
+        });
+      },
+    },
+    {
+      popover: {
+        description: `Edite o título da aula e clique em "Editar" para salvar as alterações.`,
+        side: "bottom",
+        align: "start",
+        showButtons: [""],
+        onPopoverRender: (popover, { config, state }) => {
+          const nextBtn = popover.nextButton;
+          const prevBtn = popover.previousButton;
+          if (nextBtn) nextBtn.remove();
+          if (prevBtn) prevBtn.remove();
+          const actions = AddButtonActions(popover, "Voltar ao início");
+          actions.addEventListener("click", async () => {
+            await updateOnedDriverObj.destroy();
+            store.openMai = true;
+          });
+        },
+      },
+      onHighlighted: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        await updateOnedDriverObj.destroy();
+      },
+    },
+  ];
+
+  const updateOnedDriverObj = drivertour({
+    ...configDriver,
+    steps: [...steps],
+  });
+
+  await updateOnedDriverObj.drive();
 }

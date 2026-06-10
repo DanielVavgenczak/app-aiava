@@ -1,21 +1,23 @@
 import { AddButtonActions, configDriver } from "../../utils";
 import { ContinueUploadBlock } from "./lesson";
+export { StartEditLesson } from "./lesson";
 
+// aqu
 Livewire.on("continue-created-content", async (event) => {
+    console.log("Evento recebido para continuar o tour de criação de conteúdo:", event);
   try {
     if (!event?.continue) {
       return;
     }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    await StartTourDisciplineCreateContent();
+    await StartTourDisciplineCreateContent(true);
   } catch (e) {
     console.error("Erro ao continuar o tour de criação de conteúdo:", e);
   } finally {
     console.log("Iniciando bloco de upload...");
     try {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       await StartTourDisciplineCreateContentUploadBlock();
 
     } catch (uploadErr) {
@@ -25,7 +27,11 @@ Livewire.on("continue-created-content", async (event) => {
 });
 
 
-export async function StartTourDisciplineCreateContent() {
+export async function StartTourDisciplineCreateContent(skipUpload = false) {
+  // tour.js sempre passa o UUID como primeiro argumento.
+  // skipUpload == true (booleano) = chamado do continue-created-content (pular upload)
+  // skipUpload == string (UUID) = chamado direto do tour (prosseguir upload)
+  const shouldSkipUpload = skipUpload === true;
   let store = Alpine.store("tourguide");
   store.openMai = false;
   return new Promise(async (resolve) => {
@@ -40,12 +46,12 @@ export async function StartTourDisciplineCreateContent() {
         {
           element: `#${btnCreateLesson.id}`,
           popover: {
-            description: `Vou clicar no botão "+ Aula"`,
+            description: `Interagindo com a ferramenta...`,
             showButtons: [""],
           },
           onHighlighted: async (el) => {
             await new Promise((resolve) =>
-              setTimeout(resolve, 1000),
+              setTimeout(resolve, 1500),
             );
             disciplineID = el.getAttribute("data-tour");
             el.click();
@@ -70,12 +76,14 @@ export async function StartTourDisciplineCreateContent() {
               await driverObj.moveNext();
             },
             onPopoverRender: (popover, { config, state }) => {
+              const btnPreviews = popover.previousButton;
+              if (btnPreviews) btnPreviews.style.display = "none";
               const actions = AddButtonActions(
                 popover,
-                "Voltar ao início",
+                "Cancelar operação",
               );
               actions.addEventListener("click", () => {
-                Livewire.dispatch("open-modal-module", {
+                Livewire.dispatch("tour-teacher::close-modal-new-lesson", {
                   open: false,
                 });
                 driverObj.destroy();
@@ -88,11 +96,16 @@ export async function StartTourDisciplineCreateContent() {
           element: `#lesson-actions-buttons`,
           popover: {
             description:
-              "Clique em 'Cadastrar' para salvar a aula ou em 'Cancelar' para cancelar o cadastro.",
+              "Clique em 'Registrar' para salvar a aula ou em 'Cancelar' para cancelar o cadastro.",
             onPopoverRender: (popover, { config, state }) => {
+              const btnPreviews = popover.previousButton;
+              const btnNext = popover.nextButton;
+              if (btnNext) btnNext.style.display = "none";
+              if (btnPreviews) btnPreviews.style.display = "none";
+
               const actions = AddButtonActions(
                 popover,
-                "Voltar ao início",
+                "Cancelar operação",
               );
               actions.addEventListener("click", () => {
                 Livewire.dispatch("open-modal-module", {
@@ -130,8 +143,10 @@ export async function StartTourDisciplineCreateContent() {
               store.openMai = false;
               resolve(true);
               await driverObj.destroy();
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              await StartTourDisciplineCreateContentUploadBlock();
+              if (!shouldSkipUpload) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                await StartTourDisciplineCreateContentUploadBlock();
+              }
             });
           },
         },
@@ -145,6 +160,32 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
   let store = Alpine.store("tourguide");
   store.openMai = false;
   return new Promise(async (resolve) => {
+    const waitForModuleCards = (timeout = 10000) => {
+      return new Promise((resolve, reject) => {
+        const modules = document.querySelectorAll("div.module-card");
+        if (modules.length > 0) return resolve(modules);
+        const observer = new MutationObserver(() => {
+          const modules = document.querySelectorAll("div.module-card");
+          if (modules.length > 0) {
+            observer.disconnect();
+            resolve(modules);
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => {
+          observer.disconnect();
+          reject(new Error("Timeout aguardando module cards"));
+        }, timeout);
+      });
+    };
+
+    try {
+      await waitForModuleCards();
+    } catch (e) {
+      console.error("Module cards não encontrados:", e);
+      return;
+    }
+
     const modules = document.querySelectorAll("div.module-card");
     const lastLessonRegisted = modules[modules.length - 1].getAttribute("data-tour");
     let moduleText = `Vamos adicionar um bloco à aula criada`

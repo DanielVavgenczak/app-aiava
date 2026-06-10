@@ -13,6 +13,7 @@ new class extends Component {
     {
         $this->open = $open;
     }
+    #[On('close-create-with-tour')]
     #[On('discipline-close-modal-create')]
     public function cancel()
     {
@@ -32,8 +33,8 @@ new class extends Component {
     }
 }; ?>
 <x-mary-modal wire:model="open" title="Nova disciplina" subtitle="Registre uma disciplina">
-    <form wire:submit.prevent="store">
-        <div id="discipline-input-title" wire:loading.remove>
+    <form wire:submit.prevent="store"  id="discipline-input-title">
+        <div wire:loading.remove>
             <div class="flex flex-col gap-1">
               <input wire:model="form.title" id="title_discipline" placeholder="Título da disciplina"
               class="input title !outline-none focus:border-gray-400 w-full" autocomplete="title" />

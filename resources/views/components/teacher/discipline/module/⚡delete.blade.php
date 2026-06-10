@@ -11,7 +11,6 @@ new class extends Component {
     public string $id = '';
     public ?Module $module = null;
 
-
     public function mount(Module $module)
     {
         $this->fill($module);
@@ -22,7 +21,7 @@ new class extends Component {
     public function open($id)
     {
         $this->js("console.log('chamando para o delete')");
-           if ($this->module->id === $id) {
+        if ($this->module->id === $id) {
             $this->open = true;
         }
     }
@@ -30,6 +29,11 @@ new class extends Component {
     public function deleteModule()
     {
         try {
+            $teacher = auth('teacher')->user();
+            if (!$teacher || $this->module->discipline->teacher_id !== $teacher->id) {
+                throw new \Exception('Você não tem permissão para deletar esta aula');
+            }
+
             if (!$this->module->exists) {
                 throw new \Exception('Módulo inexistente!');
             }
@@ -57,7 +61,7 @@ new class extends Component {
             DB::commit();
             session()->flash('delete-with-files', 'Aula excluída com sucesso!');
             $this->open = false;
-            return $this->redirect(route('teacher.discipline.show', $discipline), navigate: true);
+            $this->redirect(route('teacher.discipline.show', $discipline), navigate: true);
         } catch (\Exception $e) {
             DB::rollBack();
             $this->handleDeleteError($e);
@@ -83,7 +87,6 @@ new class extends Component {
                         }
                     } else {
                         \Log::info("Arquivo não encontrado para exclusão: {$path}");
-                        // File not existing isn't necessarily an error
                     }
                 }
             } catch (\Throwable $e) {
@@ -100,31 +103,36 @@ new class extends Component {
         $this->error($msg, timeout: 1000, position: 'toast-bottom toast-start');
     }
 }; ?>
-<x-mary-modal wire:model="open">
-    para deetar
-    {{-- @if ($module)
-        <div class="flex flex-col items-center justify-center gap-3" wire:loading.remove>
+<x-mary-modal wire:model="open" title="Deletar aula">
+    @if ($module)
+        <div class="flex flex-col items-center justify-center gap-3">
             <x-mary-icon name="o-trash" class="text-red-500 w-10 h-10" />
-            <p class="text-sm text-red-500 tracking-wide font-normal">
-                Deletar a aula: {{ $module->title ?? 'Aula não disponível' }}
+            <p class="text-sm text-red-500 tracking-wide font-normal text-center">
+                Tem certeza que deseja deletar a aula "{{ $module->title }}"?
+            </p>
+            <p class="text-xs text-gray-400 text-center">
+                Esta ação também removerá todos os vídeos e atividades vinculados a esta aula.
             </p>
         </div>
-        <div class="flex justify-end gap-2 items-center mt-3.5" id="module-delete-actions-{{ $module->id ?? '' }}"
-            wire:loading.remove>
+        <div class="flex justify-end gap-2 items-center mt-4"
+            id="module-delete-actions-{{ $module->id ?? '' }}">
             <button type="button" class="btn btn-sm btn-ghost" wire:click="cancelEdit">
                 Cancelar
             </button>
-
-            <button type="button" class="btn btn-sm bg-red-500 text-gray-50" wire:click="deleteModule"
-                wire:loading.remove>
-                Deletar
+            <button type="button" class="btn btn-sm bg-red-500 text-gray-50 hover:bg-red-600"
+                wire:click="deleteModule"
+                wire:loading.class="opacity-50" wire:target="deleteModule">
+                <span wire:loading.remove wire:target="deleteModule">Deletar</span>
+                <span wire:loading wire:target="deleteModule">Deletando...</span>
             </button>
         </div>
-    @endif
-    <div class="flex flex-col items-center w-full gap-2 p-5 text-center" wire:loading wire:target="deleteModule">
-        <div class="mb-2">
-            <x-mary-loading class="progress-error w-7 h-7" />
+        <div wire:loading wire:target="deleteModule">
+            <div class="flex flex-col items-center w-full gap-2 p-5 text-center">
+                <div class="mb-2">
+                    <x-mary-loading class="progress-error w-7 h-7" />
+                </div>
+                <p class="text-xs tracking-wider text-pink-600">Deletando vídeos e registros...</p>
+            </div>
         </div>
-        <p class="text-xs tracking-wider text-pink-600">Deletando</p>
-    </div> --}}
+    @endif
 </x-mary-modal>

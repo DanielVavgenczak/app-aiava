@@ -13,11 +13,12 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#${newDisciplineButton.id}`,
                 popover: {
-                    description: `Vou clicar no botão "+ Disciplina"`,
+                    // description: `Vou clicar no botão "+ Disciplina"`,
+                    description: `Interagindo com a ferramenta...`,
                     showButtons: [""],
                 },
                 onHighlighted: async (el) => {
-                    await new Promise((resolve) => setTimeout(resolve, 3000));
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
                     if (!newDisciplineButton) {
                         return;
                     }
@@ -29,25 +30,23 @@ export async function StartTourCreateDiscipline() {
             {
                 element: `#discipline-input-title`,
                 popover: {
-                    description: "Adicione o título da disciplina",
+                    description: "Digite o título da disciplina",
                     onPopoverRender: (popover, { config, state }) => {
+                        // refatorar
+                        const nextBtn = popover.nextButton;
+                        const prevBtn = popover.previousButton;
+                        if (nextBtn) nextBtn.remove();  // remove do DOM
+                        if (prevBtn) prevBtn.remove();
                         const actions = AddButtonActions(
                             popover,
-                            "Voltar ao início",
+                            "Cancelar operação",
                         );
                         actions.addEventListener("click", async () => {
-                            Livewire.dispatch("close-create");
+                            Livewire.dispatch("close-create-with-tour");
                             await driverObj.destroy();
                             store.openMai = true;
                         });
                     },
-                },
-            },
-            {
-                element: `#discipline-save`,
-                popover: {
-                    description: `Clique em 'Registrar' para salvar ou 'Cancelar' para cancelar o registro.`,
-
                 },
                 onHighlighted: async (el) => {
                     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -66,7 +65,7 @@ export async function StartTourCreateDiscipline() {
                     btnCreate.addEventListener("click", async () => {
                         await new Promise((resolve) => setTimeout(resolve, 500));
                         const errorTitle = document.querySelector("#title_discipline_error");
-                        await new Promise((resolve) => setTimeout(resolve, 100));
+                        await new Promise((resolve) => setTimeout(resolve, 500));
                         /** Resolução temporaria até recriarmos */
                         if(errorTitle && errorTitle.textContent.trim() !== ""){
                             alert("Erro: Você ja possue uma disciplina com esse titulo.");
@@ -78,10 +77,7 @@ export async function StartTourCreateDiscipline() {
                         await driverObj.destroy();
                         store.openMai = false;
 
-                        await new Promise((resolve) => setTimeout(resolve, 500));
-                        console.log("vai continuar");
-
-                        await new Promise((resolve) => setTimeout(resolve, 2000));
+                        await new Promise((resolve) => setTimeout(resolve, 1500));
 
                         const disciplinesAfterCount = document.querySelectorAll("div.discipline-card");
                         const lastRegisted = disciplinesAfterCount[0];
@@ -90,6 +86,8 @@ export async function StartTourCreateDiscipline() {
 
                         // Cria uma Promise que resolve quando o evento for recebido
                         disciplineIdToManager = dataId;
+
+                        await new Promise((resolve) => setTimeout(resolve, 1500));
 
                         let updatedDriverObj;
                         const continueStepe = [
@@ -109,7 +107,7 @@ export async function StartTourCreateDiscipline() {
                             {
                                 element: `#discipline-manager-content-${disciplineIdToManager}`,
                                 popover: {
-                                    description: `Vou clicar aqui para acessar a página da disciplina`,
+                                    description: `Interagindo com a ferramenta...`,
                                     side: "bottom",
                                     align: "start",
                                     showButtons:['']
@@ -556,7 +554,7 @@ export async function StartTourManagerDisciplineContent(){
                                     {
                                         element: `#${disciplineId}`,
                                         popover: {
-                                            description: `Iniciar gerenciamento`,
+                                            description: `Interagindo com a ferramenta...`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
@@ -570,7 +568,7 @@ export async function StartTourManagerDisciplineContent(){
                                     {
                                         element: `#discipline-manager-content-${dataId}`,
                                         popover: {
-                                            description: `Vou clicar no botão gerenciar conteúdo`,
+                                            description: `Interagindo com a ferramenta...`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']

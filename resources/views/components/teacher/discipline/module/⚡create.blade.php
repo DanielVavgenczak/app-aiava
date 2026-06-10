@@ -43,6 +43,14 @@ new class extends Component {
         $this->open = false;
         //$this->redirect(route('teacher.discipline.show', $this->disciplineId), navigate: true);
     }
+
+
+    #[On('tour-teacher::close-modal-new-lesson')]
+    public function close($open)
+    {
+        $this->open = $open;
+        $this->title = '';
+    }
     public function cancel()
     {
         $this->reset('title', 'open');
@@ -68,7 +76,7 @@ new class extends Component {
                 <button type="button" wire:click="cancel" id="module-input-cancel"
                     class="btn btn-sm bg-ghost">Cancelar</button>
                 <button type="submit" spinner id="module-input-create"
-                    class="btn btn-sm text-gray-50 bg-blue-700">Registrar
+                    class="btn btn-sm text-gray-50 bg-blue-400 hover:bg-blue-500">Registrar
                 </button>
             </div>
         </form>

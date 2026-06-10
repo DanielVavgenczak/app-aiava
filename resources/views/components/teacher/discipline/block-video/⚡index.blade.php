@@ -21,11 +21,11 @@ new class extends Component {
         $this->open = $open;
     }
 
+    #[On('tour-close-modal-upload_block')]
     #[On('upload-block-close')]
     public function close()
     {
         $this->open = false;
-        $this->module_id = '';
         $this->title = '';
     }
 }; ?>

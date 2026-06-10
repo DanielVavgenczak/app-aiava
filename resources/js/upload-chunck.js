@@ -7,6 +7,7 @@ document.addEventListener('alpine:init', () => {
         isUploading: false,
         isUploaded: false,
         showDurationError: false,
+        lastUploadResponse: null,
 
         init() {
             this.resumable = new Resumable({
@@ -27,12 +28,21 @@ document.addEventListener('alpine:init', () => {
             //     console.log('Resumable event:', event);
             // });
 
-            this.resumable.assignBrowse(document.getElementById(`fileInputVideo-${moduleId}`));
+            this.resumable.assignBrowse(document.getElementById(`browser-file-${moduleId}`));
 
             this.resumable.on('fileAdded', (file) => {
                 console.log('File added:', file);
                 this.file = file;
                 this.validateVideoDuration(file.file);
+            });
+
+            this.resumable.on('fileSuccess', (file, message) => {
+                try {
+                    this.lastUploadResponse = JSON.parse(message);
+                } catch (e) {
+                    console.error('Failed to parse upload response:', e);
+                    this.lastUploadResponse = null;
+                }
             });
 
             this.resumable.on('fileProgress', (file) => {
@@ -52,12 +62,23 @@ document.addEventListener('alpine:init', () => {
                     this.resumable.removeFile(this.file);
                     this.resumable.files = [];
                     this.file = null
-                     //window.location.reload()
+
                     Livewire.dispatch('open-new-block-to-module', {open: false});
-                    //Livewire.dispatch('upload-block-close');
-                    Livewire.dispatch('module-event', {type:'uploaded', msg:'Bloco enviado com sucesso'} );
-                    //this.resetState();
-                },1000)
+
+                    if (this.lastUploadResponse?.lesson_id) {
+                        Livewire.dispatch('upload-video-complete', {
+                            type: 'uploaded',
+                            msg: 'Bloco enviado com sucesso',
+                            lesson_id: this.lastUploadResponse.lesson_id,
+                            module_id: this.lastUploadResponse.module_id
+                        });
+                    } else {
+                        Livewire.dispatch('module-event', {
+                            type: 'uploaded',
+                            msg: 'Bloco enviado com sucesso'
+                        });
+                    }
+                }, 1000)
             });
 
             this.resumable.on('error', (message, file) => {
@@ -96,11 +117,6 @@ document.addEventListener('alpine:init', () => {
                 }
             });
         },
-        selectFile() {
-            this.showDurationError = false; // Resetar erro
-            document.getElementById(`fileInputVideo-${moduleId}`).click();
-        },
-
         uploadStart() {
             if (!this.file) return;
             //const description = document.getElementById(`description-${moduleId}`).value;

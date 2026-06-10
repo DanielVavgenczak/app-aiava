@@ -36,7 +36,7 @@ new #[Layout('layouts::teacher')] class extends Component {
     {
         $this->blockSelected = $this->discipline->modules->flatMap->lessons->firstWhere('id', $block_id);
         $this->dispatch('load-video-lesson', $block_id)
-        ->to('pages.teacher.discipline.module.block.video-content');
+        ->to('teacher.discipline.block-video.video');
     }
 
     public function refreshUploadVideo()
@@ -104,6 +104,23 @@ new #[Layout('layouts::teacher')] class extends Component {
         };
         $this->discipline = $this->loadDisciplineContent($this->disciplineID);
         $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
+    }
+
+    #[On('upload-video-complete')]
+    public function handleUploadVideoComplete($type, $msg, $lesson_id, $module_id)
+    {
+        $this->discipline = $this->loadDisciplineContent($this->disciplineID);
+        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
+
+        $this->selectedBlock = $this->discipline->modules->flatMap->lessons->firstWhere('id', $lesson_id);
+        $this->highlight = $lesson_id;
+
+        $this->dispatch('after-video-upload', module_id: $module_id, lesson_id: $lesson_id);
+
+        $this->dispatch('load-video-block', lesson_id: $lesson_id)
+            ->to('teacher.discipline.block-video.video');
+
+        $this->toast(type: 'success', title: $msg, icon: 'o-check', css: 'alert-success');
     }
 
     protected function handleEventWithToast(string $type, string $msg)
@@ -258,6 +275,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                       @foreach ($module->lessons as $lesson)
                                           <li class="">
                                               <button
+                                                  data-lesson-id="{{ $lesson->id }}"
                                                   x-on:click="
                                                   activeLesson = activeLesson === '{{ $lesson->id }}' ? null : '{{ $lesson->id }}';
                                                   $dispatch('load-video-block', {lesson_id:'{{ $lesson->id }}'});
@@ -305,7 +323,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                     @endif
                 </div>
                 <div class="w-full h-screen">
-                    <livewire:pages::teacher.discipline.module.block.video-content
+                    <livewire:teacher.discipline.block-video.video
                         :key="'video-block-' . $discipline->id ?? ''" />
                 </div>
             </div>
@@ -357,13 +375,13 @@ new #[Layout('layouts::teacher')] class extends Component {
                                   label="Deletar uma aula"
                                   x-on:click="$store.tourguide.startTourbDeleteModule()" />
                               <x-mary-button
-                                  class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                                  class="font-medium text-blue-500 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
                                   label="Criar uma tarefa"
                                    x-on:click="$store.tourguide.start('StartTourCreateActivitTask')" />
-                              {{-- <x-mary-button
-                                  class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
+                              <x-mary-button
+                                  class="font-medium text-blue-500 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
                                   label="Editar uma aula"
-                                  x-on:click="$store.tourguide.startEditLesson()" /> --}}
+                                  x-on:click="$store.tourguide.startEditLesson()" />
                           @endif
                       </div>
                   @else
@@ -374,7 +392,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                           x-on:click="$store.tourguide.start('StartTourCreateActivitTask')" />
                   @endif
               </div>
-              <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
+              <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
           </div>
         @endif
 
@@ -390,6 +408,39 @@ document.addEventListener("livewire:initialized", () => {
                 alpine.activeLesson = event.lesson_id;
             }
         });
+    })
+
+    Livewire.on('after-video-upload', (event) => {
+        const moduleList = document.getElementById('module-list-all');
+        if (moduleList) {
+            const rootEl = moduleList.closest('[x-data]');
+            if (rootEl) {
+                const alpineData = Alpine.$data(rootEl);
+                if (alpineData && 'openCollapseId' in alpineData) {
+                    alpineData.openCollapseId = event.module_id;
+                }
+            }
+        }
+
+        const moduleCard = document.getElementById('accordion-' + event.module_id);
+        if (moduleCard) {
+            const lessonList = moduleCard.querySelector('.lesson-list');
+            if (lessonList) {
+                const alpine = Alpine.$data(lessonList);
+                if (alpine && alpine.activeLesson !== undefined) {
+                    alpine.activeLesson = event.lesson_id;
+                }
+            }
+        }
+
+        setTimeout(() => {
+            const lessonBtn = document.querySelector(
+                'button[data-lesson-id="' + event.lesson_id + '"]'
+            );
+            if (lessonBtn) {
+                lessonBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 300);
     })
 });
 

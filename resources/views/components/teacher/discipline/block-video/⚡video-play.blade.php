@@ -24,7 +24,7 @@ new class extends Component {
         $this->initVideo();
     }
 }; ?>
-<div wire:init="initVideo" class="relative w-full overflow-hidden bg-black rounded-lg">
+<div wire:init="initVideo" id="video-player-{{ $lesson_id ?? '' }}" class="relative w-full overflow-hidden bg-black rounded-lg">
     <video wire:ignore id="videoPlayer" controls width="800px" height="900px"></video>
 </div>
 @script

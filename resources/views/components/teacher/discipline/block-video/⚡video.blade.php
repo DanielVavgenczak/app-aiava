@@ -3,12 +3,16 @@
 use Livewire\Component;
 use App\Models\{Lesson};
 use Livewire\Attributes\On;
+use Livewire\WithFileUploads;
 
 new class extends Component {
+    use WithFileUploads;
+
     public $lesson;
     public $selectedTab = 'material-tab';
     public bool $sureDeleteBlock = false;
     public string $video_url = '';
+    public $newVideoFile;
 
     // shows messages
     public bool $showEndBlock = false;
@@ -93,6 +97,44 @@ new class extends Component {
             $this->showEndMessage = false;
         }
 
+    public function updatedNewVideoFile()
+    {
+        $this->validate([
+            'newVideoFile' => 'file|mimes:mp4|max:512000',
+        ]);
+
+        try {
+            $file = $this->newVideoFile;
+            $lesson = $this->lesson;
+
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+            $hashName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . md5(uniqid());
+            $fileName = $originalName . '_' . $hashName . '.' . $extension;
+
+            if ($lesson->path_file && Storage::disk('private')->exists($lesson->path_file)) {
+                Storage::disk('private')->delete($lesson->path_file);
+            }
+
+            $path = Storage::disk('private')->putFileAs('videos/lessons', $file, $fileName);
+
+            $lesson->update([
+                'original_name' => $originalName,
+                'hash_name' => $hashName,
+                'path_file' => $path,
+            ]);
+
+            $this->video_url = route('media.stream', ['lesson_id' => $lesson->id]);
+            $this->dispatch('video-load', url: $this->video_url);
+            $this->newVideoFile = null;
+
+            $this->success('Vídeo atualizado com sucesso!');
+        } catch (\Exception $e) {
+            $this->newVideoFile = null;
+            $this->handleDeleteError($e);
+        }
+    }
+
     public function deleteBlock()
     {
         try {
@@ -141,13 +183,46 @@ new class extends Component {
     </x-mary-modal>
 
     <!-- Botões de ação -->
-    <div class="flex justify-end w-full gap-3 px-3 py-3">
-        {{-- <button class="btn btn-sm bg-ghost" disabled>
-            <x-mary-icon name="o-arrow-path" />
-            Atualizar
-        </button> --}}
+    <div class="flex justify-end w-full gap-3 px-3 py-3" x-data>
+        <input type="file" x-ref="videoUpdateInput" accept="video/*" class="hidden"
+            x-on:change="
+                const file = $refs.videoUpdateInput.files[0];
+                if (!file) return;
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.onloadedmetadata = () => {
+                    const duration = video.duration / 60;
+                    if (duration > 12) {
+                        alert('O vídeo excede o limite de 12 minutos.');
+                        $refs.videoUpdateInput.value = '';
+                        URL.revokeObjectURL(video.src);
+                        return;
+                    }
+                    URL.revokeObjectURL(video.src);
+                    $wire.upload('newVideoFile', file)
+                        .catch(() => { alert('Erro ao enviar vídeo.'); });
+                };
+                video.onerror = () => {
+                    alert('Não foi possível verificar a duração do vídeo. Tente outro arquivo.');
+                    $refs.videoUpdateInput.value = '';
+                    URL.revokeObjectURL(video.src);
+                };
+                video.src = URL.createObjectURL(file);
+            " />
         @if ($lesson)
-            <button x-on:click="$wire.sureDeleteBlock = true" class="btn btn-sm bg-blue-700 text-white">
+            <button x-on:click="$refs.videoUpdateInput.click()"
+                    wire:loading.attr="disabled" wire:target="newVideoFile"
+                    class="btn btn-sm bg-blue-400 hover:bg-blue-500 text-white">
+                <x-mary-icon name="o-arrow-path" class="w-5 h-5" />
+                Atualizar
+            </button>
+            <span wire:loading wire:target="newVideoFile"
+                  class="flex items-center gap-1 text-sm text-blue-500">
+                <x-mary-icon name="o-arrow-path" class="w-4 h-4 animate-spin" />
+                Atualizando...
+            </span>
+            <button x-on:click="$wire.sureDeleteBlock = true"
+                    class="btn btn-sm bg-blue-400 hover:bg-blue-500 text-white">
                 <x-mary-icon name="o-trash" class="w-5 h-5" />
                 Excluir bloco
             </button>
@@ -157,7 +232,7 @@ new class extends Component {
     <!-- Player de vídeo -->
     @if ($lesson)
         <div>
-            <livewire:pages::teacher.discipline.module.block.video :lesson_id="$lesson->id" :key="'video-block-' . $lesson->id" />
+            <livewire:teacher.discipline.block-video.video-play :lesson_id="$lesson->id" :key="'video-block-' . $lesson->id" />
         </div>
            @if($showEndBlock)
             <div class="mx-5 mb-3 p-4 bg-pink-50 border border-pink-200 rounded-lg">

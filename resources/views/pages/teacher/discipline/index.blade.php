@@ -354,7 +354,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                     </p>
                     <button
                         wire:click="createDiscipline"
-                        class="btn bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0"
+                        class="btn bg-blue-400 hover:bg-blue-500 text-white border-0"
                     >
                         <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                         Criar Primeira Disciplina
@@ -378,11 +378,13 @@ new #[Layout('layouts::teacher')] class extends Component {
                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
             </div>
+
             <div class="grid grid-cols-4 gap-2">
-              <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Criar disciplina"
-                    x-on:click="$store.tourguide.start('StartTourCreateDiscipline')" />
+                <x-mary-button
+                class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                label="Criar disciplina"
+                x-on:click="$store.tourguide.start('StartTourCreateDiscipline')" />
+                @if(count($this->disciplines) > 0)
 
                 <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-blue-100"
@@ -401,6 +403,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                     label="Deletar disciplina"
                     x-on:click="$store.tourguide.start('StartTourDeleteDiscipline')" />
+                    @endif
                 </div>
         </div>
         <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />

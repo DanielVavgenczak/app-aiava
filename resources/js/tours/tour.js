@@ -1,4 +1,4 @@
-//import { StartTourDisciplineCreateContent } from "./teacher/discipline/content";
+import { StartTourDisciplineCreateContent } from "./teacher/discipline/content";
 document.addEventListener("alpine:init", () => {
     Alpine.store("tourguide", {
         openMai: false,
@@ -33,7 +33,8 @@ document.addEventListener("alpine:init", () => {
                     "StartTourDisciplineCreateContent",
                     "StartTourDisciplineCreateContentUploadBlock",
                     "StartTourDisciplineUploadBlockToLessonSelected",
-                    "StartTourCreateActivitTask"
+                    "StartTourCreateActivitTask",
+                    "StartEditLesson"
                 ],
             },
             {
@@ -167,6 +168,9 @@ document.addEventListener("alpine:init", () => {
 
         cancelOptionsTourPage() {
             this.openMai = false;
+        },
+        async startEditLesson() {
+            await this.start('StartEditLesson');
         },
         async initTour() {
             console.log("init tour");
