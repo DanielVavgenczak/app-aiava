@@ -20,7 +20,6 @@ new class extends Component {
     #[On('open-delete-module')]
     public function open($id)
     {
-        $this->js("console.log('chamando para o delete')");
         if ($this->module->id === $id) {
             $this->open = true;
         }
@@ -102,10 +101,18 @@ new class extends Component {
         $msg = $e->getMessage() ?: 'Erro ao deletar aula';
         $this->error($msg, timeout: 1000, position: 'toast-bottom toast-start');
     }
+
+    /** Events with tour **/
+    #[On('tour::close-delete-lesson-modal')]
+    public function closeWithTour()
+    {
+        $this->open = false;
+    }
 }; ?>
 <x-mary-modal wire:model="open" title="Deletar aula">
+    <div id="module-delete-lesson-{{ $module->id }}">
     @if ($module)
-        <div class="flex flex-col items-center justify-center gap-3">
+        <div class="flex flex-col items-center justify-center gap-3" >
             <x-mary-icon name="o-trash" class="text-red-500 w-10 h-10" />
             <p class="text-sm text-red-500 tracking-wide font-normal text-center">
                 Tem certeza que deseja deletar a aula "{{ $module->title }}"?
@@ -135,4 +142,6 @@ new class extends Component {
             </div>
         </div>
     @endif
+
+    </div>
 </x-mary-modal>

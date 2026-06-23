@@ -17,9 +17,9 @@ new class extends Component {
         $this->title = $module->title;
     }
     #[On('teacher::open-edit-module')]
-    public function open($module_id)
+    public function open($id)
     {
-        if ($this->module->id === $module_id) {
+        if ($this->module->id === $id) {
             $this->open = true;
         }
     }
@@ -42,10 +42,16 @@ new class extends Component {
         }
     }
 
+    #[On('tour::clear-edit-lesson-modal')]
+    public function closeWithTour()
+    {
+        $this->open = false;
+        //$this->reset('title');
+    }
     public function cancelEdit()
     {
         $this->open = false;
-        $this->reset('title');
+        //$this->reset('title');
     }
 }; ?>
 

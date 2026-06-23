@@ -179,6 +179,17 @@ export async function StartTourDisciplineUploadBlockToLessonSelected() {
   return new Promise(async (resolve) => {
     const modulesCard = document.querySelectorAll("div.module-card");
     await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const openModules = document.querySelectorAll('div.module-card[data-expanded="true"]');
+    if(openModules.length > 0) {
+        openModules.forEach(module => {
+            const toggleBtn = module.querySelector('button[x-on\\:click*="isExpanded"]');
+            if (toggleBtn) {
+                toggleBtn.click();
+            }
+        });
+    }
+
     if(modulesCard.length === 1) {
        const uniqueModule = modulesCard[0].getAttribute('data-tour');
        await ContinueUploadBlock(null, uniqueModule);

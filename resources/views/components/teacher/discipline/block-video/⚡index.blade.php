@@ -28,6 +28,13 @@ new class extends Component {
         $this->open = false;
         $this->title = '';
     }
+
+    #[On('tour::close-opened-modals')]
+    public function closeTourActived()
+    {
+        $this->open = false;
+        $this->js("console.log('enviando pelo alpinejs')");
+    }
 }; ?>
 <x-mary-modal wire:model="open" title="Adicione conteúdo à aula:" subtitle="Adicione videos á aula  {{ $title }}"
     box-class="w-full h-screen max-w-6xl verflow-y-visible" :key="'upload-content-' . $module_id">

@@ -55,6 +55,14 @@ new class extends Component {
     {
         $this->reset('title', 'open');
     }
+
+    /** events with tour **/
+    #[On('tour::close-opened-modals')]
+    public function closeTourActived()
+    {
+        $this->open = false;
+        $this->js("console.log('enviando pelo alpinejs')");
+    }
 }; ?>
 <x-mary-modal wire:model="open" title="Nova aula" subtitle="Crie uma nova aula"
     data-tour="new-lesson-{{ $disciplineId }}">

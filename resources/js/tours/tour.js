@@ -179,6 +179,8 @@ document.addEventListener("alpine:init", () => {
         async initTour() {
             console.log("init tour");
             this.loading = true;
+
+            Livewire.dispatch("tour::close-opened-modals");
             const currentPath = window.location.pathname.trim();
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

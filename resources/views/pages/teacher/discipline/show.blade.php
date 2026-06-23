@@ -68,7 +68,14 @@ new #[Layout('layouts::teacher')] class extends Component {
             module_id: $id
         );
     }
-
+    // teste modal delete
+     public function openModalDeleteModule($id)
+    {
+        $this->dispatch(
+            'teacher::open-edit-module',
+            module_id: $id
+        );
+    }
     /** Open modal new task */
     public function openModalTask()
     {
@@ -225,23 +232,24 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 x-data="{ isExpanded: false }"
                                 x-show="true"
                                 id="accordion-{{ $module->id }}"
-                                data-tour="{{ $module->id }}">
+                                data-tour="{{ $module->id }}"
+                                :data-expanded="isExpanded.toString()">
                                 <!-- Click open -->
                                 <div class="flex items-center" id="accordion-module-{{ $module->id }}">
                                     <x-mary-dropdown wire:key="module-options-{{ $module->id }}">
                                         <x-slot:trigger>
                                             <x-mary-button
                                                 icon="o-ellipsis-vertical"
-                                                class="btn border-none btn-set-dropdown" />
+                                                class="btn border-none btn-set-dropdown-{{ $module->id ?? '' }}" />
                                         </x-slot:trigger>
                                         <x-mary-menu-item
                                             title="Editar"
-                                            class="content-lesson-edit-btn"
-                                            x-on:click="$wire.openModalEditModule('{{ $module->id }}')"
+                                            class="content-lesson-edit-btn-{{ $module->id }}"
+                                            x-on:click="$dispatch('teacher::open-edit-module',{id:'{{ $module->id }}'})"
                                             icon="o-pencil-square" />
                                         <x-mary-menu-item
                                             id="content-les-delete-b"
-                                            class="btn-to-delete"
+                                            class="content-lesson-delete-btn-{{ $module->id }}"
                                             title="Deletar"
                                             icon="o-trash"
                                             x-on:click="$dispatch('open-delete-module', {
@@ -268,8 +276,6 @@ new #[Layout('layouts::teacher')] class extends Component {
                                     </button>
 
                                      <livewire:teacher.discipline.block-video.index :module_id="$module->id" :key="'block-video-' . $module->id" :title="$module->title"/>
-                                    {{-- <livewire:pages.teacher.discipline.block.video :module_id="$module->id" :key="'block-video-' . $module->id" /> --}}
-
                                     <ul x-data="{ activeLesson: null }" class="lesson-list">
                                       @foreach ($module->lessons as $lesson)
                                           <li class="">
@@ -329,9 +335,6 @@ new #[Layout('layouts::teacher')] class extends Component {
           <livewire:teacher.discipline.module.create />
           <livewire:pages::teacher.discipline.module.task.show-task
             wire:key="'task-module-' .{{ $discipline->id ?? ''}}" />
-          {{-- <livewire:teacher.discipline.create
-            :disciplineId="$discipline->id"
-            wire:key="'create-module-' . {{ $discipline->id ?? ''}}" /> --}}
 
           <livewire:pages::teacher.discipline.module.modals.create-task
             :lessons="$discipline->modules"

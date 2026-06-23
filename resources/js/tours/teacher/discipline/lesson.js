@@ -302,11 +302,22 @@ export async function StartEditLesson() {
 
   const modulesCard = document.querySelectorAll("div.module-card");
   await new Promise((resolve) => setTimeout(resolve), 1000);
-
+  const openModules = document.querySelectorAll('div.module-card[data-expanded="true"]');
+  if(openModules.length > 0) {
+     openModules.forEach(module => {
+        const toggleBtn = module.querySelector('button[x-on\\:click*="isExpanded"]');
+        if (toggleBtn) {
+            toggleBtn.click();
+        }
+    });
+  }
   let driverObj;
 
   const buildSequentialSteps = (moduleId) => {
     const formActionsId = `module-edit-form-actions-${moduleId}`;
+
+
+
     return [
       {
         element: `#accordion-${moduleId}`,
@@ -376,8 +387,9 @@ export async function StartEditLesson() {
             if (nextBtn) nextBtn.remove(); // remove do DOM
             const actions = AddButtonActions(popover, "Cancelar operação");
             actions.addEventListener("click", async () => {
-              await driverObj.destroy();
-              store.openMai = true;
+                Livewire.dispatch("tour::clear-edit-lesson-modal");
+                await driverObj.destroy();
+                store.openMai = true;
             });
           },
         },
@@ -389,6 +401,7 @@ export async function StartEditLesson() {
             `#module-edit-send-${moduleId}`,
           );
           const close = async () => {
+            Livewire.dispatch("tour::clear-edit-lesson-modal");
             await driverObj.destroy();
             store.openMai = true;
           };
@@ -462,11 +475,11 @@ export async function StartEditLesson() {
 
 export async function StartDeleteLesson() {
   let store = Alpine.store("tourguide");
+  let moduleOpened = null;
   store.openMai = false;
 
   const modulesCard = document.querySelectorAll("div.module-card");
   await new Promise((resolve) => setTimeout(resolve), 1000);
-
   let driverObj;
 
   const buildDeleteSteps = (moduleId) => {
@@ -488,7 +501,7 @@ export async function StartDeleteLesson() {
       {
         element: `#accordion-module-${moduleId}`,
         popover: {
-          description: `Abrindo menu de opções`,
+          description: `Interagindo com a ferramenta...`,
           side: "bottom",
           align: "start",
           showButtons: [""],
@@ -512,7 +525,7 @@ export async function StartDeleteLesson() {
         },
       },
       {
-        element: `.btn-to-delete`,
+        element: `.content-lesson-delete-btn-${moduleId}`,
         popover: {
           description: `Interagindo com a ferramenta...`,
           side: "right",
@@ -527,7 +540,7 @@ export async function StartDeleteLesson() {
         },
       },
       {
-        element: `#module-delete-actions-${moduleId}`,
+        element: `#module-delete-lesson-${moduleId}`,
         popover: {
           description: `Clique em 'Cancelar' para desistir ou 'Deletar' para confirmar a exclusão`,
           side: "top",
@@ -538,8 +551,10 @@ export async function StartDeleteLesson() {
             if (nextBtn) nextBtn.remove();
             const actions = AddButtonActions(popover, "Cancelar operação");
             actions.addEventListener("click", async () => {
+              Livewire.dispatch("tour::close-delete-lesson-modal");
               await driverObj.destroy();
               store.openMai = true;
+
             });
           },
         },
@@ -565,6 +580,17 @@ export async function StartDeleteLesson() {
     await driverObj.drive();
   };
 
+  const openModules = document.querySelectorAll('div.module-card[data-expanded="true"]');
+  if(openModules.length > 0) {
+     openModules.forEach(module => {
+        const toggleBtn = module.querySelector('button[x-on\\:click*="isExpanded"]');
+        if (toggleBtn) {
+            toggleBtn.click();
+        }
+    });
+  }
+
+  // refatorar
   if (modulesCard.length === 1) {
     const moduleId = modulesCard[0].getAttribute("data-tour");
     await startDeleteTour(moduleId);
