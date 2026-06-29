@@ -40,8 +40,16 @@ new class extends Component {
     box-class="w-full h-screen max-w-6xl verflow-y-visible" :key="'upload-content-' . $module_id">
     <div class="px-2 py-4">
         <x-mary-tabs wire:model="selectedTab" label-class="font-normal text-gray-600 ">
-            <x-mary-tab name="upload-computed-tab" label="Upload pelo computador">
+            <x-mary-tab name="upload-computed-tab" label="Video">
                 <livewire:teacher.discipline.block-video.upload :module_id="$module_id" :key="'module-block-upload-' . $module_id" />
+            </x-mary-tab>
+
+              <x-mary-tab name="texto-computed-tab" label="Texto">
+                {{-- <livewire:teacher.discipline.block-video.upload :module_id="$module_id" :key="'module-block-upload-' . $module_id" /> --}}
+            </x-mary-tab>
+              <x-mary-tab name="link-computed-tab" label="Link">
+                {{-- <livewire:teacher.discipline.block-video.upload :module_id="$module_id" :key="'module-block-link-' . $module_id" /> --}}
+
             </x-mary-tab>
         </x-mary-tabs>
     </div>
