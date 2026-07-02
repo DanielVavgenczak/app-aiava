@@ -381,7 +381,7 @@ export async function ContinueUploadBlock(modules, dataId) {
         await new Promise(r => setTimeout(r, 2000));
         await el.click();
         await new Promise(r => setTimeout(r, 1000));
-        try { await waitForElement(`#browser-file-${dataId}`, 2000); }
+        try { await waitForElement(`#option-block-${dataId}`, 2000); }
         catch (e) { console.error("Modal não renderizou a tempo:", e); }
         await new Promise(r => setTimeout(r, 1000));
         await driverObj.moveNext();
