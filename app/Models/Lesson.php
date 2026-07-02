@@ -18,6 +18,8 @@ class Lesson extends Model
         'teacher_id',
         'title',
         'description',
+        'type',
+        'link',
     ];
     protected $keyType = "uuid";
     public $incrementing = false;

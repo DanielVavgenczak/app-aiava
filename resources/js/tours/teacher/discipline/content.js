@@ -4,7 +4,6 @@ export { StartEditLesson, StartDeleteLesson } from "./lesson";
 
 // aqu
 Livewire.on("continue-created-content", async (event) => {
-    console.log("Evento recebido para continuar o tour de criação de conteúdo:", event);
   try {
     if (!event?.continue) {
       return;
@@ -240,27 +239,6 @@ export async function StartTourDisciplineUploadBlockToLessonSelected() {
   });
 }
 
-
-
-/**
- * Tour Guiado: Criação de Atividades / Avaliações
- *
- * Este tour percorre todas as etapas de criação de uma atividade/avaliação dentro do modal.
- * Fluxo completo:
- *   1. Abre o modal clicando no botão "Atividade / Avaliação"
- *   2. Explica o cabeçalho e layout geral (formulário à esquerda / preview à direita)
- *   3. Apresenta o toggle "Atividade avaliativa" e campo de nota total
- *   4. Mostra o campo de enunciado da questão
- *   5. Exibe os tipos de questão (Múltipla Escolha / Dissertativa)
- *   6. Para Múltipla Escolha: input de opção, botão "+" e lista de opções
- *   7. Campo de nota da questão (visível apenas quando avaliativo)
- *   8. Botão "Criar questão"
- *   9. Painel de preview com a questão criada (contagem, botões editar/remover)
- *   10. Opções de resposta (selecionar a correta via radio button)
- *   11. Vincular à aula (select)
- *   12. Período de datas (início / fim) e tentativas
- *   13. Botões "Cancelar" e "Criar questionário"
- */
 export async function StartTourCreateActivitTask() {
   let store = Alpine.store("tourguide");
   store.openMai = false;

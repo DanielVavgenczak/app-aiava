@@ -21,6 +21,7 @@ class LessonUploadController extends Controller
         'mp4' => 'video/mp4',
         'webm' => 'video/webm',
         'ogg' => 'video/ogg',
+        'pdf' => 'application/pdf',
     ];
 
 
@@ -35,7 +36,7 @@ class LessonUploadController extends Controller
             $lesson = Lesson::findOrFail($lesson_id);
 
             if (!Storage::disk('private')->exists($lesson->path_file)) {
-                abort(404, message: 'Vídeo não encontrado');
+                abort(404, message: 'Arquivo não encontrado');
             }
 
             $path = Storage::disk('private')->path($lesson->path_file);

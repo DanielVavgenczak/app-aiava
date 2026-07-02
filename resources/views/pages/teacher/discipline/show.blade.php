@@ -290,8 +290,16 @@ new #[Layout('layouts::teacher')] class extends Component {
                                                       'hover:bg-gray-200 text-gray-600': activeLesson !== '{{ $lesson->id }}'
                                                   }"
                                                   class="transition-colors cursor-pointer w-full flex items-center gap-2 py-4 px-3 text-left font-normal tracking-wider  text-sm">
-                                                  <x-mary-icon name="o-play" class="w-4 h-4" />
-                                                  {{ $lesson->title }}
+                                                  @php
+                                                      $icon = match($lesson->type ?? 'video') {
+                                                          'video' => 'o-play',
+                                                          'text' => 'o-document-text',
+                                                          'link' => 'o-link',
+                                                          default => 'o-play',
+                                                      };
+                                                  @endphp
+                                                  <x-mary-icon name="{{ $icon }}" class="w-4 h-4" />
+                                                   {{ $lesson->title }}
                                               </button>
                                           </li>
                                       @endforeach

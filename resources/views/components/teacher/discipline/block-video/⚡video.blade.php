@@ -38,8 +38,9 @@ new class extends Component {
     {
         $this->lesson = Lesson::with('module')->find($lesson_id);
         if($this->lesson){
-          $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
-
+          if ($this->lesson->type === 'video') {
+              $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
+          }
           $this->updateNavigationStates();
         }
         $this->showEndBlock = false;
@@ -229,11 +230,32 @@ new class extends Component {
         @endif
     </div>
 
-    <!-- Player de vídeo -->
+    <!-- Player de vídeo / Conteúdo -->
     @if ($lesson)
-        <div>
-            <livewire:teacher.discipline.block-video.video-play :lesson_id="$lesson->id" :key="'video-block-' . $lesson->id" />
-        </div>
+        @if ($lesson->type === 'video')
+            <div>
+                <livewire:teacher.discipline.block-video.video-play :lesson_id="$lesson->id" :key="'video-block-' . $lesson->id" />
+            </div>
+        @elseif ($lesson->type === 'text')
+            <div class="flex flex-col items-center justify-center p-8 mx-5 bg-white border border-gray-200 rounded-lg">
+                <x-mary-icon name="o-document-text" class="w-12 h-12 text-blue-500 mb-4" />
+                <h3 class="text-lg font-medium text-gray-700 mb-2">{{ $lesson->title }}</h3>
+                <p class="text-sm text-gray-500 mb-4">{{ $lesson->original_name }}</p>
+                <a href="{{ route('media.stream', ['lesson_id' => $lesson->id]) }}" target="_blank"
+                   class="px-6 py-2 text-white transition duration-200 bg-blue-400 rounded-lg hover:bg-blue-500">
+                    <x-mary-icon name="o-eye" class="w-4 h-4 inline" /> Visualizar PDF
+                </a>
+            </div>
+        @elseif ($lesson->type === 'link')
+            <div class="flex flex-col items-center justify-center p-8 mx-5 bg-white border border-gray-200 rounded-lg">
+                <x-mary-icon name="o-link" class="w-12 h-12 text-blue-500 mb-4" />
+                <h3 class="text-lg font-medium text-gray-700 mb-2">{{ $lesson->title }}</h3>
+                <a href="{{ $lesson->link }}" target="_blank" rel="noopener noreferrer"
+                   class="px-6 py-2 text-white transition duration-200 bg-blue-400 rounded-lg hover:bg-blue-500">
+                    <x-mary-icon name="o-arrow-top-right-on-square" class="w-4 h-4 inline" /> Acessar Link
+                </a>
+            </div>
+        @endif
            @if($showEndBlock)
             <div class="mx-5 mb-3 p-4 bg-pink-50 border border-pink-200 rounded-lg">
                 <div class="flex items-center gap-3">
