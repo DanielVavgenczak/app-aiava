@@ -237,7 +237,7 @@ new class extends Component {
                 <livewire:teacher.discipline.block-video.video-play :lesson_id="$lesson->id" :key="'video-block-' . $lesson->id" />
             </div>
         @elseif ($lesson->type === 'text')
-            <div class="flex flex-col items-center justify-center p-8 mx-5 bg-white border border-gray-200 rounded-lg">
+            <div id="pdf-viewer-{{ $lesson->id }}" class="flex flex-col items-center justify-center p-8 mx-5 bg-white border border-gray-200 rounded-lg">
                 <x-mary-icon name="o-document-text" class="w-12 h-12 text-blue-500 mb-4" />
                 <h3 class="text-lg font-medium text-gray-700 mb-2">{{ $lesson->title }}</h3>
                 <p class="text-sm text-gray-500 mb-4">{{ $lesson->original_name }}</p>
@@ -247,10 +247,10 @@ new class extends Component {
                 </a>
             </div>
         @elseif ($lesson->type === 'link')
-            <div class="flex flex-col items-center justify-center p-8 mx-5 bg-white border border-gray-200 rounded-lg">
+            <div id="link-viewer-{{ $lesson->id }}" class="flex flex-col items-center justify-center p-8 mx-5 bg-white border border-gray-200 rounded-lg">
                 <x-mary-icon name="o-link" class="w-12 h-12 text-blue-500 mb-4" />
                 <h3 class="text-lg font-medium text-gray-700 mb-2">{{ $lesson->title }}</h3>
-                <a href="{{ $lesson->link }}" target="_blank" rel="noopener noreferrer"
+                <a id="link-access-btn-{{ $lesson->id }}" href="{{ $lesson->link }}" target="_blank" rel="noopener noreferrer"
                    class="px-6 py-2 text-white transition duration-200 bg-blue-400 rounded-lg hover:bg-blue-500">
                     <x-mary-icon name="o-arrow-top-right-on-square" class="w-4 h-4 inline" /> Acessar Link
                 </a>

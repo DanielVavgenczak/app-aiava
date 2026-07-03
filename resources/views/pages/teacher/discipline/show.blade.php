@@ -94,6 +94,8 @@ new #[Layout('layouts::teacher')] class extends Component {
         $this->success($message);
     }
 
+
+
     #[On('event-delete-block')]
     public function refreshDeleteBlock()
     {
@@ -270,7 +272,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                 <div class="flex flex-col gap-3 p-4 bg-gray-100"
                                     x-show="openCollapseId === '{{ $module->id }}'" x-collapse>
                                     <button id="block-open-new-block-{{ $module->id }}"
-                                        class="btn text-white tracking-wider uppercase text-[12px] bg-blue-600 tour-open-new-block-to-click cursor-pointer"
+                                        class="btn text-white tracking-wider uppercase text-[12px] bg-blue-400 tour-open-new-block-to-click cursor-pointer"
                                         x-on:click="$dispatch('open-new-block-to-module', { open: true })">
                                         <x-mary-icon name="o-plus" /> bloco
                                     </button>
@@ -291,14 +293,14 @@ new #[Layout('layouts::teacher')] class extends Component {
                                                   }"
                                                   class="transition-colors cursor-pointer w-full flex items-center gap-2 py-4 px-3 text-left font-normal tracking-wider  text-sm">
                                                   @php
-                                                      $icon = match($lesson->type ?? 'video') {
-                                                          'video' => 'o-play',
-                                                          'text' => 'o-document-text',
-                                                          'link' => 'o-link',
-                                                          default => 'o-play',
-                                                      };
-                                                  @endphp
-                                                  <x-mary-icon name="{{ $icon }}" class="w-4 h-4" />
+                                                       $icon = match($lesson->type ?? 'video') {
+                                                           'video' => 'o-play',
+                                                           'text' => 'o-document-text',
+                                                           'link' => 'o-link',
+                                                           default => 'o-play',
+                                                       };
+                                                   @endphp
+                                                   <x-mary-icon name="{{ $icon }}" class="w-4 h-4" />
                                                    {{ $lesson->title }}
                                               </button>
                                           </li>

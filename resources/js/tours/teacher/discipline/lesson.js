@@ -209,12 +209,13 @@ async function startPdfTour(dataId) {
             if (event.module_id == dataId) {
               if (typeof cleanup === "function") cleanup();
               window._lastLessonId = event.lesson_id;
-              steps[3].element = `button[data-lesson-id="${event.lesson_id}"]`;
+              steps[2].element = `button[data-lesson-id="${event.lesson_id}"]`;
+              steps[3].element = `#pdf-viewer-${event.lesson_id}`;
               resolve();
             }
           };
           cleanup = Livewire.on("after-video-upload", handler);
-          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 1500);
+          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 15000);
         });
         await driverObj.moveNext();
       },
@@ -231,13 +232,17 @@ async function startPdfTour(dataId) {
       onHighlighted: async () => {
         const btn = document.querySelector(`button[data-lesson-id="${window._lastLessonId}"]`);
         if (btn) btn.click();
-        await new Promise(r => setTimeout(r, 1500));
+        for (let i = 0; i < 50; i++) {
+          if (document.querySelector(`#pdf-viewer-${window._lastLessonId}`)) break;
+          await new Promise(r => setTimeout(r, 100));
+        }
+        await new Promise(r => setTimeout(r, 1000));
         await driverObj.moveNext();
       },
     },
     {
       popover: {
-        description: "Pronto! O PDF foi adicionado à aula.",
+        description: "Este é o PDF que foi adicionado à aula.",
         side: "top", align: "center", showButtons: [""],
         onPopoverRender: (popover) => {
           const actions = AddButtonActions(popover, "Voltar ao início");
@@ -259,33 +264,10 @@ async function startLinkTour(dataId) {
   store = Alpine.store("tourguide");
   const steps = [
     {
-      element: `#link-field-${dataId}`,
+      element: `#link-input-group-${dataId}`,
       popover: {
-        description: `Digite ou cole o link externo que deseja adicionar à aula.`,
+        description: `Digite ou cole o link externo e clique em "Salvar".`,
         side: "top", align: "start",
-        onPopoverRender: (popover) => {
-          popover.previousButton?.remove();
-          popover.nextButton?.remove();
-          const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
-        },
-      },
-      onHighlighted: async () => {
-        const input = document.querySelector(`#link-field-${dataId} input`);
-        if (!input) return;
-        input.addEventListener("blur", async () => {
-          if (input.value.trim() !== "") {
-            await new Promise(r => setTimeout(r, 300));
-            await driverObj.moveNext();
-          }
-        });
-      },
-    },
-    {
-      element: `#link-save-btn-${dataId}`,
-      popover: {
-        description: `Clique em "Salvar" para registrar o link na aula.`,
-        side: "left", align: "center",
         onPopoverRender: (popover) => {
           popover.previousButton?.remove();
           popover.nextButton?.remove();
@@ -304,7 +286,7 @@ async function startLinkTour(dataId) {
     },
     {
       popover: {
-        description: "Aguarde...",
+        description: "Registrando...",
         showButtons: [""],
       },
       onHighlighted: async () => {
@@ -313,18 +295,41 @@ async function startLinkTour(dataId) {
           const handler = (event) => {
             if (event.module_id == dataId) {
               if (typeof cleanup === "function") cleanup();
+              window._lastLessonId = event.lesson_id;
+              steps[2].element = `button[data-lesson-id="${event.lesson_id}"]`;
+              steps[3].element = `#link-access-btn-${event.lesson_id}`;
               resolve();
             }
           };
           cleanup = Livewire.on("after-video-upload", handler);
-          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 10000);
+          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 15000);
         });
         await driverObj.moveNext();
       },
     },
     {
       popover: {
-        description: "Pronto! O link foi registrado na aula.",
+        description: "Link registrado",
+        side: "right", align: "center", showButtons: [""],
+        onPopoverRender: (popover) => {
+          const actions = AddButtonActions(popover, "Cancelar operação");
+          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
+        },
+      },
+      onHighlighted: async () => {
+        await new Promise(r => setTimeout(r, 2000));
+        const btn = document.querySelector(`button[data-lesson-id="${window._lastLessonId}"]`);
+        if (btn) btn.click();
+        for (let i = 0; i < 50; i++) {
+          if (document.querySelector(`#link-access-btn-${window._lastLessonId}`)) break;
+          await new Promise(r => setTimeout(r, 100));
+        }
+        await driverObj.moveNext();
+      },
+    },
+    {
+      popover: {
+        description: "Aqui está o link adicionado! Clique em \"Acessar Link\" para abrir.",
         side: "top", align: "center", showButtons: [""],
         onPopoverRender: (popover) => {
           const actions = AddButtonActions(popover, "Voltar ao início");
@@ -332,7 +337,7 @@ async function startLinkTour(dataId) {
         },
       },
       onHighlighted: async () => {
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 3000));
         await driverObj.destroy();
       },
     },

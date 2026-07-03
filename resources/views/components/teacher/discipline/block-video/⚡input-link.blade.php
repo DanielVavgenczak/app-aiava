@@ -94,8 +94,8 @@ new class extends Component
                 <span class="text-sm font-medium tracking-wide text-blue-500">Adicione um link externo para a aula</span>
             </div>
 
-            <div class="flex gap-3">
-                <div id="link-field-{{ $module_id }}" class="flex-1">
+            <div id="link-input-group-{{ $module_id }}" class="flex gap-3">
+                <div class="flex-1">
                     <x-mary-input
                         type="url"
                         placeholder="https://exemplo.com/recurso"
