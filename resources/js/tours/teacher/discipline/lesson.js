@@ -101,8 +101,8 @@ async function startVideoTour(dataId) {
             if (event.module_id == dataId) {
               if (typeof cleanup === "function") cleanup();
               window._lastLessonId = event.lesson_id;
-              steps[4].element = `button[data-lesson-id="${event.lesson_id}"]`;
-              steps[5].element = `#video-player-${event.lesson_id}`;
+              steps[3].element = `button[data-lesson-id="${event.lesson_id}"]`;
+              steps[4].element = `#video-player-${event.lesson_id}`;
               resolve();
             }
           };
@@ -214,7 +214,7 @@ async function startPdfTour(dataId) {
             }
           };
           cleanup = Livewire.on("after-video-upload", handler);
-          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 15000);
+          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 1500);
         });
         await driverObj.moveNext();
       },
@@ -345,7 +345,6 @@ async function startLinkTour(dataId) {
 export async function ContinueUploadBlock(modules, dataId) {
   store = Alpine.store("tourguide");
   let currentTour = null;
-
   const steps = [
     {
       element: `#accordion-module-${dataId}`,
@@ -378,27 +377,26 @@ export async function ContinueUploadBlock(modules, dataId) {
         side: "right", align: "center", showButtons: [""],
       },
       onHighlighted: async (el) => {
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise(r => setTimeout(r, 800));
         await el.click();
-        await new Promise(r => setTimeout(r, 1000));
-        try { await waitForElement(`#option-block-${dataId}`, 2000); }
+        await new Promise(r => setTimeout(r, 800));
+        try { await waitForElement(`#option-block-${dataId}`, 1000); }
         catch (e) { console.error("Modal não renderizou a tempo:", e); }
         await new Promise(r => setTimeout(r, 1000));
         await driverObj.moveNext();
       },
     },
-    {
-      element: `#option-block-${dataId}`,
-      popover: {
-        description: `Interagindo com a ferramenta...`,
-        side: "right", align: "center", showButtons: [""],
-      },
-      onHighlighted: async (el) => {
-        await new Promise(r => setTimeout(r, 1000));
-        await new Promise(r => setTimeout(r, 1000));
-        await driverObj.moveNext();
-      },
-    },
+    // {
+    //   element: `#option-block-${dataId}`,
+    //   popover: {
+    //     description: `Interagindo com a ferramenta...`,
+    //     side: "right", align: "center", showButtons: [""],
+    //   },
+    //   onHighlighted: async (el) => {
+    //     await new Promise(r => setTimeout(r, 1000));
+    //     await driverObj.moveNext();
+    //   },
+    // },
     {
       element: `.options-${dataId}`,
       popover: {
