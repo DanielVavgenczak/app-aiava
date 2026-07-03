@@ -279,12 +279,13 @@ async function startLinkTour(dataId) {
         const btn = document.querySelector(`#link-save-btn-${dataId}`);
         if (!btn) return;
         btn.addEventListener("click", async () => {
-          await new Promise(r => setTimeout(r, 300));
+          await new Promise(r => setTimeout(r, 1500));
           await driverObj.moveNext();
         });
       },
     },
     {
+      element: `#link-progress-${dataId}`,
       popover: {
         description: "Registrando...",
         showButtons: [""],
@@ -302,14 +303,14 @@ async function startLinkTour(dataId) {
             }
           };
           cleanup = Livewire.on("after-video-upload", handler);
-          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 15000);
+          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 1500);
         });
         await driverObj.moveNext();
       },
     },
     {
       popover: {
-        description: "Link registrado",
+        description: "Clique no botão da aula para carregar o link.",
         side: "right", align: "center", showButtons: [""],
         onPopoverRender: (popover) => {
           const actions = AddButtonActions(popover, "Cancelar operação");
@@ -317,13 +318,13 @@ async function startLinkTour(dataId) {
         },
       },
       onHighlighted: async () => {
-        await new Promise(r => setTimeout(r, 2000));
         const btn = document.querySelector(`button[data-lesson-id="${window._lastLessonId}"]`);
         if (btn) btn.click();
         for (let i = 0; i < 50; i++) {
-          if (document.querySelector(`#link-access-btn-${window._lastLessonId}`)) break;
+          if (document.querySelector(`#link-viewer-${window._lastLessonId}`)) break;
           await new Promise(r => setTimeout(r, 100));
         }
+        await new Promise(r => setTimeout(r, 1000));
         await driverObj.moveNext();
       },
     },
