@@ -8,7 +8,6 @@ new class extends Component
 {
     public string $module_id;
     public string $link = '';
-    public bool $saved = false;
 
     public function mount(string $module_id)
     {
@@ -40,7 +39,6 @@ new class extends Component
                 'type' => 'link',
             ]);
 
-            $this->saved = true;
             $this->link = '';
 
             $this->dispatch('open-new-block-to-module', open: false);
@@ -81,13 +79,6 @@ new class extends Component
             </div>
         @endif
 
-        @if ($saved)
-            <div id="link-success-{{ $module_id }}" class="flex items-center gap-3 p-4 border border-green-200 rounded-lg bg-green-50">
-                <x-mary-icon name="o-check-circle" class="w-5 h-5 text-green-600" />
-                <p class="text-sm font-medium text-green-600">Link adicionado com sucesso!</p>
-            </div>
-        @endif
-
         <div class="flex flex-col gap-4 p-6 bg-white rounded-xl border-2 border-dashed border-gray-300">
             <div class="flex items-center gap-3">
                 <x-mary-icon name="o-link" class="w-8 h-8 text-blue-700" />
@@ -100,7 +91,7 @@ new class extends Component
                         type="url"
                         placeholder="https://exemplo.com/recurso"
                         wire:model="link"
-                        class="w-full"
+                        class="w-full !outline-none"
                     />
                 </div>
                 <button
@@ -113,10 +104,6 @@ new class extends Component
                     <span wire:loading>Salvando...</span>
                 </button>
             </div>
-
-            @error('link')
-                <p class="text-sm font-medium text-red-600">{{ $message }}</p>
-            @enderror
         </div>
     </div>
 </div>

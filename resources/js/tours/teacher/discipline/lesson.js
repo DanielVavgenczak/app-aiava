@@ -261,92 +261,89 @@ async function startPdfTour(dataId) {
 
 // ─── TOUR DE LINK ────────────────────────────────────────────
 async function startLinkTour(dataId) {
-  store = Alpine.store("tourguide");
-  const steps = [
-    {
-      element: `#link-input-group-${dataId}`,
-      popover: {
-        description: `Digite ou cole o link externo e clique em "Salvar".`,
-        side: "top", align: "start",
-        onPopoverRender: (popover) => {
-          popover.previousButton?.remove();
-          popover.nextButton?.remove();
-          const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
-        },
-      },
-      onHighlighted: async () => {
-        const btn = document.querySelector(`#link-save-btn-${dataId}`);
-        if (!btn) return;
-        btn.addEventListener("click", async () => {
-          await new Promise(r => setTimeout(r, 1500));
-          await driverObj.moveNext();
-        });
-      },
-    },
-    {
-      element: `#link-progress-${dataId}`,
-      popover: {
-        description: "Registrando...",
-        showButtons: [""],
-      },
-      onHighlighted: async () => {
-        await new Promise((resolve) => {
-          let cleanup;
-          const handler = (event) => {
-            if (event.module_id == dataId) {
-              if (typeof cleanup === "function") cleanup();
-              window._lastLessonId = event.lesson_id;
-              steps[2].element = `button[data-lesson-id="${event.lesson_id}"]`;
-              steps[3].element = `#link-access-btn-${event.lesson_id}`;
-              resolve();
-            }
-          };
-          cleanup = Livewire.on("after-video-upload", handler);
-          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 1500);
-        });
-        await driverObj.moveNext();
-      },
-    },
-    {
-      popover: {
-        description: "Clique no botão da aula para carregar o link.",
-        side: "right", align: "center", showButtons: [""],
-        onPopoverRender: (popover) => {
-          const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
-        },
-      },
-      onHighlighted: async () => {
-        const btn = document.querySelector(`button[data-lesson-id="${window._lastLessonId}"]`);
-        if (btn) btn.click();
-        for (let i = 0; i < 50; i++) {
-          if (document.querySelector(`#link-viewer-${window._lastLessonId}`)) break;
-          await new Promise(r => setTimeout(r, 100));
-        }
-        await new Promise(r => setTimeout(r, 1000));
-        await driverObj.moveNext();
-      },
-    },
-    {
-      popover: {
-        description: "Aqui está o link adicionado! Clique em \"Acessar Link\" para abrir.",
-        side: "top", align: "center", showButtons: [""],
-        onPopoverRender: (popover) => {
-          const actions = AddButtonActions(popover, "Voltar ao início");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
-        },
-      },
-      onHighlighted: async () => {
-        await new Promise(r => setTimeout(r, 3000));
-        await driverObj.destroy();
-      },
-    },
-  ];
-  const driverObj = drivertour({ ...configDriver, steps: [...steps] });
-  await driverObj.drive();
-}
+    store = Alpine.store("tourguide");
 
+    let driverObj = null;
+    let newLessonId = null;
+
+    // Step 1: Input do link
+    const step1 = {
+        element: `#link-input-group-${dataId}`,
+        popover: {
+            description: `Digite ou cole o link externo e clique em "Salvar".`,
+            side: "top", align: "start",
+            onPopoverRender: (popover) => {
+                popover.previousButton?.remove();
+                popover.nextButton?.remove();
+                const actions = AddButtonActions(popover, "Cancelar operação");
+                actions.addEventListener("click", async () => {
+                    await driverObj.destroy();
+                    store.openMai = true;
+                });
+            },
+        },
+        onHighlighted: async () => {
+            const btn = document.querySelector(`#link-save-btn-${dataId}`);
+            if (!btn) return;
+
+            btn.addEventListener("click", async (e) => {
+                // Espera o Livewire processar
+                await new Promise(r => setTimeout(r, 1500));
+
+                // Pega o último botão criado
+                const allButtons = document.querySelectorAll(`[data-lesson-id]`);
+                const lastButton = allButtons[allButtons.length - 1];
+                newLessonId = lastButton?.dataset.lessonId;
+
+                console.log("Novo ID capturado:", newLessonId);
+
+                if (newLessonId) {
+                    // Destroi o tour atual
+                    await driverObj.destroy();
+                    await new Promise(r => setTimeout(r, 500));
+                    // Cria novo tour com o ID correto
+                    const newSteps = [
+                        {
+                            element: `#lesson-btn-${newLessonId}`,
+                            popover: {
+                                description: "✅ Bloco adicionado com sucesso!",
+                                showButtons: [""],
+                            },
+                            onHighlighted: async (el) => {
+                                await new Promise(r => setTimeout(r, 500));
+                                console.log("Bloco encontrado:", el);
+                                await el.click();
+                                // Aqui você pode adicionar mais ações
+                                 await driverObj.moveNext();
+                            }
+                        },
+                        {
+                            element: `#link-viewer-${newLessonId}`,
+                            popover: {
+                                description: "Este é o link que foi adicionado à aula.",
+                            showButtons: [""],
+                            },
+                            onHighlighted: async (el) => {
+                                await new Promise(r => setTimeout(r, 3000));
+                                await driverObj.destroy();
+                            }
+                        }
+                    ];
+
+                    const updatedriverObj = drivertour({
+                        ...configDriver,
+                        steps: newSteps,
+                        start: true
+                    });
+                    await updatedriverObj.drive();
+                }
+            });
+        },
+    };
+
+    driverObj = drivertour({ ...configDriver, steps: [step1] });
+    await driverObj.drive();
+}
 // ─── TOUR PRINCIPAL DE UPLOAD ────────────────────────────────
 export async function ContinueUploadBlock(modules, dataId) {
   store = Alpine.store("tourguide");

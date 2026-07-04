@@ -282,6 +282,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                                       @foreach ($module->lessons as $lesson)
                                           <li class="">
                                               <button
+                                                  id="lesson-btn-{{ $lesson->id }}"
                                                   data-lesson-id="{{ $lesson->id }}"
                                                   x-on:click="
                                                   activeLesson = activeLesson === '{{ $lesson->id }}' ? null : '{{ $lesson->id }}';
