@@ -18,6 +18,7 @@ const waitForElement = (selector, timeout = 3000) => {
 // ─── TOUR DE VÍDEO ────────────────────────────────────────────
 async function startVideoTour(dataId) {
   store = Alpine.store("tourguide");
+  let lessonIDLASTED = null;
   const steps = [
     {
       element: `#browser-file-${dataId}`,
@@ -28,7 +29,11 @@ async function startVideoTour(dataId) {
           popover.previousButton?.remove();
           popover.nextButton?.remove();
           const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
+          actions.addEventListener("click", async () => {
+            Livewire.dispatch("tour-close-modal-upload_block", { open: false });
+            await driverObj.destroy();
+            store.openMai = true;
+         });
         },
       },
       onHighlighted: async () => {
@@ -56,7 +61,10 @@ async function startVideoTour(dataId) {
           popover.previousButton?.remove();
           popover.nextButton?.remove();
           const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
+          actions.addEventListener("click", async () => {
+            Livewire.dispatch("tour-close-modal-upload_block", { open: false });
+            await driverObj.destroy();
+            store.openMai = true; });
         },
       },
       onHighlighted: async () => {
@@ -73,10 +81,6 @@ async function startVideoTour(dataId) {
       popover: {
         description: "Aguarde enquanto o vídeo é processado e enviado.",
         showButtons: [""],
-        onPopoverRender: (popover) => {
-          const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
-        },
       },
       onHighlighted: async () => {
         const targetEl = document.querySelector(`#progress-bar-container-${dataId}`);
@@ -95,31 +99,36 @@ async function startVideoTour(dataId) {
           });
           obs.observe(targetEl, { attributeFilter: ['style'] });
         }
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
         await new Promise((resolve) => {
           let cleanup;
-          const handler = (event) => {
+          const handler = async (event) => {
+
+            console.log("esta executando???",event.lesson_id);
             if (event.module_id == dataId) {
               if (typeof cleanup === "function") cleanup();
               window._lastLessonId = event.lesson_id;
               steps[3].element = `button[data-lesson-id="${event.lesson_id}"]`;
+              //await new Promise(r => setTimeout(r, 1000));
+              console.log("Novo ID capturado: para o video", event.lesson_id);
               steps[4].element = `#video-player-${event.lesson_id}`;
               resolve();
             }
           };
           cleanup = Livewire.on("after-video-upload", handler);
+          console.log("Esperando evento after-video-upload para o video", cleanup);
           setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 15000);
         });
+
+
         await driverObj.moveNext();
       },
     },
     {
       popover: {
-        description: "Clique no botão da aula para carregar o vídeo.",
-        side: "right", align: "center", showButtons: [""],
-        onPopoverRender: (popover) => {
-          const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
-        },
+        description: "Interagindo com a ferramenta...",
+        showButtons: [""],
       },
       onHighlighted: async () => {
         const btn = document.querySelector(`button[data-lesson-id="${window._lastLessonId}"]`);
@@ -136,10 +145,7 @@ async function startVideoTour(dataId) {
       popover: {
         description: "Este é o vídeo que foi adicionado e está sendo reproduzido.",
         side: "top", align: "center", showButtons: [""],
-        onPopoverRender: (popover) => {
-          const actions = AddButtonActions(popover, "Voltar ao início");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
-        },
+        showButtons: [""],
       },
       onHighlighted: async () => {
         await new Promise(r => setTimeout(r, 3000));
@@ -164,7 +170,11 @@ async function startPdfTour(dataId) {
           popover.previousButton?.remove();
           popover.nextButton?.remove();
           const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
+          actions.addEventListener("click", async () => {
+            Livewire.dispatch("tour-close-modal-upload_block", { open: false });
+            await driverObj.destroy();
+            store.openMai = true;
+        });
         },
       },
       onHighlighted: async () => {
@@ -222,12 +232,9 @@ async function startPdfTour(dataId) {
     },
     {
       popover: {
-        description: "PDF adicionado! Clique no botão da aula para visualizar.",
+        description: "PDF adicionado!",
         side: "right", align: "center", showButtons: [""],
-        onPopoverRender: (popover) => {
-          const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
-        },
+       showButtons: [""],
       },
       onHighlighted: async () => {
         const btn = document.querySelector(`button[data-lesson-id="${window._lastLessonId}"]`);
@@ -243,7 +250,7 @@ async function startPdfTour(dataId) {
     {
       popover: {
         description: "Este é o PDF que foi adicionado à aula.",
-        side: "top", align: "center", showButtons: [""],
+        showButtons: [""],
         onPopoverRender: (popover) => {
           const actions = AddButtonActions(popover, "Voltar ao início");
           actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
@@ -277,6 +284,7 @@ async function startLinkTour(dataId) {
                 popover.nextButton?.remove();
                 const actions = AddButtonActions(popover, "Cancelar operação");
                 actions.addEventListener("click", async () => {
+                    Livewire.dispatch("tour-close-modal-upload_block", { open: false });
                     await driverObj.destroy();
                     store.openMai = true;
                 });
@@ -295,8 +303,6 @@ async function startLinkTour(dataId) {
                 const lastButton = allButtons[allButtons.length - 1];
                 newLessonId = lastButton?.dataset.lessonId;
 
-                console.log("Novo ID capturado:", newLessonId);
-
                 if (newLessonId) {
                     // Destroi o tour atual
                     await driverObj.destroy();
@@ -310,7 +316,7 @@ async function startLinkTour(dataId) {
                                 showButtons: [""],
                             },
                             onHighlighted: async (el) => {
-                                await new Promise(r => setTimeout(r, 500));
+                                await new Promise(r => setTimeout(r, 1000));
                                 console.log("Bloco encontrado:", el);
                                 await el.click();
                                 // Aqui você pode adicionar mais ações
