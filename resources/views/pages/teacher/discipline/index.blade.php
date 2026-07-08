@@ -391,10 +391,10 @@ new #[Layout('layouts::teacher')] class extends Component {
                     label="Editar  disciplina"
                     x-on:click="$store.tourguide.start('StartTourEditDiscipline')" />
 
-                 <x-mary-button
+                 {{-- <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                     label="Filtrar disciplina"
-                    x-on:click="$store.tourguide.start('StartTourSearchDiscipline')" />
+                    x-on:click="$store.tourguide.start('StartTourSearchDiscipline')" /> --}}
                  <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                     label="Gerenciar conteúdo"

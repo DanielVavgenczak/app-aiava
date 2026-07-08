@@ -43,16 +43,17 @@ new class extends Component {
 
 <x-mary-modal wire:model="open" title="Editar" subtitle="Edite a disciplina: {{ $discipline->title ?? 'Discipline' }}">
     <form wire:submit.prevent="update">
-        <div wire:loading.remove class="my-3" id="discipline-edit-form-title-{{ $discipline->id ?? '' }}">
+        <div id="discipline-edit-form-actions-{{ $discipline->id ?? '' }}">
+        <div wire:loading.remove class="my-3">
             <x-mary-input for="title" :value="__('Titulo')" wire:model="title" class="!outline-none" />
         </div>
-        <div class="flex justify-end my-3" id="discipline-edit-form-actions-{{ $discipline->id ?? '' }}">
+        <div class="flex justify-end my-3">
             <div class="flex items-center gap-2">
                 <button class="cursor-pointer btn btn-sm btn-ghost" x-on:click="$wire.openEditContent = false"
                     id="discipline-edit-cancel-{{ $discipline->id ?? '' }}">
                     Cancelar
                 </button>
-                <button class="bg-pink-600 btn btn-sm text-gray-50" type="submit"
+                <button class="bg-blue-400 btn btn-sm text-gray-50" type="submit"
                     id="discipline-edit-form-send-{{ $discipline->id ?? '' }}">
                     Editar
                 </button>
@@ -60,9 +61,10 @@ new class extends Component {
         </div>
         <div wire:loading class="flex flex-col justify-center w-full text-center">
             <div class="mb-2">
-                <x-mary-loading class="text-pink-600 loading-dots" />
+                <x-mary-loading class="text-blue-400 loading-dots" />
             </div>
-            <span class="text-xs text-pink-600">Editando</span>
+            <span class="text-xs text-blue-400">Editando</span>
+        </div>
         </div>
     </form>
 </x-mary-modal>

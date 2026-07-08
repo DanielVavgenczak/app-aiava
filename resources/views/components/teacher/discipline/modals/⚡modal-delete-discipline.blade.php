@@ -72,7 +72,6 @@ new class extends Component {
         <p class="mb-3 text-sm font-medium tracking-wider text-blue-400">
             {{ $title }}
         </p>
-    </div>
     <div class="flex flex-col items-center w-full gap-2 p-5 text-center" wire:loading wire:target="delete">
         <div class="mb-2">
             <x-mary-loading class="progress-error w-7 h-7" />
