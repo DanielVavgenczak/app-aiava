@@ -12,19 +12,16 @@ new class extends Component {
                 'icon' => 'o-academic-cap',
                 'route' => route('student.discipline'),
                 'label' => 'Conteúdos',
-                'badge' => null,
             ],
             [
                 'icon' => 'o-chat-bubble-bottom-center',
                 'route' => route('student.messages'),
                 'label' => 'Mensagens',
-                'badge' => null,
             ],
             [
                 'icon' => 'o-chat-bubble-left-right',
                 'route' => route('student.forum.index'),
                 'label' => 'Fórum',
-                'badge' => null,
             ],
         ];
     }
@@ -114,19 +111,7 @@ new class extends Component {
                                 class="w-5 h-5 transition-transform group-hover:scale-110"
                                 ::class="isActive('{{ parse_url($menu['route'], PHP_URL_PATH) }}') ? 'text-white' : ''"
                             />
-
-                            {{-- Badge no ícone (quando colapsado) --}}
-                            @if($menu['badge'] && $menu['badge']['value'] > 0)
-                                <span
-                                    x-show="!$store.expandedSidebar.expanded"
-                                    class="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full"
-                                >
-                                    {{ $menu['badge']['value'] }}
-                                </span>
-                            @endif
                         </div>
-
-                        {{-- Label e Badge --}}
                         <div
                             x-show="$store.expandedSidebar.expanded"
                             x-transition:enter="transition ease-out duration-200"
@@ -137,13 +122,6 @@ new class extends Component {
                             <span class="font-medium capitalize">
                                 {{ $menu['label'] }}
                             </span>
-
-                            {{-- Badge --}}
-                            @if($menu['badge'] && $menu['badge']['value'] > 0)
-                                <span class="px-2 py-0.5 text-xs font-bold text-white bg-red-500 rounded-full">
-                                    {{ $menu['badge']['value'] }}
-                                </span>
-                            @endif
                         </div>
 
                         {{-- Indicador de Ativo (barra lateral) --}}

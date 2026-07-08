@@ -344,8 +344,8 @@ new #[Layout('layouts::teacher')] class extends Component {
                 </div>
             </div>
           <livewire:teacher.discipline.module.create />
-          <livewire:pages::teacher.discipline.module.task.show-task
-            wire:key="'task-module-' .{{ $discipline->id ?? ''}}" />
+          {{-- <livewire:pages::teacher.discipline.module.task.show-task
+            wire:key="'task-module-' .{{ $discipline->id ?? ''}}" /> --}}
 
           <livewire:pages::teacher.discipline.module.modals.create-task
             :lessons="$discipline->modules"
