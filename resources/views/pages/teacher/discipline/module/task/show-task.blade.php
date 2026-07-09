@@ -174,10 +174,11 @@ new class extends Component {
                                           wire:click="startEditingQuestion({{ $index }})" icon="o-pencil-square"
                                           class="btn-sm btn" spinner />
                                       @if ($task->type !== 'multiple_choice')
-                                          <x-mary-button class="btn-sm" label="Entregas"
+                                        <span class="badge bg-red-300">{{ $task->studentAnwsers->count() }}/span>
+                                          {{-- <x-mary-button class="btn-sm" label="Entregas"
                                               badge="{{ $task->studentAnwsers->count() }}"
                                               badge-classes="bg-gray-500 text-white"
-                                              x-on:click="$dispatch('event-teacher-show-student-answer',{task_id: '{{ $task->id }}'})" />
+                                              x-on:click="$dispatch('event-teacher-show-student-answer',{task_id: '{{ $task->id }}'})" /> --}}
                                       @endif
 
                                       <button wire:click="removeQuestion({{ $index }})" type="button"
