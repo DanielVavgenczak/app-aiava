@@ -14,15 +14,16 @@ new class extends Component {
                 'label' => 'Conteúdos',
             ],
             [
-                'icon' => 'o-chat-bubble-bottom-center',
-                'route' => route('teacher.messages'),
-                'label' => 'Mensagens',
-            ],
-            [
                 'icon' => 'o-users',
                 'route' => route('teacher.classes'),
                 'label' => 'Turmas',
             ],
+            [
+                'icon' => 'o-chat-bubble-bottom-center',
+                'route' => route('teacher.messages'),
+                'label' => 'Mensagens',
+            ],
+
             [
                 'icon' => 'o-chat-bubble-left-right',
                 'route' => route('teacher.forum'),
