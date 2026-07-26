@@ -30,8 +30,9 @@
                 'w-[calc(100%-5rem)] left-20'">
             {{ $slot }}
         </main>
-        <x-mary-button
-            class="fixed z-[999] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50"
+        <button
+            class="btn fixed z-[999] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50 transition-all duration-500 ease-in-out"
+            id="just-chat"
             x-on:click="$store.tourguide.initTour()"
             x-show="!$store.tourguide.openMai">
             <img
@@ -39,7 +40,7 @@
                 alt="Iniciar tour guiado"
                 class="w-[100px] h-auto"
             />
-        </x-mary-button>
+        </button>
     </div>
 </body>
 </html>

@@ -69,7 +69,7 @@ document.addEventListener("alpine:init", () => {
                 isDynamic: false,
                 path: "/professor/mensagens",
                 tourModule: () => import("./teacher/messages"),
-                tours: ["StartTourTeacherMessages"],
+                tours: ["StartTourTeacherMessageToDiscipline","StartTourTeacherMessages","StartTourInitChatInClasse"],
             },
             {
                 exact: true,

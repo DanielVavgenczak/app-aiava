@@ -28,3 +28,11 @@ body {
 input:focus ~ label {
     border: 1px;
 }
+/* Estado quando o input de mensagem está focado */
+#just-chat {
+    transition: bottom 0.3s ease;
+}
+
+body:has(input:focus) #just-chat {
+    bottom: 10rem !important;
+}

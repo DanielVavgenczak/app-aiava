@@ -3,10 +3,16 @@
 use Livewire\Component;
 use Livewire\Attributes\On;
 use App\Models\Teacher\Classe;
+use Illuminate\Support\Facades\Storage;
 
 new class extends Component {
     public bool $openDelete = false;
     public ?Classe $classe;
+
+    public function mount(Classe $classe)
+    {
+        $this->fill($classe);
+    }
 
     #[On('delete-classe-modal')]
     public function open($id)
@@ -18,6 +24,14 @@ new class extends Component {
     public function delete()
     {
         try {
+            $students = $this->classe->students()->with('profile')->get();
+
+            foreach ($students as $student) {
+                if ($student->profile?->avatar && Storage::disk('public')->exists($student->profile->avatar)) {
+                    Storage::disk('public')->delete($student->profile->avatar);
+                }
+            }
+
             $this->classe->delete();
             $this->openDelete = false;
             $this->classe = null;
@@ -42,7 +56,7 @@ new class extends Component {
         <div class="mb-6 flex justify-center items-center gap-3 p-5" id="classe-delete-text-{{ $classe->id ?? '' }}"
             wire:loading.remove>
             <x-mary-icon name="o-trash" class="text-red-500 w-4 h-4" />
-            <span class="text-red-500">Tem certeza que deseja deletar? {{ $classe->title }}</span>
+            <span class="text-red-400">Tem certeza que deseja deletar? {{ $classe->name }}</span>
         </div>
         <div class="flex flex-col items-center text-center gap-3 p-5 w-full" wire:loading wire:target="delete">
             <div class="mb-4">

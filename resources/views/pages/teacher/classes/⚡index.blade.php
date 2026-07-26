@@ -382,9 +382,9 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
                                 {{-- Excluir --}}
                                 <button
-                                    wire:click="deleteClasse({{ $classe->id }})"
+                                    x-on:click="$dispatch('delete-classe-modal', {id: '{{ $classe->id }}'})"
                                     id="classe-delete-{{ $classe->id }}"
-                                    class="btn btn-sm bg-red-200 text-gray-700 hover:bg-red-400 border-0"
+                                    class="btn btn-sm bg-red-200 text-gray-700 hover:bg-red-400 border-0 hover:text-gray-50"
                                     title="Excluir turma"
                                 >
                                     <x-mary-icon name="o-trash" class="w-4 h-4" />
@@ -396,6 +396,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
                     {{-- Modais --}}
                     <livewire:teacher.classe.edit-classe :classe="$classe" :wire:key="'edit-' . $classe->id" />
+                    <livewire:teacher.classe.delete-classe  :classe="$classe" :wire:key="'delete-' . $classe->id" />
                     {{-- <livewire:pages::teacher.modal-delete-classe :classe="$classe" :wire:key="'delete-' . $classe->id" /> --}}
                 @endforeach
             </div>

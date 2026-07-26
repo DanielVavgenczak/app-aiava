@@ -24,11 +24,18 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
         return $this->notifications[$studentId] ?? 0;
     }
     #[Computed]
+    public function countDisciplines(): int
+    {
+        return auth()->guard('teacher')->user()->disciplines()->count();
+    }
+
+    #[Computed]
     public function classes()
     {
         return Classe::where('teacher_id', auth()->guard('teacher')->id())
             ->with(['students'])
             ->withCount('students')
+            ->has('students')
             ->get();
     }
 
@@ -177,18 +184,21 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
         </div>
     </div>
 
+    @if($this->countDisciplines > 0)
     <div class="grid grid-cols-12 gap-6 h-[calc(100%-2rem)]" id="teacher-messages-{{ Auth::guard('teacher')->id() }}">
         {{-- Sidebar: Lista de Turmas --}}
         <div class="col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" id="classes-sidebar-{{ Auth::guard('teacher')->id() }}">
             {{-- Header Sidebar --}}
             <div class="p-4 border-b border-gray-200 bg-gray-50">
                 <h2 class="font-bold text-gray-900">Minhas Turmas</h2>
+                {{ count($this->classes) }}
             </div>
 
             {{-- Lista de Turmas --}}
-            <div class="flex-1 overflow-y-auto">
+            <div class="flex-1 overflow-y-auto" id="classe-listing-all">
                 @forelse($this->classes as $classe)
                     <button
+                        id="classe-chat-{{ $classe->id }}"
                         wire:click="selectClasse('{{ $classe->id }}')"
                         class="classe-item w-full p-4 hover:bg-gray-50 border-b border-gray-100 text-left transition-colors {{ $selectedClasseId === $classe->id ? 'bg-blue-50 border-l-4 border-l-blue-600' : '' }}"
                         data-classe-id="{{ $classe->id }}"
@@ -202,10 +212,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
                                 <p class="text-sm text-gray-500">{{ $classe->students_count }} alunos</p>
                             </div>
                             @if($selectedClasseId === $classe->id)
-                                <x-mary-icon name="o-check-circle" class="w-5 h-5 text-blue-600" />
+                                <x-mary-icon name="o-check-circle" class="w-5 h-5 text-blue-600"/>
                             @endif
                         </div>
                     </button>
+
                 @empty
                     <div class="p-8 text-center">
                         <x-mary-icon name="o-user-group" class="w-12 h-12 text-gray-400 mx-auto mb-2" />
@@ -217,35 +228,39 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
 
         {{-- Sidebar: Lista de Alunos (quando turma selecionada) --}}
         @if($selectedClasseId)
-            <div class="col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" id="students-sidebar-{{ Auth::guard('teacher')->id() }}">
+            <div class="col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col"
+            id="classe-chat-sidebar-{{$selectedClasseId }}">
                 {{-- Header --}}
                 <div class="p-4 border-b border-gray-200 bg-gray-50">
                     <h2 class="font-bold text-gray-900">Alunos da Turma</h2>
                 </div>
 
                 {{-- Botão Chat em Grupo --}}
+                @if (count($this->students) > 1)
+
                 <button
                     wire:click="selectGroupChat"
-                    id="group-chat-{{ Auth::guard('teacher')->id() }}"
-                    class="w-full p-4 hover:bg-gray-50 border-b border-gray-100 text-left transition-colors {{ $isGroupChat ? 'bg-green-50 border-l-4 border-l-green-600' : '' }}"
+                    id="group-chat-{{ $selectedClasseId }}"
+                    class="w-full p-4 hover:bg-blue-50 border-b border-blue-100 text-left transition-colors {{ $isGroupChat ? 'bg-blue-50 border-l-4 border-l-blue-400' : '' }}"
                 >
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-400 rounded-full flex items-center justify-center text-white">
                             <x-mary-icon name="o-user-group" class="w-5 h-5" />
                         </div>
                         <div>
                             <h3 class="font-semibold text-gray-900">Chat em Grupo</h3>
-                            <p class="text-xs text-gray-500">Toda a turma</p>
+                            <p class="text-xs text-gray-500"> {{  $this->selectedClasse->name  }}</p>
                         </div>
                     </div>
                 </button>
-
+                @endif
                 {{-- Lista de Alunos --}}
-                <div class="flex-1 overflow-y-auto" id="students-list-{{ Auth::guard('teacher')->id() }}" x-data="notifications({{ Auth::guard('teacher')->user()}})">
+                <div class="flex-1 overflow-y-auto" id="students-list-{{$selectedClasseId }}" x-data="notifications({{ Auth::guard('teacher')->user()}})">
                     @forelse($this->students as $student)
                         <button
+                            id="student-conversation-{{ $student->id }}"
                             wire:click="selectStudent('{{ $student->id }}')"
-                            class="student-item w-full p-4 hover:bg-gray-50 border-b border-gray-100 text-left transition-colors {{ $selectedStudentId === $student->id && !$isGroupChat ? 'bg-blue-50 border-l-4 border-l-blue-600' : '' }}"
+                            class="student-chat-{{ $student->id }} student-item w-full p-4 hover:bg-gray-50 border-b border-gray-100 text-left transition-colors {{ $selectedStudentId === $student->id && !$isGroupChat ? 'bg-blue-50 border-l-4 border-l-blue-400' : '' }}"
                             data-student-id="{{ $student->id }}"
                         >
                             <div class="flex items-center gap-3">
@@ -285,7 +300,8 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
         @endif
 
         {{-- Área de Chat --}}
-        <div class="{{ $selectedClasseId ? 'col-span-6' : 'col-span-9' }} bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col" id="chat-area-{{ Auth::guard('teacher')->id() }}">
+        <div class="{{ $selectedClasseId ? 'col-span-6' : 'col-span-9' }} bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col"
+            id="chat-area-{{ $selectedClasseId }}">
             @if($selectedClasseId && ($selectedStudentId || $isGroupChat))
                 {{-- Header do Chat --}}
                 <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
@@ -364,18 +380,20 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
                 </div>
 
                 {{-- Input de Mensagem --}}
-                <div class="p-4 border-t border-gray-200 bg-white" id="message-input-{{ Auth::guard('teacher')->id() }}">
-                    <form wire:submit.prevent="sendMessage" class="flex gap-2">
+                <div class="p-4 border-t border-gray-200 bg-white" id="message-input-{{ Auth::guard('teacher')->id() }}" >
+                    <form wire:submit.prevent="sendMessage" class="flex gap-2"
+                            id="message-sender-{{ $selectedClasseId }}">
                         <input
                             type="text"
+                            id="message-input"
                             wire:model="messageContent"
                             placeholder="Digite sua mensagem..."
-                            class="input input-bordered flex-1"
+                            class="input input-bordered flex-1 !outline-none"
                             autofocus
                         />
                         <button
                             type="submit"
-                            class="btn bg-blue-600 text-white hover:bg-blue-700 border-0"
+                            class="btn bg-blue-400 text-white hover:bg-blue-500 border-0"
                             wire:loading.attr="disabled"
                         >
                             <x-mary-icon name="o-paper-airplane" class="w-5 h-5" />
@@ -400,26 +418,53 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
             @endif
         </div>
     </div>
+    @else
+    <div class="flex items-center justify-center h-[calc(100%-2rem)]">
+        <div class="text-center">
+            <x-mary-icon name="o-exclamation-triangle" class="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma Disciplina Cadastrada</h3>
+            <p class="text-gray-500">Cadastre uma disciplina para usar o chat.</p>
+            <a href="{{ route('teacher.discipline') }}" class="btn btn-sm btn-primary">Cadastrar Disciplina</a>
+        </div>
+    </div>
+    @endif
 
     {{-- Tour Modal --}}
     <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
         <div
             class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
-            <div class="flex flex-col">
-                <div class="flex justify-end">
+            <div class="flex justify-between items-center">
+                <h2 class="text-sm font-normal text-gray-500">Opções do Chat</h2>
                     <x-mary-button icon="o-x-mark"
-                        class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                        class="bg-white border-none btn-square text-gray-500 hover:text-blue-500"
                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
-                </div>
-                <h2 class="text-lg font-normal text-gray-700">Opções de Tour do Chat:</h2>
             </div>
-            <div class="flex items-center gap-3 p-4 bg-gray-100">
-                <x-mary-button
-                    class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Como usar o chat" x-on:click="$store.tourguide.start('StartTourTeacherMessages')" />
+            <div class="flex items-center gap-3 p-4 bg-gray-50">
+                @if ($this->countDisciplines == 0)
+                    <div class="flex flex-col items-center gap-2 mx-auto">
+                        <x-mary-icon name="o-user-group" class="w-6 h-6 text-gray-400" />
+                        <p class="text-sm text-gray-500">Você ainda não possui disciplina cadastrada.</p>
+                        <button class="btn btn-sm font-medium text-blue-500 border-[1px] border-blue-500 hover:bg-blue-400 hover:border-0 hover:text-blue-100" x-on:click="$store.tourguide.start('StartTourTeacherMessageToDiscipline')">Cadastrar disciplina</button>
+                    </div>
+                @else
+                    @if (count($this->classes) === 0)
+                        <div class="flex flex-col items-center gap-2 mx-auto">
+                            <x-mary-icon name="o-user-group" class="w-6 h-6 text-gray-400" />
+                            <p class="text-sm text-gray-500">Você ainda não possui turmas cadastradas.</p>
+                            <button
+                                class="btn btn-sm font-medium text-blue-500 border-[1px] border-blue-500 hover:bg-blue-400 hover:border-0 hover:text-blue-100" x-on:click="$store.tourguide.start('StartTourTeacherMessageToClasse')">Cadastrar Turma</button>
+                        </div>
+                    @else
+                        <x-mary-button
+                        class="font-medium text-blue-500 border-[1px] border-blue-500 btn hover:bg-blue-400 hover:border-0 hover:text-blue-100"
+                        label="Iniciar uma conversa" x-on:click="$store.tourguide.start('StartTourInitChatInClasse')" />
+                    @endif
+                @endif
+                {{ $this->countDisciplines }}
+
             </div>
         </div>
-        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" >
     </div>
 </div>
 
