@@ -123,7 +123,6 @@ new #[Layout('layouts::teacher')] class extends Component {
                 <h1 class="text-3xl font-bold text-gray-900">Minhas Disciplinas</h1>
                 <p class="text-gray-600 mt-1">Gerencie suas disciplinas e conteúdos</p>
             </div>
-
             <button
                 id="discipline-create"
                 wire:click="createDiscipline"
@@ -136,6 +135,8 @@ new #[Layout('layouts::teacher')] class extends Component {
     </div>
 
     {{-- Card de Estatísticas --}}
+    @if ($this->stats['disciplines'] > 0)
+
     <div class="mb-6">
         <div class="bg-blue-400 rounded-sm p-6 text-white shadow-sm">
             <div class="flex items-center justify-between">
@@ -214,7 +215,7 @@ new #[Layout('layouts::teacher')] class extends Component {
             </div>
         @endif
     </div>
-
+    @endif
     {{-- Lista de Disciplinas --}}
     <div id="discipline-card">
         @if($this->disciplines->count() > 0)

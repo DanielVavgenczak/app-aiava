@@ -105,16 +105,16 @@ new #[Layout('layouts::teacher')] class extends Component {
             {{-- Estado Vazio --}}
             <div id="forum-empty-state" class="text-center py-12">
                 <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <x-mary-icon name="o-inbox" class="w-10 h-10 text-gray-400" />
+                    <x-mary-icon name="o-chat-bubble-left-right" class="w-10 h-10 text-blue-400" />
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma disciplina encontrada</h3>
                 <p class="text-gray-500">
-                    Você ainda não possui disciplinas cadastradas para criar postagens no fórum. Adicione disciplinas para começar a interagir com seus alunos!
+                    Você ainda não possui disciplinas cadastradas para criar postagens no fórum. <br/> Adicione disciplinas para começar a interagir com seus alunos!
                 </p>
                 <a
                     href="{{ route('teacher.discipline') }}"
                     wire:navigate
-                    class="btn bt-md bg-blue-700 mt-4 text-white border-0 hover:bg-blue-500 transition-colors"
+                    class="btn bt-md bg-blue-400 mt-4 text-white border-0 hover:bg-blue-500 transition-colors"
                 >
                     <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                     Adicionar Disciplina

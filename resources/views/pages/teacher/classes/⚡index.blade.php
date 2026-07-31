@@ -153,6 +153,8 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     </div>
 
     {{-- Cards de Estatísticas --}}
+     @if($this->disciplines->count() > 0)
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {{-- Total de Turmas --}}
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-sm">
@@ -286,6 +288,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
         @endif
     </div>
 
+    @endif
     {{-- Lista de Turmas --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" id="classe-list">
         @if($this->classes->count() > 0)
@@ -411,7 +414,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             {{-- Estado Vazio --}}
             <div class="text-center py-16">
                 <div class="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <x-mary-icon name="o-user-group" class="w-12 h-12 text-gray-400" />
+                    <x-mary-icon name="o-user-group" class="w-12 h-12 text-blue-500" />
                 </div>
 
                 @if($search || $disciplineFilter)
@@ -441,9 +444,9 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             Criar Primeira Turma
                         </button>
                     @else
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
-                            <div class="flex items-start gap-3">
-                                <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
+                            <div class="flex justify-center items-center gap-3">
+                                <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                                 <div class="text-left">
                                     <p class="text-sm text-yellow-800 font-medium">
                                         Você precisa cadastrar disciplinas primeiro
@@ -456,7 +459,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             <a
                                 href="{{ route('teacher.discipline') }}"
                                 wire:navigate
-                                class="btn btn-sm btn-primary mt-4"
+                                class="btn btn-sm bg-blue-400 text-blue-50 hover:bg-blue-500 mt-4"
                             >
                                 Ir para Disciplinas
                             </a>

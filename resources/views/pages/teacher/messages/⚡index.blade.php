@@ -421,10 +421,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
     @else
     <div class="flex items-center justify-center h-[calc(100%-2rem)]">
         <div class="text-center">
-            <x-mary-icon name="o-exclamation-triangle" class="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+            <x-mary-icon name="o-chat-bubble-bottom-center" class="w-16 h-16 text-blue-500 mx-auto mb-4" />
             <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhuma Disciplina Cadastrada</h3>
             <p class="text-gray-500">Cadastre uma disciplina para usar o chat.</p>
-            <a href="{{ route('teacher.discipline') }}" class="btn btn-sm btn-primary">Cadastrar Disciplina</a>
+            <a href="{{ route('teacher.discipline') }}" class="btn btn-sm bg-blue-400 text-blue-50 hover:bg-blue-500 mt-4">Cadastrar Disciplina</a>
         </div>
     </div>
     @endif
