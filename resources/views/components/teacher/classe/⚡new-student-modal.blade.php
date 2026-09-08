@@ -5,9 +5,10 @@ use App\Models\Teacher\{Classe, Student};
 use Livewire\Attributes\{On, Validate};
 use Illuminate\Support\Facades\Hash;
 use Mary\Traits\Toast;
-
+use App\Traits\GeneratePasswordStudent;
+use Illuminate\Support\Facades\Log;
 new class extends Component {
-    use Toast;
+    use Toast, GeneratePasswordStudent;
     public bool $open = false;
 
     #[Validate('required', message: 'Nome é obrigatório!')]
@@ -20,6 +21,7 @@ new class extends Component {
     public array $students = [];
     public string $classeId;
     public string $disciplineId;
+
     public Classe $classe;
 
     #[On('teacher::new-student')]
@@ -79,13 +81,16 @@ new class extends Component {
             DB::transaction(function () {
                 foreach ($this->students as $student) {
                     //$phone = !empty(trim($student['phone'] ?? '')) ? $student['phone'] : null;
+                    $temporaryPassword = $this->generateRandomPassword(); // Senha temporária padrão
                     Student::create([
                         'full_name' => $student['name'],
                         'email' => $student['email'],
                         'classe_id' => $this->classeId,
                         'teacher_id' => Auth::guard('teacher')->user()->id,
                         'discipline_id' => $this->disciplineId,
-                        'password' => Hash::make('123456'),
+                        'password' => Hash::make($temporaryPassword),
+                        'temporary_password' => $temporaryPassword,
+                        'must_change_password' => true,
                     ]);
                 }
             });
@@ -110,6 +115,7 @@ new class extends Component {
                       timeout: 8000
                   );
               } else {
+                 dd($e->getMessage());
                   $this->error(
                       'Erro ao cadastrar aluno',
                       'Ocorreu um erro inesperado. Tente novamente.',

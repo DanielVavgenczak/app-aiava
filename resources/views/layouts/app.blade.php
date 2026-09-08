@@ -23,8 +23,6 @@
 <body class="bg-base-100/50 dark:bg-slate-900">
     <x-mary-toast />
     <div class="flex flex-col bg-gray-100 min-w-min" x-data>
-        {{-- <livewire:layout.header-top-app />
-        <x-aside-bar /> --}}
         <main class="relative h-full p-2 transition-all duration-300 ease-in-out top-16 "
             x-bind:class="$store.expandedSidebar.expanded ? 'w-[calc(100%-16.666667%)] left-[16.666667%]' :
                 'w-[calc(100%-5rem)] left-20'">

@@ -74,7 +74,7 @@ new #[Layout('layouts.guest')] class extends Component {
                     <input
                         type="checkbox"
                         wire:model="form.remember"
-                        class="h-4 w-4 text-pink-600"
+                        class="h-4 w-4 text-blue-600"
                     />
                     <label class="ml-2 text-sm text-gray-900">
                         Lembrar-me

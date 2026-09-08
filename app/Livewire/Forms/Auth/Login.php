@@ -54,7 +54,7 @@ class Login extends Form
             RateLimiter::clear($this->throttleKey());
 
             $student = Auth::guard('student')->user();
-            if ($student && Hash::check('123456', $student->password)) {
+            if ($student && $student->must_change_password) {
                 session()->put('must_change_password', true);
             }
 
