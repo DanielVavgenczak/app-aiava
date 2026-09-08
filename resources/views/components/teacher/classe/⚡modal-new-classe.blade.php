@@ -68,7 +68,7 @@ new class extends Component {
         $this->open = false;
     }
 
-    //#[On('classe-create-cancel')]
+    #[On('classe-create-cancel')]
     public function cancelRegister()
     {
         $this->open = false;
@@ -89,7 +89,7 @@ new class extends Component {
 
 <x-mary-modal wire:model="open" title="Nova turma" subtitle="Registre uma nova turma">
     <form wire:submit.prevent="storeClasse" >
-        <div class="flex flex-col" wire:loading.remove>
+        <div class="flex flex-col" wire:loading.remove id="register-classe-inputs">
             <div class="mb-4" id="classe-input-discipline">
                    <label class="block mb-1 text-sm font-medium text-gray-700">Disciplina</label>
                     <x-mary-select wire:model="disciplineId" placeholder="Selecione a disciplina" :options="$disciplines"
@@ -107,7 +107,7 @@ new class extends Component {
                     </button>
                 </div>
                 <div class="flex items-center gap-2" id="classe-input-save">
-                    <button class="btn btn-sm text-gray-50 capitalize bg-blue-700 hover:bg-blue-500" type="submit"
+                    <button class="btn btn-sm text-gray-50 capitalize bg-blue-400 hover:bg-blue-500" type="submit"
                         id="create-confirm">
                         cadastrar
                     </button>

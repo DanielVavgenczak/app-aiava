@@ -143,7 +143,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                 <button
                     @click="$wire.createClasse"
                     id="classe-create"
-                    class="btn bg-gradient-to-r from-blue-600 to-blue-700 text-white border-0 hover:from-blue-700 hover:to-blue-500 shadow-sm"
+                    class="btn bg-blue-400 text-white border-0 hover:bg-blue-500  shadow-sm"
                 >
                     <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                     Nova Turma
@@ -319,7 +319,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             </div>
 
             {{-- Lista --}}
-            <div class="divide-y divide-gray-200">
+            <div class="divide-y divide-gray-200" id="classe-list-content">
                 @foreach ($this->classes as $classe)
                     <div
                         class="group px-6 py-4 hover:bg-blue-50 transition-colors card-classe"
@@ -330,7 +330,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                     >
                         <div class="grid grid-cols-12 gap-4 items-center">
                             {{-- Nome da Turma --}}
-                            <div class="col-span-4 lg:col-span-3">
+                            <div class="col-span-4 lg:col-span-3 selection-to-driver">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                                         <x-mary-icon name="o-user-group" class="w-5 h-5 text-white" />
@@ -343,7 +343,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             </div>
 
                             {{-- Alunos --}}
-                            <div class="col-span-3 lg:col-span-2 flex justify-center">
+                            <div class="col-span-3 lg:col-span-2 flex justify-center selection-to-driver">
                                 <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
                                     {{ $classe->students->count() }}
                                     {{ Str::plural('aluno', $classe->students->count()) }}
@@ -351,7 +351,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             </div>
 
                             {{-- Disciplina --}}
-                            <div class="col-span-5 lg:col-span-4">
+                            <div class="col-span-5 lg:col-span-4 selection-to-driver">
                                 <div class="flex items-center gap-2">
                                     <x-mary-icon name="o-academic-cap" class="w-4 h-4 text-gray-400" />
                                     <span class="text-gray-700 text-sm">{{ $classe->discipline->title }}</span>
@@ -366,10 +366,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                     wire:navigate
                                     id="classe-access-{{ $classe->id }}"
                                     class="btn btn-sm bg-blue-200 text-gray-700 hover:bg-blue-400 border-0"
-                                    title="Acessar turma"
+                                    title="Editar turma"
                                 >
                                     <x-mary-icon name="o-eye" class="w-4 h-4" />
-                                    <span class="hidden sm:inline">Acessar</span>
+                                    <span class="hidden sm:inline">Editar</span>
                                 </a>
 
                                 {{-- Editar --}}
@@ -377,10 +377,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                     x-on:click="$dispatch('edit-classe-modal',{id: @js($classe->id)})"
                                     id="classe-edit-{{ $classe->id }}"
                                     class="btn btn-sm bg-green-200 text-gray-700 hover:bg-green-400 border-0"
-                                    title="Editar turma"
+                                    title="Renomear turma"
                                 >
                                     <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
-                                    <span class="hidden sm:inline">Editar</span>
+                                    <span class="hidden sm:inline">Renomear</span>
                                 </button>
 
                                 {{-- Excluir --}}
@@ -388,10 +388,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                     x-on:click="$dispatch('delete-classe-modal', {id: '{{ $classe->id }}'})"
                                     id="classe-delete-{{ $classe->id }}"
                                     class="btn btn-sm bg-red-200 text-gray-700 hover:bg-red-400 border-0 hover:text-gray-50"
-                                    title="Excluir turma"
+                                    title="Deletar turma"
                                 >
                                     <x-mary-icon name="o-trash" class="w-4 h-4" />
-                                    <span class="hidden sm:inline">Excluir</span>
+                                    <span class="hidden sm:inline">Deletar</span>
                                 </button>
                             </div>
                         </div>
@@ -486,24 +486,24 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
             </div>
             <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
                 <x-mary-button
-                    class="text-blue-600 border-[1px] border-blue-600 btn hover:text-gray-100"
+                    class="text-blue-500 border-[1px] border-blue-500 btn hover:bg-blue-500 hover:text-gray-50"
                     label="Criar turma"
                     x-on:click="$store.tourguide.start('StartTourClasseCreate')" />
                 <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Editar turma"
+                    class="font-medium text-blue-600 border-[1px] border-blue-500 btn hover:bg-blue-500 hover:text-gray-100"
+                    label="Renomear turma"
                     x-on:click="$store.tourguide.start('StartTourClasseEdit')" />
                 <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Excluir turma"
+                    class="font-medium text-blue-500 border-[1px] border-blue-500 btn hover:bg-blue-500 hover:text-gray-100"
+                    label="Deletar turma"
                     x-on:click="$store.tourguide.start('StartTourClasseDelete')" />
                 <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Acessar turma"
+                    class="font-medium text-blue-500 border-[1px] border-blue-500 btn hover:bg-blue-500 hover:text-gray-100"
+                    label="Editar turma"
                     x-on:click="$store.tourguide.start('StartTourClasseAccess')" />
                 <x-mary-button
-                    class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Turma sem alunos"
+                    class="font-medium text-blue-500 border-[1px] border-blue-500 btn hover:bg-blue-500 hover:text-gray-100"
+                    label="Inserir alunos"
                     x-on:click="$store.tourguide.start('StartTourClasseEmptyStudents')" />
             </div>
         </div>
@@ -512,17 +512,24 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
     @script
     <script>
-    document.addEventListener("livewire:initialized", () => {
-        if (sessionStorage.getItem("tour-empty-class-auto")) return;
-        const emptyClasses = document.querySelectorAll('.card-classe[data-students-count="0"]');
-        if (emptyClasses.length > 0) {
-            sessionStorage.setItem("tour-empty-class-auto", "1");
-            setTimeout(() => {
-                const store = Alpine.store("tourguide");
-                if (store) store.start("StartTourClasseEmptyStudents");
-            }, 1500);
+    document.getElementById('classe-list').addEventListener('click', (event) => {
+        if (!event.isTrusted) return;
+        const store = Alpine.store('tourguide');
+        if (store && store.isTourActive) {
+
+            const target = event.target.closest('button, a');
+            if (target) {
+                const id = target.id || '';
+                if (id.startsWith('classe-edit-') ||
+                    id.startsWith('classe-delete-') ||
+                    id.startsWith('classe-access-')) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                }
+            }
         }
-    });
+    }, true);
     </script>
     @endscript
 

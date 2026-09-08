@@ -52,8 +52,11 @@ new class extends Component {
 }; ?>
 
 <x-mary-modal wire:model="openDelete">
+
     @if ($classe)
-        <div class="mb-6 flex justify-center items-center gap-3 p-5" id="classe-delete-text-{{ $classe->id ?? '' }}"
+    <div id="classe-delete-content">
+
+    <div class="mb-6 flex justify-center items-center gap-3 p-5""
             wire:loading.remove>
             <x-mary-icon name="o-trash" class="text-red-500 w-4 h-4" />
             <span class="text-red-400">Tem certeza que deseja deletar? {{ $classe->name }}</span>
@@ -75,5 +78,7 @@ new class extends Component {
                 Deletar
             </button>
         </div>
+
+    </div>
     @endif
 </x-mary-modal>

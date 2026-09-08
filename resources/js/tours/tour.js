@@ -3,6 +3,7 @@ document.addEventListener("alpine:init", () => {
     Alpine.store("tourguide", {
         openMai: false,
         loading: false,
+        isTourActive: false,
         pages: [
             {
                 exact:true,

@@ -35,6 +35,7 @@ new class extends Component {
 
     public function updateClasse()
     {
+        $this->js('console.log("Atualizando classe...")');
         $this->validateMultiple(['classe_name', 'disciplineId']);
         try {
             $this->classe->update([
