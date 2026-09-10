@@ -78,6 +78,7 @@ new class extends Component {
 <x-mary-modal wire:model="open" title="Editar aluno" subtitle="Editar informações do aluno {{ $student->full_name }}" box-class="w-1/2  max-w-6xl">
 
     <form wire:submit.prevent="updateStudent" wire:loading.class="flex flex-col justify-center items-center">
+        <div id="student-edit-actions-{{ $student->id }}">
         <div class="mb-3  gap-2" wire:target="updateStudent" wire:loading,remove>
             <div class="" id="student-input-full_name-{{ $student->id }}">
                 <x-mary-input label="Nome" wire:model="studentName" class="w-full !outline-none"
@@ -89,19 +90,22 @@ new class extends Component {
             </div>
         </div>
 
-        <div id="student-edit-actions-{{ $student->id }}">
+        <div>
             <div class="self-end mt-4" wire:loading.remove>
                 <button type="button" class="btn btn-sm btn-ghost tracking-wider capitalize"
                     x-on:click="$wire.cancel()" id="student-edit-cancel-{{ $student->id }}">cancelar</button>
                 <button type="submit" class="btn btn-sm bg-blue-400 hover:bg-blue-500 capitalize text-gray-50 tracking-wider"
-                    wire:click="updateStudent" id="student-edit-confirm-{{ $student->id }}">editar</button>
+                    wire:click="updateStudent" id="student-edit-confirm-{{ $student->id }}">salvar</button>
             </div>
             <div wire:loading wire:target="updateStudent" class="w-full flex justify-center">
                 <div class="flex flex-col justify-center items-center gap-4">
                     <x-mary-loading class="loading-spinner loading-xl text-blue-400" />
-                    <span class="text-xs capitalize font-semibold tracking-wider text-blue-400">editando</span>
+                    <span class="text-xs capitalize font-semibold tracking-wider text-blue-400">salvando</span>
                 </div>
             </div>
+        </div>
+
+
         </div>
     </form>
 </x-mary-modal>

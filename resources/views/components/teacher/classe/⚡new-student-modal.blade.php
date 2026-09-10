@@ -17,6 +17,8 @@ new class extends Component {
     #[Validate('required', message: 'O e-mail é obrigatório!')]
     #[Validate('email', message: 'O e-mail deve ser valido!')]
     public string $studentEmail = '';
+
+    #[Validate('required', message: 'O telefone é obrigatório!')]
     public string $studentPhone = '';
     public array $students = [];
     public string $classeId;
@@ -35,7 +37,8 @@ new class extends Component {
     {
         $validated = $this->validate([
             'studentName' => 'required|string|min:3',
-            'studentEmail' => 'required|email'
+            'studentEmail' => 'required|email',
+            'studentPhone' => 'required'
         ]);
          // ✅ VERIFICA SE EMAIL JÁ EXISTE NA LISTA ATUAL
         $emailExistsInList = collect($this->students)->contains(function ($student) use ($validated) {
@@ -60,10 +63,11 @@ new class extends Component {
         $students = [
             'name' => $validated['studentName'],
             'email' => $validated['studentEmail'],
+            'phone' => $validated['studentPhone'],
         ];
 
         $this->students[] = $students;
-        $this->reset(['studentName', 'studentEmail']);
+        $this->reset(['studentName', 'studentEmail', 'studentPhone']);
     }
 
     /**
@@ -80,11 +84,11 @@ new class extends Component {
         try {
             DB::transaction(function () {
                 foreach ($this->students as $student) {
-                    //$phone = !empty(trim($student['phone'] ?? '')) ? $student['phone'] : null;
                     $temporaryPassword = $this->generateRandomPassword(); // Senha temporária padrão
                     Student::create([
                         'full_name' => $student['name'],
                         'email' => $student['email'],
+                        'phone' => $student['phone'],
                         'classe_id' => $this->classeId,
                         'teacher_id' => Auth::guard('teacher')->user()->id,
                         'discipline_id' => $this->disciplineId,
@@ -94,7 +98,7 @@ new class extends Component {
                     ]);
                 }
             });
-            $this->reset('studentName', 'studentEmail','students');
+            $this->reset('studentName', 'studentEmail','studentPhone','students');
             $this->open = false;
             $this->dispatch('student-event', type: 'created', message: 'Aluno cadastrado com sucesso!');
         } catch (\Exception $e) {
@@ -136,21 +140,43 @@ new class extends Component {
 <x-mary-modal wire:model="open" title="Aluno" subtitle="Registrar aluno" box-class="w-11/12  max-w-6xl">
     <form wire:submit.prevent="storeStudent" class="flex gap-4 w-full">
     {{-- Card Esquerda: Inputs --}}
-    <div class="w-1/2 bg-white rounded-lg shadow p-4">
+    <div class="w-1/2 bg-white rounded-lg shadow p-4" id="student-inputs" >
         <div class="flex flex-col gap-4">
             <div id="student-input-full_name">
                 <label class="text-sm font-bold text-gray-600" for="input-student-full_name">Nome completo</label>
                 <input class="input !outline-none focus:border-gray-300 w-full mt-1"
+                    type="text"
                     placeholder="Nome do aluno" id="input-student-full_name"
                     wire:model="studentName"/>
                 @error("studentName")
                     <span class="text-xs text-red-500">{{ $message }}</span>
                 @enderror
             </div>
-
+            <div id="student-input-phone">
+                <label class="text-sm font-bold text-gray-600" for="input-student-input-phone">Telefone</label>
+                <input class="input !outline-none focus:border-gray-300 w-full mt-1"
+                    type="text"
+                    placeholder="XX XXXXX-XXXX" id="input-student-input-phone"
+                    x-data
+                    x-on:input="
+                        let v = $event.target.value.replace(/\D/g, '').slice(0, 11);
+                        if (v.length > 6) {
+                            v = v.slice(0,2) + ' ' + v.slice(2,7) + '-' + v.slice(7);
+                        } else if (v.length > 2) {
+                            v = v.slice(0,2) + ' ' + v.slice(2);
+                        }
+                        $event.target.value = v;
+                        $wire.set('studentPhone', v);
+                    "
+                    wire:model="studentPhone"/>
+                @error("studentPhone")
+                    <span class="text-xs text-red-500">{{ $message }}</span>
+                @enderror
+            </div>
             <div id="student-input-email">
                 <label class="text-sm font-bold text-gray-600" for="input-student-input-email">E-mail</label>
                 <input class="input !outline-none focus:border-gray-300 w-full mt-1"
+                    type="email"
                     placeholder="E-mail do aluno" id="input-student-input-email"
                     wire:model="studentEmail"/>
                 @error("studentEmail")
@@ -180,8 +206,9 @@ new class extends Component {
                         <div class="flex gap-7 flex-1">
                             <span class="text-sm text-gray-700">{{ $student['name'] }}</span>
                             <span class="text-sm text-gray-700">{{ $student['email'] }}</span>
+                            <span class="text-sm text-gray-700">{{ $student['phone'] }}</span>
                         </div>
-                        <x-mary-button icon="o-trash" class="btn btn-sm bg-red-200 rounded-sm text-red-500"
+                        <x-mary-button icon="o-trash" class="btn btn-sm bg-red-100 rounded-sm text-red-500"
                             wire:click="removeStudent({{ $index }})" spinner />
                     </li>
                 @endforeach

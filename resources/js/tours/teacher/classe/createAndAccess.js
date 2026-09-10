@@ -9,7 +9,7 @@ export async function ContinueCreateAcessClasseTour(dataTour) {
         {
           element: `#classe-${dataId}`,
           popover: {
-            description: `Vou selecionar a última turma criada`,
+            description: `Interagindo com a ferramenta...`,
             side: "bottom",
             align: "start",
             showButtons: ['']
@@ -23,7 +23,7 @@ export async function ContinueCreateAcessClasseTour(dataTour) {
         {
           element: `#classe-access-${dataId}`, // Seleciona o elemento com base no ID
           popover: {
-            description: `Vou redirecionar para a página de registro de alunos.`,
+            description: `Interagindo com a ferramenta...`,
             side: "bottom",
             align: "start",
             showButtons: ['']

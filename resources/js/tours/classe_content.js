@@ -68,119 +68,6 @@ export async function StartTourStudentRegister()
     let store = Alpine.store("tourguide");
     store.openMai = false;
     await ContinueRegisterStudentTour();
-    // return new Promise(async (resolve) => {
-    //     const btnStudentRegister = document.querySelector("button#student-register");
-    //     if(!btnStudentRegister) return;
-    //     const driverObj = drivertour({
-    //         ...configDriver,
-    //         steps: [
-    //             {
-    //                 element: `#${btnStudentRegister.id}`,
-    //                 popover: {
-    //                     description: `Vou clicar no botão "+ Aluno"`,
-    //                     showButtons: [""],
-    //                 },
-    //                 onHighlighted: async (el) => {
-    //                     await new Promise((resolve) => setTimeout(resolve, 3000));
-    //                     if (!btnStudentRegister) {
-    //                         return;
-    //                     }
-    //                     btnStudentRegister.click();
-    //                     await new Promise((resolve) => setTimeout(resolve, 1000));
-    //                     await driverObj.moveNext();
-    //                 },
-    //             },
-
-    //             {
-    //                 element: `#student-input-full_name`,
-    //                 popover: {
-    //                     description: "Insira o nome completo do aluno",
-    //                 },
-    //             },
-    //             {
-    //                 element: `#student-input-email`,
-    //                 popover: {
-    //                     description: "Insira o email do aluno",
-    //                 },
-    //             },
-    //             {
-    //                 element: `#student-input-phone`,
-    //                 popover: {
-    //                     description: "Caso queira insira o telefone do aluno",
-    //                 },
-    //             },
-    //             {
-    //                 element: `#student-input-add`,
-    //                 popover: {
-    //                     description: "Clique em '+ adicionar', para adicionar o aluno a lista",
-    //                 },
-    //                 onHighlighted: async (el) => {
-    //                     await new Promise((resolve) => setTimeout(resolve, 3000));
-    //                     await driverObj.moveNext();
-    //                 },
-    //             },
-    //             {
-    //                 element: `#student-input-list`,
-    //                 popover: {
-    //                     description: "Verifique os dados do aluno, caso esteja errado exclua da lista clicando na lixeira",
-    //                     onPopoverRender: (popover, { config, state }) => {
-    //                         const actions = AddButtonActions(
-    //                             popover,
-    //                             "voltar ao inicio",
-    //                         );
-    //                         actions.addEventListener("click", () => {
-    //                             Livewire.dispatch("student-register-cancel");
-    //                             driverObj.destroy();
-    //                             store.openMai = true;
-    //                         });
-    //                     },
-    //                 },
-    //                 onHighlighted:async(el) => {
-    //                     await new Promise((resolve) => setTimeout(resolve, 2000));
-    //                 }
-    //             },
-    //             {
-    //                 element: `#student-input-actions`,
-    //                 popover: {
-    //                     description: "Escolher Cancelar ou Registrar",
-    //                     onPopoverRender: (popover, { config, state }) => {
-    //                         const actions = AddButtonActions(
-    //                             popover,
-    //                             "voltar ao inicio",
-    //                         );
-    //                         actions.addEventListener("click", async() => {
-    //                             Livewire.dispatch("student-register-cancel");
-    //                             await driverObj.destroy();
-    //                             store.openMai = true;
-    //                         });
-    //                     },
-    //                 },
-    //                 onHighlighted:async(el) => {
-    //                     const cancel = el.querySelector("#student-input-cancel");
-    //                     const save = el.querySelector("#student-input-register");
-    //                     if (!cancel && !save) {
-    //                         return;
-    //                     }
-    //                     cancel.addEventListener("click",async(event) => {
-    //                         event.preventDefault();
-
-    //                         Livewire.dispatch("student-register-cancel");
-    //                         await driverObj.destroy();
-    //                         store.openMai = true;
-    //                     });
-
-    //                     save.addEventListener("click", async () => {
-    //                         Livewire.dispatch("student-register-cancel");
-    //                         await driverObj.destroy();
-    //                         store.openMai = true;
-    //                     });
-    //                 },
-    //             },
-    //         ]
-    //     })
-    //     return await driverObj.drive();
-    // })
-
 }
 
 export async function StartTourStudentAccess()
@@ -321,13 +208,13 @@ export async function StartTourStudentEdit()
                                     {
                                         element: `#student-${dataId}`,
                                         popover: {
-                                            description: `Vamos clicar no botão de editar`,
+                                            description: `Interagindo com a ferramenta...`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
                                         },
                                         onHighlighted: async (el) => {
-                                            await new Promise((resolve) => setTimeout(resolve, 3000));
+                                            await new Promise((resolve) => setTimeout(resolve, 1000));
                                             el.style.zIndex = "0";
                                             await driverObj.moveNext();
                                             //return;
@@ -336,13 +223,13 @@ export async function StartTourStudentEdit()
                                     {
                                         element: `#student-btn-edit-${dataId}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: `Vamos abrir modal de editção do aluno`,
+                                            description: `Interagindo com a ferramenta...`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
                                         },
                                         onHighlighted: async (el) => {
-                                            await new Promise((resolve) => setTimeout(resolve, 3000));
+                                            await new Promise((resolve) => setTimeout(resolve, 1000));
                                             const btnEdit = document.querySelector(`#student-btn-edit-${dataId}`)
                                             if(!btnEdit) return;
                                             await btnEdit.click()
@@ -352,42 +239,44 @@ export async function StartTourStudentEdit()
 
                                         }
                                     },
-                                    {
-                                        element: `#student-input-full_name-${dataId}`, // Seleciona o elemento com base no ID
-                                        popover: {
-                                            description: `Caso queira edite o nome do aluno`,
-                                            side: "bottom",
-                                            align: "start",
-                                            //showButtons:['']
-                                        },
+                                    // {
+                                    //     element: `#student-edit-actions-${dataId}`, // Seleciona o elemento com base no ID
+                                    //     popover: {
+                                    //         description: `Analise os campos e clique em 'Salvar' para salvar as alterações`,
+                                    //         side: "bottom",
+                                    //         align: "start",
+                                    //         //showButtons:['']
+                                    //     },
 
-                                    },
-                                    {
-                                        element: `#student-input-email-${dataId}`, // Seleciona o elemento com base no ID
-                                        popover: {
-                                            description: `Caso queira edite o email do aluno`,
-                                            side: "bottom",
-                                            align: "start",
-                                            //showButtons:['']
-                                        },
+                                    // },
+                                    // {
+                                    //     element: `#student-input-email-${dataId}`, // Seleciona o elemento com base no ID
+                                    //     popover: {
+                                    //         description: `Caso queira edite o email do aluno`,
+                                    //         side: "bottom",
+                                    //         align: "start",
+                                    //         //showButtons:['']
+                                    //     },
 
-                                    },
-                                    {
-                                        element: `#student-input-phone-${dataId}`, // Seleciona o elemento com base no ID
-                                        popover: {
-                                            description: `Caso queira edite o telefone do estudante`,
-                                            side: "bottom",
-                                            align: "start",
-                                            //showButtons:['']
-                                        },
+                                    // },
+                                    // {
+                                    //     element: `#student-input-phone-${dataId}`, // Seleciona o elemento com base no ID
+                                    //     popover: {
+                                    //         description: `Caso queira edite o telefone do estudante`,
+                                    //         side: "bottom",
+                                    //         align: "start",
+                                    //         //showButtons:['']
+                                    //     },
 
-                                    },
+                                    // },
                                     {
                                         element: `#student-edit-actions-${dataId}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: "Clique em 'Cancelar' para cancelar Ou 'Editar' para savar as alterações",
+                                            description: "Analise os campos e clique em 'Salvar' para salvar as alterações",
                                             onPopoverRender: (popover, { config, state }) => {
-                                                const actions =  AddButtonActions(popover, "voltar ao inicio")
+                                                popover.nextButton.remove();
+                                                popover.previousButton.remove();
+                                                const actions =  AddButtonActions(popover, "Cancelar operação")
                                                 actions.addEventListener('click', async () => {
                                                     Livewire.dispatch("student-edit-cancel");
                                                     await driverObj.destroy();
@@ -399,12 +288,9 @@ export async function StartTourStudentEdit()
                                             //await new Promise((resolve) => setTimeout(resolve, 2000));
                                             const btnCancel = el.querySelector(`#student-edit-cancel-${dataId}`)
                                             const btnConfirm = el.querySelector(`#student-edit-confirm-${dataId}`)
-                                            console.log('Achados', btnCancel, btnConfirm);
                                             if(!btnCancel || !btnConfirm) return;
-
                                             await btnCancel.addEventListener('click', async (event) => {
                                                 event.preventDefault();
-                                                console.log('cliquei nessa merda');
                                                 await  handlerCloseModal();
                                             })
                                             await btnConfirm.addEventListener('click', async () => {
@@ -483,13 +369,13 @@ export async function StartTourStudentDelete()
                                     {
                                         element: `#student-${dataId}`,
                                         popover: {
-                                            description: `Vamos clicar no botão de deletar`,
+                                            description: `Interagindo com a ferramenta...`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
                                         },
                                         onHighlighted: async (el) => {
-                                            await new Promise((resolve) => setTimeout(resolve, 3000));
+                                            await new Promise((resolve) => setTimeout(resolve, 1000));
                                             el.style.zIndex = "0";
                                             await driverObj.moveNext();
                                             //return;
@@ -498,18 +384,18 @@ export async function StartTourStudentDelete()
                                     {
                                         element: `#student-btn-delete-${dataId}`, // Seleciona o elemento com base no ID
                                         popover: {
-                                            description: `Vamos abrir modal de exclusão do aluno`,
+                                            description: `Interagindo com a ferramenta...`,
                                             side: "bottom",
                                             align: "start",
                                             showButtons:['']
                                         },
                                         onHighlighted: async (el) => {
-                                            await new Promise((resolve) => setTimeout(resolve, 3000));
+                                            await new Promise((resolve) => setTimeout(resolve, 1000));
                                             const btnEdit = document.querySelector(`#student-btn-delete-${dataId}`)
                                             if(!btnEdit) return;
                                             await btnEdit.click()
                                             el.style.zIndex = "0";
-                                            await new Promise((resolve) => setTimeout(resolve, 2000));
+                                            await new Promise((resolve) => setTimeout(resolve, 1000));
                                             await driverObj.moveNext();
 
                                         }
@@ -522,7 +408,9 @@ export async function StartTourStudentDelete()
                                             align: "start",
                                             //showButtons:['']
                                               onPopoverRender: (popover, { config, state }) => {
-                                                const actions =  AddButtonActions(popover, "voltar ao inicio")
+                                                popover.nextButton?.remove();
+                                                popover.previousButton?.remove();
+                                                const actions =  AddButtonActions(popover, "Cancelar operação")
                                                 actions.addEventListener('click', async () => {
                                                     Livewire.dispatch("student-delete-cancel");
                                                     await driverObj.destroy();
