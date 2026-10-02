@@ -16,8 +16,6 @@ new #[Layout('layouts::teacher')] class extends Component {
     public ?ForumTopic $topic = null;
     public int $perPage = 2;
     public array $visibleChildrenCount = [];
-    public bool $showDeleteModal = false;
-    public ?string $deleteReplyId = null;
 
     public function mount(string $id): void
     {
@@ -44,40 +42,18 @@ new #[Layout('layouts::teacher')] class extends Component {
      */
     public function confirmDeleteReply($replyId): void
     {
-        $this->deleteReplyId = $replyId;
-        $this->showDeleteModal = true;
+        $this->dispatch('confirm-delete-reply', $replyId)->to('teacher.forum.modal-reply-delete-to-replay');
     }
 
-    /**
-     * Executa deleção de resposta
-     */
-    public function executeDeleteReply(): void
+
+    #[On('forum-reply-deleted')]
+    public function refreshRepliesAfterDelete(): void
     {
-        $reply = ForumReply::find($this->deleteReplyId);
-
-        if (!$reply || !Auth::guard('teacher')->user()?->can('delete', $reply)) {
-            $this->error('Você não tem permissão para excluir esta resposta.');
-            $this->showDeleteModal = false;
-            $this->deleteReplyId = null;
-            return;
-        }
-
-        $reply->delete();
-        $this->showDeleteModal = false;
-        $this->deleteReplyId = null;
-
         unset($this->allReplies);
         unset($this->replies);
         unset($this->repliesWithChildren);
-
-        $this->dispatch('reply-event', type: 'delete', message: 'Resposta excluída com sucesso!');
     }
 
-    public function cancelDeleteReply(): void
-    {
-        $this->showDeleteModal = false;
-        $this->deleteReplyId = null;
-    }
 
     /**
      * Carrega mais sub-respostas para uma resposta específica
@@ -230,6 +206,14 @@ new #[Layout('layouts::teacher')] class extends Component {
         };
     }
 
+    // Os modais de resposta disparam 'reply-created'; sem este listener a lista
+    // não era recarregada após criar uma resposta.
+    #[On('reply-created')]
+    public function refreshAfterCreate(): void
+    {
+        $this->refresh('create', 'Resposta enviada com sucesso!');
+    }
+
 };?>
 
 <div>
@@ -243,11 +227,11 @@ new #[Layout('layouts::teacher')] class extends Component {
             $breadcrumbItems[] = ['label' => Str::limit($topic->title, 30)];
         }
     @endphp
-    <livewire:global.breadcrumb :items="$breadcrumbItems" />
+    <livewire:global.breadcrumb :items="$breadcrumbItems" tour-id="forum-replies-breadcrumb" />
 
     @if($topic)
     {{-- Header do Tópico --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6" id="forum-replies-header">
         <div class="p-8">
             <div class="flex items-start justify-between gap-4">
                 <div class="flex items-start gap-4 flex-1">
@@ -281,7 +265,8 @@ new #[Layout('layouts::teacher')] class extends Component {
                 </div>
 
                 <button wire:click="createReply"
-                    class="btn btn-sm bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-lg flex-shrink-0">
+                    id="forum-replies-new-btn"
+                    class="btn btn-sm bg-blue-400 text-white hover:bg-blue-500 border-0 shadow-lg flex-shrink-0">
                     <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                     <span class="hidden sm:inline">Nova Resposta</span>
                 </button>
@@ -290,7 +275,7 @@ new #[Layout('layouts::teacher')] class extends Component {
     </div>
 
     {{-- Lista de Respostas --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" id="forum-replies-list">
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
             <div class="flex items-center justify-between">
                 <h2 class="font-bold text-gray-900 flex items-center gap-2">
@@ -309,7 +294,7 @@ new #[Layout('layouts::teacher')] class extends Component {
             @endphp
 
             {{-- Resposta Principal --}}
-            <div class="p-6" wire:key="reply-{{ $reply->id }}">
+            <div class="p-6" wire:key="reply-{{ $reply->id }}" data-tour="reply-item">
                 <div class="flex items-start gap-4">
                     <div class="flex-shrink-0">
                         <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
@@ -348,13 +333,13 @@ new #[Layout('layouts::teacher')] class extends Component {
                             <div class="flex items-center gap-2">
                                 @if($reply->isMyReply(auth()->guard('teacher')->id(), 'teacher'))
                                 <button wire:click="editReply('{{ $reply->id }}')"
-                                    class="btn btn-sm bg-blue-100 text-blue-600" title="Editar">
+                                    class="btn btn-sm bg-blue-100 text-blue-600" title="Editar" data-tour="edit-reply">
                                     <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                 </button>
                                 @endif
 
                                 <button wire:click="confirmDeleteReply('{{ $reply->id }}')"
-                                    class="btn btn-sm {{ $this->canDeleteReply($reply) && !$reply->isMyReply(auth()->guard('teacher')->id(), 'teacher') ? 'bg-red-500 text-white' : 'bg-red-100 text-red-600' }}" title="{{ $this->canDeleteReply($reply) && !$reply->isMyReply(auth()->guard('teacher')->id(), 'teacher') ? 'Excluir (moderação)' : 'Excluir' }}">
+                                    class="btn btn-sm {{ $this->canDeleteReply($reply) && !$reply->isMyReply(auth()->guard('teacher')->id(), 'teacher') ? 'bg-red-500 text-white' : 'bg-red-100 text-red-600' }}" title="{{ $this->canDeleteReply($reply) && !$reply->isMyReply(auth()->guard('teacher')->id(), 'teacher') ? 'Excluir (moderação)' : 'Excluir' }}" data-tour="delete-reply">
                                     <x-mary-icon name="o-trash" class="w-4 h-4" />
                                 </button>
                             </div>
@@ -366,6 +351,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                         </div>
 
                         <button wire:click="replyToReply('{{ $reply->id }}')"
+                            data-tour="reply-to-reply"
                             class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50">
                             <x-mary-icon name="o-chat-bubble-left" class="w-4 h-4" />
                             Responder
@@ -519,43 +505,50 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     <livewire:teacher.forum.modal-replie-topic />
     <livewire:teacher.forum.modal-replie-to-replie-topic />
+    <livewire:teacher.forum.modal-edit-replie-topic />
+    <livewire:teacher.forum.modal-reply-delete-to-replay />
 
-    {{-- Modal de confirmação de exclusão de resposta --}}
-    <x-mary-modal wire:model="showDeleteModal" persistent class="backdrop-blur-sm">
-        <div class="text-center">
-            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
-                <x-mary-icon name="o-exclamation-triangle" class="h-10 w-10 text-red-600" />
+    {{-- Tour Modal --}}
+    <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2
+            -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
+            shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+            <div class="flex justify-between items-center">
+                <h2 class="text-sn font-bold text-gray-700">Opções do Tópico</h2>
+                <div class="flex justify-end">
+                    <x-mary-button icon="o-x-mark"
+                        class="bg-white border-none btn-square hover:none hover:bg-blue-400 hover:text-gray-100"
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                </div>
             </div>
+            <div class="grid grid-cols-3 gap-2">
 
-            <h3 class="text-xl font-bold text-gray-900 mb-2">
-                Excluir Resposta?
-            </h3>
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Nova resposta"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumRepliesNewReply')" />
 
-            <p class="text-gray-600 mb-6">
-                Tem certeza que deseja excluir esta resposta? Esta ação não pode ser desfeita.
-            </p>
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Responder"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumRepliesReplyToReply')" />
 
-            <div class="flex gap-3 justify-center">
-                <button wire:click="cancelDeleteReply" class="btn btn-ghost">
-                    <x-mary-icon name="o-x-mark" class="w-5 h-5" />
-                    Cancelar
-                </button>
+                <x-mary-button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    label="Editar resposta"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumRepliesEditReply')" />
 
-                <button wire:click="executeDeleteReply"
-                    class="btn bg-red-600 text-white hover:bg-red-700 border-0"
-                    wire:loading.attr="disabled">
-                    <span wire:loading.remove wire:target="executeDeleteReply">
-                        <x-mary-icon name="o-trash" class="w-5 h-5" />
-                        Sim, Excluir
-                    </span>
-                    <span wire:loading wire:target="executeDeleteReply" class="flex items-center gap-2">
-                        <span class="loading loading-spinner loading-sm"></span>
-                        Excluindo...
-                    </span>
-                </button>
+                <x-mary-button
+                    class="font-medium text-red-600 border-[1px] border-red-600 btn hover:bg-red-600 hover:text-gray-100"
+                    label="Excluir resposta"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumRepliesDeleteReply')" />
             </div>
         </div>
-    </x-mary-modal>
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
+    </div>
+
+    
 </div>
 {{-- ```
 

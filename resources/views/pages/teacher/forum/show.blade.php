@@ -224,6 +224,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                         <a
                                             href="{{ route('teacher.forum.replies', $topic->id) }}"
                                             wire:navigate
+                                            data-tour="topic-title"
                                             class="text-lg font-semibold text-gray-900 hover:text-pink-700 transition-colors block truncate"
                                         >
                                             {{ $topic->title }}
@@ -276,19 +277,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                     {{-- Ações (aparecem no hover) --}}
                                     @if($isMyTopic || $canDelete)
                                         <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            @if($isMyTopic)
-                                            <button
-                                                wire:click="editTopic({{ $topic->id }})"
-                                                class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50"
-                                                title="Editar"
-                                            >
-                                                <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
-                                            </button>
-                                            @endif
                                             <button
                                                 @click="$dispatch('teacher::delete-topic-forum', {topicId: '{{ $topic->id }}'})"
                                                 class="btn btn-sm {{ $canDelete && !$isMyTopic ? 'bg-red-500 text-white hover:bg-red-700' : 'btn-ghost text-red-600 hover:bg-red-50' }}"
                                                 title="{{ $canDelete && !$isMyTopic ? 'Excluir (moderação)' : 'Excluir' }}"
+                                                data-tour="delete-topic"
                                             >
                                                 <x-mary-icon name="o-trash" class="w-4 h-4" />
                                             </button>
@@ -305,10 +298,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                 <p class="text-gray-500 mb-4">Seja o primeiro a iniciar uma discussão!</p>
                                 <button
                                     @click="$wire.openNewTopicModal"
-                                    class="btn btn-primary");
+                                    class="btn btn-primary bg-blue-400 text-white border-0 hover:bg-blue-500");
                                 >
                                     <x-mary-icon name="o-plus" class="w-5 h-5" />
-                                    Criar Primeiro Tópico
+                                    Criar primeiro tópico
                                 </button>
                             </div>
                         @endforelse
@@ -364,6 +357,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                           <a
                                                 href="{{ route('teacher.forum.replies', $topic->id) }}"
                                                 wire:navigate
+                                                data-tour="topic-title"
                                                 class="text-lg font-bold text-gray-900 hover:text-blue-700 transition-colors truncate"
                                             >
                                                 {{ $topic->title }}
@@ -399,9 +393,10 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                     {{-- Ações Visíveis --}}
                                     <div class="flex items-center gap-2">
                                         <button
-                                            wire:click="editTopic({{ $topic->id }})"
+                                            wire:click="editTopic('{{ $topic->id }}')"
                                             class="btn btn-sm bg-blue-500 text-white hover:bg-blue-700 border-0"
                                             title="Editar"
+                                            data-tour="edit-topic"
                                         >
                                             <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                             <span class="hidden sm:inline">Editar</span>
@@ -410,6 +405,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                             @click="$dispatch('teacher::delete-topic-forum', {topicId: '{{ $topic->id }}'})"
                                             class="btn btn-sm bg-red-400 text-white hover:bg-red-700 border-0"
                                             title="{{ $canDelete ? 'Excluir' : 'Sem permissão' }}"
+                                            data-tour="delete-topic"
                                         >
                                             <x-mary-icon name="o-trash" class="w-4 h-4" />
                                             <span class="hidden sm:inline">Excluir</span>
@@ -425,11 +421,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                                 <h3 class="text-lg font-semibold text-gray-900 mb-2">Você ainda não tem tópicos</h3>
                                 <p class="text-gray-500 mb-6">Crie seu primeiro tópico e compartilhe suas ideias!</p>
                                 <button
-                                   @click="$wire.openNewTopicModal"
-                                    class="btn btn-md bg-gray-200 text-blue-500 border-0"
+                                   x-on:click="$wire.openNewTopicModal"
+                                    class="btn btn-md bg-gray-200 text-blue-400 border-0"
                                 >
                                     <x-mary-icon name="o-sparkles" class="w-5 h-5" />
-                                    Criar Meu Primeiro Tópico
+                                    Criar primeiro Tópico
                                 </button>
                             </div>
                         @endforelse
@@ -462,15 +458,52 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
             </div>
-            <div class="grid grid-cols-3 gap-2">
+            <div
+                class="grid grid-cols-3 gap-2"
+                x-data="{
+                    activeTab: '{{ $this->selectedTab }}',
+                    init() {
+                        const tabs = document.querySelector('#forum-show-tabs');
+                        if (!tabs) return;
+                        this.readActiveTab(tabs);
+                        this.tabObserver = new MutationObserver(() => this.readActiveTab(tabs));
+                        this.tabObserver.observe(tabs, { subtree: true, attributes: true, attributeFilter: ['class'] });
+                    },
+                    readActiveTab(tabs) {
+                        const active = tabs.querySelector('a.tab-active[data-name]');
+                        this.activeTab = active ? active.getAttribute('data-name') : null;
+                    },
+                }">
               <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
                     label="Criar tópico"
                     x-on:click="$store.tourguide.start('StartTourTeacherForumShowNewTopic')" />
-              <x-mary-button
+
+                <button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Selecionar meus tópicos"
-                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowMyTopics')" />
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowAllTopics')"
+                    x-show="activeTab !== 'all-tap'">Todos tópicos</button>
+
+                @if($this->myTopics->count() > 0)
+                <x-mary-button
+                class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                label="Meus tópicos"
+                x-on:click="$store.tourguide.start('StartTourTeacherForumShowMyTopics')"
+                x-show="activeTab !== 'mine-tap'" />
+                @endif
+
+                <button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowEditTopic')"
+                    x-show="activeTab === 'mine-tap'">Editar tópico</button>
+
+                <button
+                    class="font-medium text-red-600 border-[1px] border-red-600 btn hover:bg-red-600 hover:text-gray-100"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowDeleteTopic')">Excluir tópico</button>
+
+                <button
+                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    x-on:click="$store.tourguide.start('StartTourTeacherForumShowSelectTopic')">Selecionar tópico</button>
             </div>
         </div>
         <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />

@@ -141,11 +141,7 @@ new #[Layout('layouts::teacher')] class extends Component {
             <div class="grid grid-cols-2 gap-2">
               <x-mary-button
                     class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Visão geral do Fórum"
-                    x-on:click="$store.tourguide.start('StartTourTeacherForum')" />
-              <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                    label="Interagir"
+                    label="Acessar"
                     x-on:click="$store.tourguide.start('StartTourTeacherForumInteract')" />
             </div>
         </div>

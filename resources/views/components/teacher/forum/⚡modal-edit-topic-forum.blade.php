@@ -15,9 +15,6 @@ new class extends Component {
     #[Validate('required|string|min:3|max:255', message: 'O título é obrigatório (3-255 caracteres)')]
     public string $title = '';
 
-    #[Validate('nullable|string|max:1000')]
-    public string $description = '';
-
     #[On('teacher::open-edit-topic-forum')]
     public function openModal($topicId): void
     {
@@ -25,7 +22,6 @@ new class extends Component {
 
         if ($this->topic && Auth::guard('teacher')->user()?->can('update', $this->topic)) {
             $this->title = $this->topic->title;
-            $this->description = $this->topic->description ?? '';
             $this->open = true;
         } else {
             $this->error('Você não tem permissão para editar este tópico.');
@@ -34,16 +30,15 @@ new class extends Component {
 
     public function update(): void
     {
-        $this->validate();
-
         if (!$this->topic || !Auth::guard('teacher')->user()?->can('update', $this->topic)) {
             $this->error('Você não tem permissão para editar este tópico.');
             return;
         }
 
+        $this->validate();
+
         $this->topic->update([
             'title' => $this->title,
-            'description' => $this->description,
         ]);
 
         $this->close();
@@ -52,44 +47,28 @@ new class extends Component {
         $this->dispatch('forum-event', type: 'update', msg: 'Tópico atualizado!');
     }
 
+    #[On('teacher::close-edit-forum-topic')]
     public function close(): void
     {
         $this->open = false;
-        $this->reset(['title', 'description', 'topic']);
+        $this->reset(['title', 'topic']);
     }
 }; ?>
 
 <div>
     <x-mary-modal wire:model="open" title="Editar Tópico" persistent class="backdrop-blur-sm">
-        <form wire:submit="update" class="space-y-4">
-            <div>
-                <x-mary-input
-                    wire:model="title"
-                    label="Título do Tópico"
-                    icon="o-pencil-square"
-                    placeholder="Digite o título..."
-                    hint="3-255 caracteres"
-                />
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Descrição (Opcional)
-                </label>
-                <textarea
-                    wire:model="description"
-                    rows="5"
-                    class="textarea textarea-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                    placeholder="Descreva melhor seu tópico..."
-                ></textarea>
-                <div class="flex justify-between items-center mt-1">
-                    <p class="text-xs text-gray-500">Máximo 1000 caracteres</p>
-                    <p class="text-xs text-gray-500">{{ strlen($description) }}/1000</p>
+        <form id="form-edit-topic" wire:submit.prevent="update" class="space-y-4">
+            <div id="input-edit-topic">
+                <div>
+                    <x-mary-input
+                        wire:model="title"
+                        class="!outline-none"
+                        label="Título do Tópico"
+                        icon="o-pencil-square"
+                        placeholder="Digite o título..."
+                        hint="3-255 caracteres"
+                    />
                 </div>
-                @error('description')
-                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                @enderror
-            </div>
 
             @if($topic)
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -105,21 +84,18 @@ new class extends Component {
                 </div>
             @endif
 
-            <x-slot:actions>
-                <x-mary-button
-                    label="Cancelar"
-                    @click="$wire.close()"
-                    icon="o-x-mark"
-                />
+            <div class="flex justify-end items-center gap-2">
+                <button type="button" class="btn btn-sm btn-ghost"
+                    id="btn-cancel-edit"
+                    x-on:click="$wire.close()">
+                    Cancelar</button>
 
-                <x-mary-button
-                    label="Salvar Alterações"
-                    class="btn-primary"
-                    type="submit"
-                    spinner="update"
-                    icon="o-check-circle"
-                />
-            </x-slot:actions>
+                    <button type="submit" class="btn btn-sm bg-blue-400  hover:*:bg-blue-500 text-white"
+                    id="btn-save-edit"
+                    x-on:click="$wire.update()">
+                    Salvar Alterações</button>
+
+            </div>
         </form>
     </x-mary-modal>
 </div>

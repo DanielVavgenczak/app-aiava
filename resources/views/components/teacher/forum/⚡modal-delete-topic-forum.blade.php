@@ -40,6 +40,7 @@ new class extends Component {
         $this->dispatch('forum-event', type: 'delete', msg: 'Tópico excluído!');
     }
 
+    #[On('teacher::close-delete-forum-topic')]
     public function close(): void
     {
         $this->open = false;
@@ -49,7 +50,7 @@ new class extends Component {
 
 <div>
     <x-mary-modal wire:model="open" persistent class="backdrop-blur-sm">
-        <div class="text-center">
+        <div id="form-delete-topic" class="text-center">
             <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
                 <x-mary-icon name="o-exclamation-triangle" class="h-10 w-10 text-red-600" />
             </div>
@@ -106,20 +107,20 @@ new class extends Component {
 
             <div class="flex gap-3 justify-center">
                 <button
+                    id="btn-cancel-delete"
                     wire:click="close"
-                    class="btn btn-ghost"
+                    class="btn btn-sm btn-ghost"
                 >
-                    <x-mary-icon name="o-x-mark" class="w-5 h-5" />
                     Cancelar
                 </button>
 
                 <button
+                    id="btn-confirm-delete"
                     wire:click="delete"
-                    class="btn bg-red-600 text-white hover:bg-red-700 border-0"
+                    class="btn bg-red-400 text-white hover:bg-red-500 border-0"
                     wire:loading.attr="disabled"
                 >
                     <span wire:loading.remove wire:target="delete">
-                        <x-mary-icon name="o-trash" class="w-5 h-5" />
                         Sim, Excluir Tópico
                     </span>
                     <span wire:loading wire:target="delete" class="flex items-center gap-2">

@@ -347,7 +347,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                         <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             @if($isMyTopic)
                                             <button
-                                                wire:click="editTopic({{ $topic->id }})"
+                                                wire:click="editTopic('{{ $topic->id }}')"
                                                 class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50"
                                                 title="Editar"
                                             >

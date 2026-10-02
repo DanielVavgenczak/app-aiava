@@ -87,7 +87,27 @@ document.addEventListener("alpine:init", () => {
                 tours: [
                     "StartTourTeacherForumShowNewTopic",
                     "StartTourTeacherForumShowSelectTopic",
+                    "StartTourTeacherForumShowAllTopics",
                     "StartTourTeacherForumShowMyTopics",
+                    "StartTourTeacherForumShowEditTopic",
+                    "StartTourTeacherForumShowDeleteTopic",
+                ],
+            },
+            // Forum > topico > respostas (interacao entre aluno e professor).
+            // A entrada "/professor/forum" acima nao intercepta esta URL: o
+            // trecho depois do path seria "replies/<uuid>" e a regex de UUID
+            // reprova, entao o loop segue para esta entrada.
+            {
+                exact: false,
+                isDynamic: true,
+                path: "/professor/forum/replies",
+                tourModule: () => import("./teacher/forum/forum"),
+                tours: [
+                    "StartTourTeacherForumReplies",
+                    "StartTourTeacherForumRepliesNewReply",
+                    "StartTourTeacherForumRepliesReplyToReply",
+                    "StartTourTeacherForumRepliesEditReply",
+                    "StartTourTeacherForumRepliesDeleteReply",
                 ],
             },
 

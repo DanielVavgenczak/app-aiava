@@ -48,6 +48,7 @@ new class extends Component {
         $this->toast(type: 'success', title: 'Resposta enviada!');
     }
 
+    #[On('teacher::close-reply-forum-topic')]
     public function cancel()
     {
         $this->open = false;
@@ -58,17 +59,17 @@ new class extends Component {
 ?>
 
 <x-mary-modal wire:model="open" title="Nova resposta" size="lg">
-    <form wire:submit.prevent="save" class="space-y-4">
-        <x-mary-textarea
-            wire:model="content"
-            placeholder="Digite sua resposta..."
-            rows="6"
-            class="textarea textarea-bordered w-full !outline-none"
-        />
+                <form wire:submit.prevent="save" id="form-reply-topic" class="space-y-4">
+                    <x-mary-textarea
+                        wire:model="content"
+                        placeholder="Digite sua resposta..."
+                        rows="6"
+                        class="textarea textarea-bordered w-full !outline-none"
+                    />
 
-        <div class="flex justify-end space-x-2">
-            <button type="button" class="btn btn-sm btn-ghost" wire:click="cancel">Cancelar</button>
-            <button type="submit" class="btn btn-sm btn-primary">Enviar</button>
-        </div>
-    </form>
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="btn-cancel-reply" class="btn btn-sm btn-ghost" wire:click="cancel">Cancelar</button>
+                        <button type="submit" id="btn-save-reply" class="btn btn-sm btn-primary">Responder</button>
+                    </div>
+                </form>
 </x-mary-modal>
