@@ -1,0 +1,15 @@
+node_modules
+vendor
+.env
+.env.*
+.git
+.gitignore
+docker
+!docker/supervisor.conf
+docs
+*.log
+storage/logs
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*

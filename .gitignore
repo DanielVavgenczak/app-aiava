@@ -28,3 +28,4 @@ CHECKLIST.md
 bootstrap/cache/*
 public/vendor/*
 
+.env.production

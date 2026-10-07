@@ -17,7 +17,6 @@ RUN echo "upload_max_filesize = 100M\npost_max_size = 100M\nmemory_limit = 512M\
 WORKDIR /var/www/html
 COPY . /var/www/html
 
-RUN if [ -f .env.production ]; then cp .env.production .env; fi
 
 RUN mkdir -p bootstrap/cache && chmod -R 775 bootstrap/cache
 
