@@ -3,22 +3,35 @@
 use Livewire\Component;
 use Livewire\Attributes\On;
 use App\Models\Teacher\{Discipline};
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 new class extends Component {
     public bool $open = false;
     public string $id = '';
     public string $title = '';
 
+    #[On('delete-discipline-modal')]
     #[On('delete-module-modal')]
     public function open($id)
     {
-        if ($this->id === $id || $this->id === '') {
-            $this->id = $id;
-            $discipline = Discipline::find($id);
-            $this->title = $discipline ? $discipline->title : '';
-            $this->open = true;
+        if ($this->id !== '' && $this->id !== $id) {
+            return;
         }
+
+        $discipline = Discipline::find($id);
+
+        if ($discipline === null) {
+            $this->resetState();
+            $this->dispatch('discipline-event', type: 'error', msg: 'Disciplina não encontrada!');
+            return;
+        }
+
+        $this->authorizeForUser(Auth::guard('teacher')->user(), 'delete', $discipline);
+
+        $this->id = $discipline->id;
+        $this->title = $discipline->title;
+        $this->open = true;
     }
 
     #[On('to-close')]
@@ -29,15 +42,20 @@ new class extends Component {
 
     public function delete()
     {
+        $discipline = Discipline::find($this->id);
+
+        if ($discipline === null) {
+            $this->dispatch('discipline-event', type: 'error', msg: 'Disciplina não encontrada!');
+            $this->resetState();
+            return;
+        }
+
+        $this->authorizeForUser(Auth::guard('teacher')->user(), 'delete', $discipline);
+
         try {
-            $discipline = Discipline::find($this->id);
-            if (!$discipline) {
-                Session::flash('error', 'Disciplina não encontrada');
-            }
-            $modules = $discipline->modules;
+            $modules = $discipline->modules()->with('lessons')->get();
             foreach ($modules as $module) {
-                $lessons = $module->lessons;
-                foreach ($lessons as $lesson) {
+                foreach ($module->lessons as $lesson) {
                     if ($lesson->path_file && Storage::disk('private')->exists($lesson->path_file)) {
                         Storage::disk('private')->delete($lesson->path_file);
                     }
@@ -45,21 +63,22 @@ new class extends Component {
                 }
                 $module->delete();
             }
+
             $discipline->delete();
+
             $this->dispatch('discipline-event', type: 'delete', msg: 'Disciplina excluída com sucesso!');
-            $this->resetState();
-            // sleep(3);
         } catch (Exception $ex) {
-            $this->open = false; // Fecha o modal em caso de erro
-            $this->title = ''; // Reseta o título
-            $this->id = ''; // Reseta o ID
+            $this->dispatch('discipline-event', type: 'error', msg: 'Não foi possível excluir a disciplina!');
         }
+
+        $this->resetState();
     }
+
     private function resetState()
     {
-        $this->open = false; // Fecha o modal
-        $this->id = ''; // Reseta o ID
-        $this->title = ''; // Reseta o título
+        $this->open = false;
+        $this->id = '';
+        $this->title = '';
     }
 }; ?>
 

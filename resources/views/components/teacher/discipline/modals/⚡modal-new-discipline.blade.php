@@ -3,33 +3,49 @@
 use Livewire\Component;
 use Livewire\Attributes\On;
 use App\Livewire\Forms\{DisciplineForm};
+use App\Models\Teacher\Discipline;
+use Illuminate\Support\Facades\Auth;
 
 new class extends Component {
     public DisciplineForm $form;
     public bool $open = false;
     public $diciplineIdToManager;
+
     #[On('create-content-modal')]
     public function open($open)
     {
         $this->open = $open;
+        if ($open) {
+            $this->form->reset();
+            $this->resetValidation();
+        }
     }
+
     #[On('close-create-with-tour')]
     #[On('discipline-close-modal-create')]
     public function cancel()
     {
         $this->open = false;
         $this->form->reset();
+        $this->resetValidation();
     }
 
     public function store()
     {
+        $teacher = Auth::guard('teacher')->user();
+        $this->authorizeForUser($teacher, 'create', Discipline::class);
+
         $result = $this->form->disciplineStore();
 
-        if(!$result) return;
+        if (! $result) {
+            return;
+        }
+
         $this->open = false;
         $this->dispatch('discipline-send-id-tour', discipline_id: $this->form->getDisciplineId());
         $this->dispatch('discipline-event', type: 'create', msg: 'Disciplina criada com sucesso!');
-        $this->form->reset();
+        $this->form->resetForm();
+        $this->resetValidation();
     }
 }; ?>
 <x-mary-modal wire:model="open" title="Nova disciplina" subtitle="Registre uma disciplina">
