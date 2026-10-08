@@ -3,55 +3,114 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Teacher\Discipline;
+use Closure;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class DisciplineForm extends Form
 {
-
-    // #[Validate('required', message: 'O titulo do disciplina é obrigatório!')]
-    // #[Validate('min:3', message: 'A disciplina deve ter no minimo 3 caracteres')]
     public string $title = '';
 
     public ?string $disciplineId = null;
 
-    public function disciplineStore()
+    /**
+     * Regras compartilhadas entre store e update.
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
     {
-        $teacher_id = Auth::guard('teacher')->user()->id;
-        $this->validate([
+        return [
             'title' => [
                 'required',
+                'string',
                 'min:3',
                 'max:255',
-                function ($attribute, $value, $fail) use ($teacher_id) {
-                    $clearValue = Str::lower(trim($value));
-                    if (Discipline::teacherHasDiscipline($teacher_id, $clearValue)) {
-                        $fail('Você já possui uma disciplina com esse título!');
-                    }
-                },
-            ]
-        ]);
+                $this->uniqueTitleForTeacher(),
+            ],
+        ];
+    }
+
+    private function uniqueTitleForTeacher(): Closure
+    {
+        $teacherId = Auth::guard('teacher')->id();
+        $ignoreId = $this->disciplineId;
+
+        return function ($attribute, $value, $fail) use ($teacherId, $ignoreId) {
+            if (! $teacherId) {
+                $fail('Sessão inválida, faça login novamente.');
+                return;
+            }
+
+            $duplicada = Discipline::withTrashed()
+                ->forTeacher($teacherId)
+                ->normalized($value)
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->first();
+
+            if ($duplicada === null) {
+                return;
+            }
+
+            $fail($duplicada->trashed()
+                ? 'Você já possui uma disciplina com esse título (excluída)! Restoure-a ou escolha outro título.'
+                : 'Você já possui uma disciplina com esse título!');
+        };
+    }
+
+    public function disciplineStore(): bool
+    {
+        $this->validate($this->rules());
 
         $discipline = Discipline::create([
-            "teacher_id" => $teacher_id,
-            "title" => $this->title,
+            'teacher_id' => Auth::guard('teacher')->id(),
+            'title' => $this->title,
         ]);
+
         $this->setDisciplineId($discipline->id);
+
         return true;
+    }
+
+    public function disciplineUpdate(): bool
+    {
+        $discipline = $this->findDiscipline();
+
+        if ($discipline === null) {
+            return false;
+        }
+
+        $this->validate($this->rules());
+
+        $discipline->update([
+            'title' => $this->title,
+        ]);
+
+        return true;
+    }
+
+    private function findDiscipline(): ?Discipline
+    {
+        if ($this->disciplineId === null || $this->disciplineId === '') {
+            return null;
+        }
+
+        return Discipline::withTrashed()->find($this->disciplineId);
     }
 
     private function setDisciplineId(string $id)
     {
         $this->disciplineId = $id;
     }
+
     public function getDisciplineId()
     {
         return $this->disciplineId ?? null;
     }
+
     public function resetForm()
     {
         $this->title = '';
+        $this->disciplineId = null;
     }
 }
