@@ -17,14 +17,26 @@ new class extends Component {
     #[On('student-event-open-task')]
     public function open($id)
     {
-        $this->show = true;
-        $this->activitask = ActivitTask::with([
+        $student = Auth::guard('student')->user();
+
+        $activitask = ActivitTask::with([
             'tasks' => function ($query) {
                 $query->with(['options'])->orderBy('created_at');
             },
-        ])->find($id);
+        ])
+            ->whereHas('module', function ($query) use ($student) {
+                $query->where('discipline_id', $student->discipline_id);
+            })
+            ->find($id);
 
-        $this->student = Auth::guard('student')->user();
+        if (!$activitask) {
+            $this->error('Atividade não encontrada');
+            return;
+        }
+
+        $this->show = true;
+        $this->activitask = $activitask;
+        $this->student = $student;
     }
 
     public function submitAnswers()

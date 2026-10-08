@@ -34,8 +34,11 @@ new #[Layout(name: 'layouts::student')] class extends Component {
 
     public function loadDisciplineData(): void
     {
+        $student = auth()->guard('student')->user();
+
         $this->discipline = Discipline::withCount('ForumTopics')
             ->with('Classes')
+            ->where('id', $student?->discipline_id)
             ->findOrFail($this->disciplineID);
 
         $this->classes = $this->discipline->Classes;

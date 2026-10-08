@@ -3,14 +3,18 @@
 namespace App\Models\Forum;
 
 use App\Models\Traits\UuidTrait;
+use Database\Factories\ForumReplieFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, MorphTo, HasMany};
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+#[UseFactory(ForumReplieFactory::class)]
 class ForumReplie extends Model
 {
-    use SoftDeletes, HasUuids, UuidTrait;
+    use SoftDeletes, HasUuids, UuidTrait, HasFactory;
 
     protected $fillable = [
         'topic_id',

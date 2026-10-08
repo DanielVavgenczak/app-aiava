@@ -5,13 +5,17 @@ namespace App\Models\Teacher;
 use App\Models\Forum\ForumTopic;
 use App\Models\Traits\UuidTrait;
 use App\Traits\GeneratePasswordStudent;
+use Database\Factories\StudentFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
+#[UseFactory(StudentFactory::class)]
 class Student extends Authenticatable
 {
-    use  UuidTrait, Notifiable, GeneratePasswordStudent;
+    use  HasFactory, UuidTrait, Notifiable, GeneratePasswordStudent;
 
     protected $keyType = 'string';
     public $incrementing = false;

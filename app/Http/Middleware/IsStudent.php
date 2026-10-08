@@ -16,11 +16,15 @@ class IsStudent
      */
     public function handle(Request $request, Closure $next): Response
     {
-        //dd(Auth::guard('student')->user());
-        if (!Auth::guard('student')->check()) {
-            return redirect()->route('login')
-                ->with('error', 'Area exclusiva para estudantes');
+        if (Auth::guard('student')->check()) {
+            return $next($request);
         }
-        return $next($request);
+
+        if ($request->expectsJson() || $request->header('X-Livewire')) {
+            abort(403, 'Acesso negado. Área exclusiva para estudantes.');
+        }
+
+        return redirect()->route('student.login')
+            ->with('error', 'Área exclusiva para estudantes');
     }
 }

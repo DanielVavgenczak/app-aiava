@@ -46,7 +46,9 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
             return null;
         }
 
-        return Classe::with('students')->find($this->selectedClasseId);
+        return Classe::with('students')
+            ->where('teacher_id', auth()->guard('teacher')->id())
+            ->find($this->selectedClasseId);
     }
 
     #[Computed]
@@ -93,6 +95,15 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
 
     public function selectClasse($classeId): void
     {
+        $ownsClasse = Classe::where('teacher_id', auth()->guard('teacher')->id())
+            ->whereKey($classeId)
+            ->exists();
+
+        if (!$ownsClasse) {
+            $this->error('Turma não encontrada');
+            return;
+        }
+
         $this->selectedClasseId = $classeId;
         $this->selectedStudentId = null;
         $this->isGroupChat = false;
@@ -100,6 +111,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
 
     public function selectStudent($studentId): void
     {
+        if (!$this->selectedClasse || !$this->selectedClasse->students()->whereKey($studentId)->exists()) {
+            $this->error('Aluno não encontrado nesta turma');
+            return;
+        }
+
         $this->selectedStudentId = $studentId;
         $this->isGroupChat = false;
         if (isset($this->notifications[$studentId])) {
@@ -124,12 +140,33 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
             return;
         }
 
+        $classe = $this->selectedClasse;
+
+        if (!$classe) {
+            $this->error('Turma não encontrada');
+            return;
+        }
+
+        $receiverId = null;
+        $receiverType = null;
+
+        if (!$this->isGroupChat) {
+            if (!$this->selectedStudentId
+                || !$classe->students()->whereKey($this->selectedStudentId)->exists()) {
+                $this->error('Destinatário inválido');
+                return;
+            }
+
+            $receiverId = $this->selectedStudentId;
+            $receiverType = \App\Models\Teacher\Student::class;
+        }
+
         $message = Message::create([
-            'classe_id' => $this->selectedClasseId,
+            'classe_id' => $classe->id,
             'sender_id' => auth()->guard('teacher')->id(),
             'sender_type' => 'App\Models\Teacher\Teacher',
-            'receiver_id' => $this->isGroupChat ? null : $this->selectedStudentId,
-            'receiver_type' => $this->isGroupChat ? null : 'App\Models\Teacher\Student',
+            'receiver_id' => $receiverId,
+            'receiver_type' => $receiverType,
             'content' => $this->messageContent,
         ]);
 
@@ -138,12 +175,11 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
 
         // Enviar notificação ao destinatário
         if ($this->isGroupChat) {
-            $students = Classe::find($this->selectedClasseId)->students;
-            foreach ($students as $student) {
+            foreach ($classe->students as $student) {
                 $student->notify(new MessageNotification($message));
             }
-        } elseif ($this->selectedStudentId) {
-            $student = \App\Models\Teacher\Student::find($this->selectedStudentId);
+        } elseif ($receiverId) {
+            $student = \App\Models\Teacher\Student::find($receiverId);
             if ($student) {
                 $student->notify(new MessageNotification($message));
             }

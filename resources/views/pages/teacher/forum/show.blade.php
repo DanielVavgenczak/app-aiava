@@ -32,6 +32,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     {
         $this->discipline = Discipline::withCount('ForumTopics')
             ->with('Classes')
+            ->where('teacher_id', auth()->guard('teacher')->id())
             ->findOrFail($this->disciplineID);
         $this->classes = $this->discipline->classes;
     }

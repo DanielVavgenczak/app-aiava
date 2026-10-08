@@ -7,10 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{HasMany, MorphTo, BelongsTo};
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Database\Factories\ForumTopicFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
+#[UseFactory(ForumTopicFactory::class)]
 class ForumTopic extends Model
 {
-    use SoftDeletes, HasUuids;
+    use SoftDeletes, HasUuids, HasFactory;
 
     protected $fillable = [
         'title',

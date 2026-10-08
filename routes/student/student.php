@@ -3,7 +3,7 @@
 use App\Http\Controllers\Teacher\LessonUploadController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('aluno')->middleware('teacherOrStudent')->group(function () {
+Route::prefix('aluno')->middleware('isStudent')->group(function () {
 
     Route::livewire('/disciplina', 'pages::student.discipline.index')
         ->name('student.discipline');
@@ -26,8 +26,10 @@ Route::prefix('aluno')->middleware('teacherOrStudent')->group(function () {
 
     Route::livewire('/perfil', 'pages::student.profile.index')
         ->name('student.profile');
-
-    // Load streaming lesson
-    Route::get("/lesson/{lesson_id}", [LessonUploadController::class, 'stream'])
-        ->name('media.stream');
 });
+
+// Streaming de aulas: compartilhado entre professor e aluno.
+// A autorização por vínculo de disciplina é feita no controller.
+Route::get('/aluno/lesson/{lesson_id}', [LessonUploadController::class, 'stream'])
+    ->middleware('teacherOrStudent')
+    ->name('media.stream');

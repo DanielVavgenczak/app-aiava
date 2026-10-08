@@ -33,7 +33,9 @@ class LessonUploadController extends Controller
      */
     public function stream($lesson_id)
     {
-            $lesson = Lesson::findOrFail($lesson_id);
+            $lesson = Lesson::with('module.discipline')->findOrFail($lesson_id);
+
+            $this->authorizeStreamAccess($lesson);
 
             if (!Storage::disk('private')->exists($lesson->path_file)) {
                 abort(404, message: 'Arquivo não encontrado');
@@ -48,6 +50,38 @@ class LessonUploadController extends Controller
             return response()->stream(function () use ($path, $fileSize) {
                 $this->readFileChunked($path, $fileSize);
             }, 200, $this->prepareHeaders($mimeType, $fileSize, $path));
+    }
+
+    /**
+     * Garante que o usuário autenticado tem vínculo com a disciplina da aula.
+     */
+    private function authorizeStreamAccess(Lesson $lesson): void
+    {
+        $disciplineId = $lesson->module?->discipline_id;
+        $disciplineTeacherId = $lesson->module?->discipline?->teacher_id;
+
+        if (Auth::guard('teacher')->check()) {
+            $currentTeacherId = Auth::guard('teacher')->id();
+
+            if ((string) $lesson->teacher_id === (string) $currentTeacherId
+                || (string) $disciplineTeacherId === (string) $currentTeacherId) {
+                return;
+            }
+
+            abort(403, 'Sem permissão para acessar esta aula.');
+        }
+
+        if (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+
+            if ($student && (string) $student->discipline_id === (string) $disciplineId) {
+                return;
+            }
+
+            abort(403, 'Sem permissão para acessar esta aula.');
+        }
+
+        abort(403, 'Sem permissão para acessar esta aula.');
     }
 
     /**

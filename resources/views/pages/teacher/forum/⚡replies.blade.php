@@ -97,6 +97,9 @@ new #[Layout('layouts::teacher')] class extends Component {
     {
         $this->topic = ForumTopic::with(['discipline', 'classe', 'owner'])
             ->withCount('replies')
+            ->whereHas('discipline', function ($query) {
+                $query->where('teacher_id', auth()->guard('teacher')->id());
+            })
             ->findOrFail($this->topicId);
     }
 

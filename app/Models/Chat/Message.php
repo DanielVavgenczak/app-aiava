@@ -3,15 +3,19 @@
 
 namespace App\Models\Chat;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{MorphTo, BelongsTo};
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Database\Factories\MessageFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use App\Models\Teacher\Classe;
 
+#[UseFactory(MessageFactory::class)]
 class Message extends Model
 {
-    use SoftDeletes, HasUuids;
+    use SoftDeletes, HasUuids, HasFactory;
 
     protected $fillable = [
         'classe_id',

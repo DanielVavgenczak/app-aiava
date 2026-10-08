@@ -69,18 +69,41 @@ new #[Layout(name: 'layouts::student')] class extends Component
         }
         // Chat privado
         else if ($this->selectedRecipientId) {
-            $studentId = auth()->guard('student')->id();
-            $studentType = 'App\Models\Teacher\Student';
+            $recipientType = $this->resolveRecipientType($this->selectedRecipientId);
+
+            if (!$recipientType) {
+                return collect();
+            }
 
             $query->betweenUsers(
-                $studentId,
-                $studentType,
+                auth()->guard('student')->id(),
+                Student::class,
                 $this->selectedRecipientId,
-                $this->selectedRecipientType
+                $recipientType
             );
         }
 
         return $query->get();
+    }
+
+    /**
+     * Deriva o tipo do destinatário no servidor (nunca confia no client).
+     */
+    private function resolveRecipientType(?string $recipientId): ?string
+    {
+        if (!$recipientId || !$this->classe) {
+            return null;
+        }
+
+        if ($this->teacher && (string) $this->teacher->id === (string) $recipientId) {
+            return Teacher::class;
+        }
+
+        if ($this->classe->students()->whereKey($recipientId)->exists()) {
+            return Student::class;
+        }
+
+        return null;
     }
 
     public function selectGroupChat(): void
@@ -123,12 +146,26 @@ new #[Layout(name: 'layouts::student')] class extends Component
             return;
         }
 
+        $receiverId = null;
+        $receiverType = null;
+
+        if (!$this->isGroupChat) {
+            $receiverType = $this->resolveRecipientType($this->selectedRecipientId);
+
+            if (!$receiverType) {
+                $this->error('Destinatário inválido');
+                return;
+            }
+
+            $receiverId = $this->selectedRecipientId;
+        }
+
         $message = Message::create([
             'classe_id' => $this->classe->id,
             'sender_id' => auth()->guard('student')->id(),
-            'sender_type' => 'App\Models\Teacher\Student',
-            'receiver_id' => $this->isGroupChat ? null : $this->selectedRecipientId,
-            'receiver_type' => $this->isGroupChat ? null : $this->selectedRecipientType,
+            'sender_type' => Student::class,
+            'receiver_id' => $receiverId,
+            'receiver_type' => $receiverType,
             'content' => $this->messageContent,
         ]);
 
@@ -140,14 +177,14 @@ new #[Layout(name: 'layouts::student')] class extends Component
                 Log::info('professor notificado');
                 $teacher->notify(new MessageNotification($message));
             }
-        } elseif ($this->selectedRecipientType === 'App\Models\Teacher\Teacher') {
-            $teacher = Teacher::find($this->selectedRecipientId);
+        } elseif ($receiverType === Teacher::class) {
+            $teacher = Teacher::find($receiverId);
             if ($teacher) {
                 $teacher->notify(new MessageNotification($message));
                 $this->js("console.log('O professor achado notificando')");
             }
-        } elseif ($this->selectedRecipientType === 'App\Models\Teacher\Student') {
-            $student = Student::find($this->selectedRecipientId);
+        } elseif ($receiverType === Student::class) {
+            $student = Student::find($receiverId);
             if ($student) {
                 $student->notify(new MessageNotification($message));
             }

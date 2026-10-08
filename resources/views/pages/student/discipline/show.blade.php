@@ -18,6 +18,13 @@ new #[Layout('layouts::student')] class extends Component {
     // ✅ Método melhorado
     protected function loadData(): void
     {
+        $student = auth()->guard('student')->user();
+
+        abort_unless(
+            $student && (string) $student->discipline_id === (string) $this->discipline_id,
+            404
+        );
+
         // ✅ Carrega módulos
         $this->modules = Module::with([
             'discipline:id,title', // ✅ Sintaxe mais limpa
@@ -26,9 +33,6 @@ new #[Layout('layouts::student')] class extends Component {
         ])
         ->where('discipline_id', $this->discipline_id)
         ->get();
-
-        // ✅ Pega discipline do primeiro módulo (se existir)
-       // $this->discipline = $this->modules->first()?->discipline;
 
         // ✅ OU carrega discipline diretamente (mais seguro)
         $this->discipline = \App\Models\Teacher\Discipline::select('id', 'title')

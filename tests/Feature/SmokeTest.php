@@ -20,6 +20,6 @@ it('redireciona rota do professor para login', function () {
     $this->get('/professor/disciplina')->assertRedirect(route('login'));
 });
 
-it('redireciona rota do aluno para login', function () {
-    $this->get('/aluno/disciplina')->assertRedirect(route('login'));
+it('redireciona rota do aluno para o login do aluno', function () {
+    $this->get('/aluno/disciplina')->assertRedirect(route('student.login'));
 });

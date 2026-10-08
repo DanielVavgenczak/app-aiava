@@ -149,9 +149,11 @@ new #[Layout('layouts::student')] class extends Component {
 
     protected function loadTopic(): void
     {
+        $student = Auth::guard('student')->user();
+
         $this->topic = ForumTopic::with(['discipline', 'classe', 'owner'])
             ->withCount('replies')
-            ->orderBy('created_at', 'asc')
+            ->where('discipline_id', $student?->discipline_id)
             ->findOrFail($this->topicId);
     }
 

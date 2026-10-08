@@ -17,6 +17,14 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
     public function mount(Classe $classe): void
     {
+        $teacherId = auth()->guard('teacher')->id();
+
+        abort_unless(
+            (string) $classe->teacher_id === (string) $teacherId
+                || (string) $classe->discipline?->teacher_id === (string) $teacherId,
+            403
+        );
+
         $this->classe = $classe->load(['discipline', 'students']);
     }
 

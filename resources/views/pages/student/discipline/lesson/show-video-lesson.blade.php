@@ -16,9 +16,19 @@ new class extends Component {
     #[On('stundent-lesson-streaming-block')]
     public function streamingLesson($lesson_id)
     {
-        $this->lesson = Lesson::where('id', $lesson_id)->first();
-        if(!$this->lesson) return;
+        $student = auth()->guard('student')->user();
 
+        $lesson = Lesson::where('id', $lesson_id)
+            ->whereHas('module', function ($query) use ($student) {
+                $query->where('discipline_id', $student?->discipline_id);
+            })
+            ->first();
+
+        if (!$lesson) {
+            return;
+        }
+
+        $this->lesson = $lesson;
         $this->show = true;
         $this->updateNavigationStates();
         $this->showEndMessage = false;

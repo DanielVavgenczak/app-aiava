@@ -5,11 +5,15 @@ namespace App\Models\Teacher;
 use App\Models\Forum\ForumTopic;
 use App\Models\Traits\UuidTrait;
 use App\Models\Teacher\{Discipline, Student};
+use Database\Factories\ClasseFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[UseFactory(ClasseFactory::class)]
 class Classe extends Model
 {
-    use UuidTrait;
+    use HasFactory, UuidTrait;
     public $incrementing = false;
     protected $keyType = "string";
     protected $fillable = ['name', 'discipline_id', 'teacher_id'];

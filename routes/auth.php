@@ -5,20 +5,25 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('web')->group(function () {
     Route::livewire('teacher/register', 'pages.teacher.auth.register')
+        ->middleware('throttle:10,1')
         ->name('teacher.register');
 
     Route::livewire('teacher/login', 'pages.teacher.auth.login')
+        ->middleware('throttle:10,1')
         ->name('teacher.login');
 
     // Login student
     Route::livewire('student/login', 'pages.student.auth.login')
+        ->middleware('throttle:10,1')
         ->name('student.login');
 
 
     Route::livewire('forgot-password', 'pages.auth.forgot-password')
+        ->middleware('throttle:10,1')
         ->name('password.request');
 
     Route::livewire('reset-password/{token}', 'pages.auth.reset-password')
+        ->middleware('throttle:10,1')
         ->name('password.reset');
 });
 
