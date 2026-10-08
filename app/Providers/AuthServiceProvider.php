@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Forum\ForumReplie;
 use App\Models\Forum\ForumTopic;
+use App\Models\Teacher\Discipline;
 use App\Models\Teacher\Teacher;
 use App\Models\Teacher\Student;
+use App\Policies\DisciplinePolicy;
 use App\Policies\ForumRepliePolicy;
 use App\Policies\ForumTopicPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -16,6 +18,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         ForumTopic::class => ForumTopicPolicy::class,
         ForumReplie::class => ForumRepliePolicy::class,
+        Discipline::class => DisciplinePolicy::class,
     ];
 
     public function boot(): void
