@@ -33,7 +33,7 @@ jobs:
       - run: npm ci
       - run: cp .env.example .env || true
       - run: php artisan key:generate --env=testing || true
-      - run: vendor/bin/pest --max-parallel=2
+      - run: vendor/bin/pest --parallel
       - run: npm run build --if-present
 
   build:
