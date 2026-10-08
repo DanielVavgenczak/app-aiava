@@ -94,7 +94,6 @@ new class extends Component {
       #[On('hide-end-message-afeter-delay')]
         public function hideEndMessage()
         {
-            sleep(3);
             $this->showEndMessage = false;
         }
 

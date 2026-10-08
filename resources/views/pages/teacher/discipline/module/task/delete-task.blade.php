@@ -23,7 +23,6 @@ new class extends Component {
     {
         $this->activittask->delete();
         $this->dispatch('task-deleted');
-        sleep(2);
         $this->openDelete = false;
     }
 }; ?>

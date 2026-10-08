@@ -501,13 +501,11 @@ new class extends Component {
                 }
             });
             $this->dispatch('task-created-success', message: 'Atividade criada com sucesso!');
-            sleep(2);
             $this->resetFormCreation();
             $this->close();
             $this->questions = [];
         } catch (\Exception $e) {
-            dd('deu erro aqui dentro do salve meu', $e->getMessage());
-            $this->js("console.log('deu erro em salver essa parada' + {$e->getMessage()})");
+            $this->js("console.log('deu erro em salvar essa parada')");
             $this->addError('save', 'Erro ao salvar tarefa: ' . $e->getMessage());
         }
     }
@@ -1271,18 +1269,19 @@ new class extends Component {
                                     <button
                                         type="button"
                                         wire:click="save"
+                                        wire:loading.attr="disabled"
                                         id="create-task-save-btn-{{ $disciplineId }}"
                                         class="btn btn-md bg-blue-400 hover:bg-blue-500 capitalize text-gray-50">
                                         criar questionário
                                     </button>
-                                    {{-- <div
+                                    <div
                                         wire:loading wire:target="save"
                                         class="flex items-center gap-2">
                                         <span class="text-sm text-pink-7">
                                             Salvando o questionário
                                         </span>
                                         <x-mary-loading class=" text-pink-700 loading-dots" />
-                                    </div> --}}
+                                    </div>
                                 </div>
                             </div>
                         <!-- end rest infos -->

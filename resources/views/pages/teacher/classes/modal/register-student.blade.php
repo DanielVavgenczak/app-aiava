@@ -49,7 +49,6 @@ new class extends Component {
     {
         unset($this->students[$index]);
         $this->students = array_values($this->students);
-        sleep(1);
     }
 
     public function storeStudent()

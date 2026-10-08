@@ -46,7 +46,9 @@ new class extends Component {
                 });
                 // limpar o feedback dessa resposta após salvar
                 unset($this->feedbacks[$studentAnswerId]);
-                StudentAnwser::where('student_id', $studentId)->update(['corrected' => true]);
+                StudentAnwser::where('student_id', $studentId)
+                    ->where('task_id', $this->task_id)
+                    ->update(['corrected' => true]);
             }
         } catch (\Exception $e) {
             // erro atrelado ao campo específico

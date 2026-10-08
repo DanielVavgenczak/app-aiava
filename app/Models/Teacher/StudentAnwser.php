@@ -10,7 +10,7 @@ class StudentAnwser extends Model
     use UuidTrait;
     public $incrementing = false;
     protected $keyType = "string";
-    protected $fillable = ['id', 'task_id', 'student_id', 'activit_task_id', 'answer_text', 'is_correct', 'order'];
+    protected $fillable = ['id', 'task_id', 'student_id', 'activit_task_id', 'answer_text', 'answer_option_id', 'is_correct', 'order'];
 
     /**
      * return student who answered

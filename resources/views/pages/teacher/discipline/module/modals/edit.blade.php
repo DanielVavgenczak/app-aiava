@@ -32,7 +32,6 @@ new class extends Component {
             ]);
             $this->open = false;
             $this->dispatch('module-event', type: 'update', msg: 'Módulo editado com sucesso!');
-            sleep(2);
         } catch (\Exception $e) {
             if (!empty($e->getMessage())) {
                 $this->toast(type: 'error', title: $e->getMessage(), icon: 'o-alert-triangle', css: 'alert-error');

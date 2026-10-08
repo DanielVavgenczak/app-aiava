@@ -43,18 +43,26 @@ new class extends Component {
 
     protected function saveMultipleChoiceAnswer(Task $task)
     {
-        if (!empty($this->selectedOptions[$task->id])) {
-            $optionId = $this->selectedOptions[$task->id];
-            $isCorrect = TaskOptions::where('id', $optionId)->where('correct', true)->exists();
-
-            StudentAnwser::create([
-                'task_id' => $task->id,
-                'student_id' => $this->student->id,
-                'activit_task_id' => $this->activitask->id,
-                'task_option_id' => $optionId,
-                'is_correct' => $isCorrect,
-            ]);
+        $optionId = $this->selectedOptions[$task->id] ?? null;
+        if (empty($optionId)) {
+            return;
         }
+
+        $option = TaskOptions::where('id', $optionId)
+            ->where('task_id', $task->id)
+            ->first();
+
+        if (!$option) {
+            return;
+        }
+
+        StudentAnwser::create([
+            'task_id' => $task->id,
+            'student_id' => $this->student->id,
+            'activit_task_id' => $this->activitask->id,
+            'answer_option_id' => $option->id,
+            'is_correct' => (bool) $option->correct,
+        ]);
     }
 
     protected function saveDissertativeAnswer(Task $task)

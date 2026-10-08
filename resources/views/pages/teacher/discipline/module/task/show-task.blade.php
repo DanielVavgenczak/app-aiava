@@ -51,7 +51,6 @@ new class extends Component {
         $taskEdit->update([
             'question' => $this->editingQuestionTitle,
         ]);
-        sleep(2);
         $this->success('Questão editada com sucesso');
         $this->cancelEditing();
     }

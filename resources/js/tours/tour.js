@@ -178,13 +178,13 @@ document.addEventListener("alpine:init", () => {
                 tourModule: () => import("./student/forum"),
                 tours: ["StartTourStudentForumReplies"],
             },
-            // {
-            //     exact: true,
-            //     isDynamic: false,
-            //     path: "/student/mensagens",
-            //     tourModule: () => import("./student/messages"),
-            //     tours: ["StartTourStudentMessages"],
-            // },
+            {
+                exact: true,
+                isDynamic: false,
+                path: "/aluno/mensagens",
+                tourModule: () => import("./student/messages"),
+                tours: ["StartTourStudentMessages"],
+            },
 
         ],
 

@@ -40,7 +40,6 @@ new class extends Component {
                 'name' => $this->classe_name,
                 'discipline_id' => $this->disciplineId,
             ]);
-            sleep(1);
             $this->dispatch('action-event-classe', type: 'update');
             $this->open = false;
         } catch (\Exception $e) {

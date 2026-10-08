@@ -119,7 +119,6 @@ new class extends Component {
                       timeout: 8000
                   );
               } else {
-                 dd($e->getMessage());
                   $this->error(
                       'Erro ao cadastrar aluno',
                       'Ocorreu um erro inesperado. Tente novamente.',
