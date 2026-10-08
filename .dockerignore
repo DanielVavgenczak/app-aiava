@@ -2,3 +2,5 @@
 .git*
 node_modules
 dist
+vendor
+storage/logs/*

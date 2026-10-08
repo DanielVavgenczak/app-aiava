@@ -1,13 +1,6 @@
-# MESMO ARQUIVO DO LOCAL, SÓ REMOVENDO:
-# - user: "1001:1001"
-# - bind mounts (..:/var/www/html)
-# - portas de dev (5173)
-
 services:
   app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/danielvavgenczak/app-aiava:${IMAGE_TAG:-latest}
     container_name: iava_app
     restart: unless-stopped
     ports:
@@ -21,6 +14,12 @@ services:
       - redis
     networks:
       - iava_network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   webserver:
     image: nginx:alpine
@@ -35,6 +34,12 @@ services:
       - iava_network
     depends_on:
       - app
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/up || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   database:
     image: postgres:16
@@ -50,6 +55,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - iava_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:7-alpine
