@@ -18,7 +18,8 @@ new #[Layout('layouts::teacher')] class extends Component {
     {
         $teacherId = auth()->guard('teacher')->id();
 
-        $query = Discipline::where('teacher_id', $teacherId);
+        $query = Discipline::where('teacher_id', $teacherId)
+            ->withCount('modules');
 
         // Busca
         if ($this->search) {
@@ -48,16 +49,6 @@ new #[Layout('layouts::teacher')] class extends Component {
         ];
     }
 
-    #[Computed]
-    public function lessonCount()
-    {
-
-        return Discipline::
-        withCount('lessons')
-        ->where('teacher_id', $this->getTeacherGuard()->id())
-        ->get();
-    }
-
     public function clearFilters(): void
     {
         $this->reset(['search', 'sortBy']);
@@ -76,7 +67,7 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     public function deleteDiscipline($disciplineId): void
     {
-        $this->dispatch('delete-module-modal', id: $disciplineId);
+        $this->dispatch('delete-discipline-modal', id: $disciplineId);
     }
 
     public function detailsDiscipline($disciplineId): void
@@ -90,7 +81,8 @@ new #[Layout('layouts::teacher')] class extends Component {
         match($type) {
             'create' => $this->success($msg),
             'update' => $this->success($msg),
-            'delete' => $this->error($msg),
+            'delete' => $this->success($msg),
+            'error' => $this->error($msg),
             default => null,
         };
     }
@@ -103,11 +95,6 @@ new #[Layout('layouts::teacher')] class extends Component {
     public function updatedSortBy(): void
     {
         $this->resetPage();
-    }
-
-    private function getTeacherGuard()
-    {
-        return auth()->guard('teacher');
     }
 }; ?>
 
@@ -287,7 +274,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                             <div class="flex items-center justify-center gap-2 text-xs text-gray-500 mb-4">
                                 <x-mary-icon name="o-calendar" class="w-3 h-3" />
                                 <span id="card-discipline-count-module-{{ $discipline->id }}">
-                                    Aulas: {{ $discipline->modules->count() }}
+                                    Aulas: {{ $discipline->modules_count }}
                                 </span>
                                 <span>Criada {{ $discipline->created_at->diffForHumans() }}</span>
                             </div>

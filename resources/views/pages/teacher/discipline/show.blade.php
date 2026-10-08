@@ -3,6 +3,7 @@
 use Livewire\Component;
 use Livewire\Attributes\{Layout, On, Url};
 use App\Models\Teacher\{Discipline};
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 new #[Layout('layouts::teacher')] class extends Component {
@@ -29,6 +30,13 @@ new #[Layout('layouts::teacher')] class extends Component {
         }
         $this->disciplineID = $id;
         $this->discipline = $this->loadDisciplineContent($this->disciplineID);
+
+        if (! $this->discipline instanceof Discipline) {
+            abort(404);
+        }
+
+        $this->authorizeForUser(Auth::guard('teacher')->user(), 'view', $this->discipline);
+
         $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
     }
     #[On('select-lesson')]
@@ -141,7 +149,7 @@ new #[Layout('layouts::teacher')] class extends Component {
         $this->toast(type: 'error', title: "{$msg}", icon: 'o-trash', css: 'alert-error');
         return;
     }
-    protected function loadDisciplineContent(string $id): Discipline
+    protected function loadDisciplineContent(string $id): ?Discipline
     {
         return Discipline::with([
             'modules' => function ($q) {
