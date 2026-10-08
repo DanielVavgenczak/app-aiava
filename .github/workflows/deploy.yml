@@ -27,7 +27,9 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
-      - run: composer install --no-progress --prefer-dist
+      - name: Prepare bootstrap/cache
+        run: mkdir -p bootstrap/cache && chmod -R 775 bootstrap/cache
+      - run: composer install --no-progress --prefer-dist --no-interaction
       - run: npm ci
       - run: cp .env.example .env || true
       - run: php artisan key:generate --env=testing || true
