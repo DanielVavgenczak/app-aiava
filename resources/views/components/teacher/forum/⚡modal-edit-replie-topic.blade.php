@@ -18,9 +18,14 @@ new class extends Component {
     #[On('teacher::open-edit-reply-modal')]
     public function openModal($replyId): void
     {
-        $this->reply = ForumReplie::find($replyId);
+        $teacher = Auth::guard('teacher')->user();
+        $this->reply = ForumReplie::where('id', $replyId)
+            ->whereHas('topic.discipline', function ($q) use ($teacher) {
+                $q->where('teacher_id', $teacher->id);
+            })
+            ->first();
 
-        if ($this->reply && Auth::guard('teacher')->user()?->can('update', $this->reply)) {
+        if ($this->reply && $teacher?->can('update', $this->reply)) {
             $this->content = $this->reply->content;
             $this->open = true;
         } else {

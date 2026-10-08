@@ -95,10 +95,11 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     protected function loadTopic(): void
     {
+        $teacher = auth()->guard('teacher')->user();
         $this->topic = ForumTopic::with(['discipline', 'classe', 'owner'])
             ->withCount('replies')
-            ->whereHas('discipline', function ($query) {
-                $query->where('teacher_id', auth()->guard('teacher')->id());
+            ->whereHas('discipline', function ($query) use ($teacher) {
+                $query->where('teacher_id', $teacher->id);
             })
             ->findOrFail($this->topicId);
     }

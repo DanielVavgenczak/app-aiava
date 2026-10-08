@@ -36,9 +36,20 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     {
         $student = auth()->guard('student')->user();
 
+        if (!$student) {
+            $this->discipline = Discipline::withCount('ForumTopics')
+                ->with('Classes')
+                ->where('teacher_id', auth()->guard('teacher')->id())
+                ->where('id', $this->disciplineID)
+                ->findOrFail($this->disciplineID);
+            $this->classes = $this->discipline->classes ?? collect();
+            return;
+        }
+
         $this->discipline = Discipline::withCount('ForumTopics')
             ->with('Classes')
-            ->where('id', $student?->discipline_id)
+            ->where('id', $student->discipline_id)
+            ->where('id', $this->disciplineID)
             ->findOrFail($this->disciplineID);
 
         $this->classes = $this->discipline->Classes;
