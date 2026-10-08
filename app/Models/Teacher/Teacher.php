@@ -4,6 +4,8 @@ namespace App\Models\Teacher;
 
 use App\Models\Teacher\Discipline;
 use App\Models\Traits\UuidTrait;
+use Database\Factories\TeacherFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illmuninate\Broadcasting\PrivateChannel;
 
+#[UseFactory(TeacherFactory::class)]
 class Teacher extends Authenticatable
 {
     use HasFactory, Notifiable, UuidTrait;
