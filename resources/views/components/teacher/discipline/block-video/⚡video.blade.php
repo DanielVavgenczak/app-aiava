@@ -36,13 +36,22 @@ new class extends Component {
     #[On('load-video-block')]
     public function loadVideoLesson($lesson_id)
     {
-        $this->lesson = Lesson::with('module')->find($lesson_id);
-        if($this->lesson){
-          if ($this->lesson->type === 'video') {
-              $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
-          }
-          $this->updateNavigationStates();
+        $teacher = auth('teacher')->user();
+
+        $this->lesson = Lesson::with('module.discipline')
+            ->where('id', $lesson_id)
+            ->whereHas('module.discipline', fn ($q) => $q->where('teacher_id', $teacher?->id))
+            ->first();
+
+        if (! $this->lesson) {
+            abort(404);
         }
+
+        if ($this->lesson->type === 'video') {
+            $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
+        }
+
+        $this->updateNavigationStates();
         $this->showEndBlock = false;
     }
 
