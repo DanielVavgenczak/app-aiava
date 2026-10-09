@@ -20,6 +20,10 @@ new class extends Component {
 
     public function mount(Student $student)
     {
+        $teacher = auth('teacher')->user();
+        $student = Student::where('id', $student->id)
+            ->whereHas('classe', fn ($q) => $q->where('teacher_id', $teacher->id))
+            ->firstOrFail();
         $this->fill($student);
     }
 
