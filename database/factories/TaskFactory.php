@@ -2,11 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Module;
 use App\Models\Teacher\ActivitTask;
-use App\Models\Teacher\Discipline;
 use App\Models\Teacher\Task;
-use App\Models\Teacher\Teacher;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,23 +20,17 @@ class TaskFactory extends Factory
             'type' => 'dissertative',
             'order' => 1,
             'value' => null,
-            'module_id' => Module::factory(),
-            'discipline_id' => Discipline::factory(),
-            'teacher_id' => Teacher::factory(),
+            'activit_task_id' => ActivitTask::factory(),
         ];
     }
 
     /**
-     * Mantém a tarefa no mesmo vínculo (professor/módulo/disciplina) da atividade.
+     * Mantém a tarefa vinculada à atividade (que concentra dono/módulo/disciplina).
      */
     public function forActivitTask(ActivitTask $activitTask): static
     {
         return $this->state(fn () => [
-            'module_id' => $activitTask->module_id,
-            'discipline_id' => $activitTask->discipline_id,
-            'teacher_id' => $activitTask->teacher_id,
-        ])->afterCreating(function (Task $task) use ($activitTask) {
-            $task->forceFill(['activit_task_id' => $activitTask->id])->save();
-        });
+            'activit_task_id' => $activitTask->id,
+        ]);
     }
 }
