@@ -16,15 +16,34 @@ new class extends Component
     #[On('confirm-delete-reply')]
     public function openModal(string $replyId): void
     {
+        $teacher = Auth::guard('teacher')->user();
+        $reply = \App\Models\Forum\ForumReplie::where('id', $replyId)
+            ->whereHas('topic.discipline', function ($q) use ($teacher) {
+                $q->where('teacher_id', $teacher->id);
+            })
+            ->first();
+
+        if (!$reply) {
+            $this->error('Você não tem permissão para excluir esta resposta.');
+            $this->showDeleteModal = false;
+            $this->deleteReplyId = null;
+            return;
+        }
+
         $this->deleteReplyId = $replyId;
         $this->showDeleteModal = true;
     }
 
     public function executeDeleteReply(): void
     {
-        $reply = ForumReply::find($this->deleteReplyId);
+        $teacher = Auth::guard('teacher')->user();
+        $reply = ForumReply::where('id', $this->deleteReplyId)
+            ->whereHas('topic.discipline', function ($q) use ($teacher) {
+                $q->where('teacher_id', $teacher->id);
+            })
+            ->first();
 
-        if (!$reply || !Auth::guard('teacher')->user()?->can('delete', $reply)) {
+        if (!$reply || !$teacher?->can('delete', $reply)) {
             $this->error('Você não tem permissão para excluir esta resposta.');
             $this->showDeleteModal = false;
             $this->deleteReplyId = null;

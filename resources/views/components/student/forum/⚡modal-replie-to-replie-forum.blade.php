@@ -33,7 +33,25 @@ new class extends Component {
         $author = Auth::guard('teacher')->check()
             ? Auth::guard('teacher')->user()
             : Auth::guard('student')->user();
-        //dd($this->topic_id, $this->parent_id, $this->content, $author->id, get_class($author));
+
+        $query = \App\Models\Forum\ForumTopic::where('id', $this->topic_id);
+        if (Auth::guard('teacher')->check()) {
+            $query->whereHas('discipline', function ($q) use ($author) {
+                $q->where('teacher_id', $author->id);
+            });
+        } elseif (Auth::guard('student')->check()) {
+            $query->whereHas('discipline', function ($q) use ($author) {
+                $q->where('id', $author->discipline_id);
+            });
+        }
+        $topic = $query->first();
+
+        if (!$topic) {
+            $this->error('Você não tem permissão para responder neste tópico.');
+            $this->open = false;
+            return;
+        }
+
         ForumReplie::create([
             'topic_id' => $this->topic_id,
             'parent_id' => empty($this->parent_id) ? null : $this->parent_id,

@@ -36,11 +36,31 @@ new class extends Component {
             'title' => 'required|string|min:3',
             'classe_id' => 'required|exists:classes,id',
         ]);
+
+        $teacher = Auth::guard('teacher')->user();
+        $discipline = \App\Models\Teacher\Discipline::forTeacher($teacher->id)
+            ->where('id', $this->discipline_id)
+            ->first();
+
+        if (!$discipline) {
+            $this->error('Você não tem permissão para criar tópicos nesta disciplina.');
+            $this->open = false;
+            return;
+        }
+
+        if (!\App\Models\Teacher\Classe::where('id', $this->classe_id)
+            ->where('discipline_id', $this->discipline_id)
+            ->exists()) {
+            $this->error('Turma inválida para esta disciplina.');
+            $this->open = false;
+            return;
+        }
+
         ForumTopic::create([
             'title' => $this->title,
             'discipline_id' => $this->discipline_id,
             'classe_id' => $this->classe_id,
-            'owner_id' => Auth::guard('teacher')->user()->id,
+            'owner_id' => $teacher->id,
             'owner_type' => 'App\Models\Teacher\Teacher',
         ]);
 

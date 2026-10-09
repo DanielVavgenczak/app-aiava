@@ -1,62 +1,110 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{On};
-use App\Models\Teacher\{StudentAnwser, QuestionFeedback};
+use Livewire\Attributes\{On, Locked};
+use App\Models\Teacher\{StudentAnwser, QuestionFeedback, Task};
+use Illuminate\Support\Facades\{Auth, DB};
 use Mary\Traits\Toast;
 new class extends Component {
     use Toast;
+    #[Locked]
     public $studentAnswer;
     public string $selectedTab = 'to-correct-tab';
     public bool $show = false;
+    #[Locked]
     public string $task_id = '';
     public array $feedbacks = [];
 
     #[On('event-teacher-show-student-answer')]
     public function open($task_id)
     {
-        $this->studentAnswer = StudentAnwser::where('task_id', $task_id)->get();
+        $teacher = Auth::guard('teacher')->user();
+
+        $task = Task::query()
+            ->where('id', $task_id)
+            ->whereHas('activitTask', function ($query) use ($teacher) {
+                $query->where('teacher_id', $teacher?->id)
+                    ->whereHas('discipline', function ($disciplineQuery) use ($teacher) {
+                        $disciplineQuery->where('teacher_id', $teacher?->id);
+                    });
+            })
+            ->first();
+
+        if (! $task) {
+            $this->reset(['studentAnswer', 'task_id', 'feedbacks']);
+            $this->show = false;
+            $this->error('Tarefa não encontrada ou você não tem permissão para acessá-la.');
+            return;
+        }
+
+        $this->task_id = $task->id;
+        $this->studentAnswer = StudentAnwser::where('task_id', $task->id)
+            ->orderBy('created_at')
+            ->get();
         $this->show = true;
-        $this->task_id = $task_id;
     }
 
-    public function sendFeedback($studentAnswerId, $studentId)
+    public function sendFeedback(string $studentAnswerId)
     {
-        try {
-            $this->validate(
-                [
-                    "feedbacks.$studentAnswerId" => 'required|string|min:6|max:1000',
-                ],
-                [
-                    "feedbacks.$studentAnswerId.required" => 'O feedback é obrigatório.',
-                    "feedbacks.$studentAnswerId.min" => 'O feedback deve ter pelo menos :min caracteres.',
-                    "feedbacks.$studentAnswerId.max" => 'O feedback deve ter no máximo :max caracteres.',
-                ],
-            );
-            $feedback = $this->feedbacks[$studentAnswerId] ?? null;
-            if (!empty($feedback)) {
-                DB::transaction(function () use ($studentAnswerId, $studentId, $feedback) {
-                    QuestionFeedback::create([
-                        'student_anwser_id' => $studentAnswerId,
-                        'task_id' => $this->task_id,
-                        'student_id' => $studentId,
-                        'feedback' => $feedback,
-                        'teacher_id' => Auth::guard('teacher')->user()->id,
-                    ]);
+        $this->validate(
+            [
+                "feedbacks.$studentAnswerId" => 'required|string|min:6|max:1000',
+            ],
+            [
+                "feedbacks.$studentAnswerId.required" => 'O feedback é obrigatório.',
+                "feedbacks.$studentAnswerId.min" => 'O feedback deve ter pelo menos :min caracteres.',
+                "feedbacks.$studentAnswerId.max" => 'O feedback deve ter no máximo :max caracteres.',
+            ],
+        );
+
+        $teacher = Auth::guard('teacher')->user();
+
+        // Nunca confiar no ID enviado pelo cliente: a resposta precisa pertencer
+        // à tarefa carregada e a tarefa precisa pertencer ao professor logado.
+        $answer = StudentAnwser::query()
+            ->where('id', $studentAnswerId)
+            ->where('task_id', $this->task_id)
+            ->whereHas('task', function ($query) use ($teacher) {
+                $query->whereHas('activitTask', function ($activitQuery) use ($teacher) {
+                    $activitQuery->where('teacher_id', $teacher?->id)
+                        ->whereHas('discipline', function ($disciplineQuery) use ($teacher) {
+                            $disciplineQuery->where('teacher_id', $teacher?->id);
+                        });
                 });
-                // limpar o feedback dessa resposta após salvar
-                unset($this->feedbacks[$studentAnswerId]);
-                StudentAnwser::where('student_id', $studentId)
-                    ->where('task_id', $this->task_id)
-                    ->update(['corrected' => true]);
-            }
-        } catch (\Exception $e) {
-            // erro atrelado ao campo específico
-            $this->addError("feedbacks.$studentAnswerId", $e->getMessage());
-            if ($e->getMessage() !== 'O feedback é obrigatório.') {
-                $this->js("console.log'Testando lignatures')");
-            }
+            })
+            ->first();
+
+        if (! $answer) {
+            $this->addError("feedbacks.$studentAnswerId", 'Resposta inválida ou sem permissão.');
+            return;
         }
+
+        $feedback = $this->feedbacks[$studentAnswerId] ?? null;
+        if (empty($feedback)) {
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($answer, $feedback) {
+                QuestionFeedback::create([
+                    'student_anwser_id' => $answer->id,
+                    'task_id' => $answer->task_id,
+                    'student_id' => $answer->student_id,
+                    'feedback' => $feedback,
+                    'teacher_id' => Auth::guard('teacher')->user()->id,
+                ]);
+
+                StudentAnwser::where('student_id', $answer->student_id)
+                    ->where('task_id', $answer->task_id)
+                    ->update(['corrected' => true]);
+            });
+        } catch (\Exception $e) {
+            $this->addError("feedbacks.$studentAnswerId", $e->getMessage());
+            return;
+        }
+
+        unset($this->feedbacks[$studentAnswerId]);
+        $this->success('Feedback enviado com sucesso.');
     }
 }; ?>
 
@@ -103,10 +151,10 @@ new class extends Component {
                                             placeholder="Insira a nota ex: 1,0" />
                                         <button class="btn btn-sm btn-ghost mt-2 self-end bg-gray-200"
                                             wire:loading.attr="disabled"
-                                            x-on:click.prevent="$wire.sendFeedback('{{ $answer->id }}', '{{ $answer->student_id }}')">
+                                            x-on:click.prevent="$wire.sendFeedback('{{ $answer->id }}')">
                                             Finalizar correção
                                             <x-mary-loading wire:loading
-                                                wire:target="sendFeedback('{{ $answer->id }}', '{{ $answer->student_id }}')" />
+                                                wire:target="sendFeedback('{{ $answer->id }}')" />
                                         </button>
                                     </div>
                                 </div>

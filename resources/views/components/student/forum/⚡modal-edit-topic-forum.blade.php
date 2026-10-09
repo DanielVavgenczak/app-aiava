@@ -27,13 +27,28 @@ new class extends Component {
     #[On('student::open-edit-topic-forum')]
     public function openModal($topicId): void
     {
-        $this->topic = ForumTopic::find($topicId);
+        $user = $this->getCurrentUser();
+        $guard = Auth::guard('teacher')->check() ? 'teacher' : 'student';
 
-        if ($this->topic && $this->getCurrentUser()?->can('update', $this->topic)) {
+        $query = ForumTopic::where('id', $topicId);
+        if ($guard === 'teacher') {
+            $query->whereHas('discipline', function ($q) use ($user) {
+                $q->where('teacher_id', $user->id);
+            });
+        } elseif ($guard === 'student') {
+            $query->whereHas('discipline', function ($q) use ($user) {
+                $q->where('id', $user->discipline_id);
+            });
+        }
+        $this->topic = $query->first();
+
+        if ($this->topic && $user?->can('update', $this->topic)) {
             $this->title = $this->topic->title;
             $this->description = $this->topic->description ?? '';
             $this->open = true;
         } else {
+            $this->reset(['title', 'description', 'topic']);
+            $this->open = false;
             $this->error('Você não tem permissão para editar este tópico.');
         }
     }

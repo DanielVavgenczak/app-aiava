@@ -1,16 +1,32 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{On};
+use Livewire\Attributes\{On, Locked};
 use App\Models\Teacher\ActivitTask;
+use Illuminate\Support\Facades\Auth;
 
 new class extends Component {
     public bool $openDelete = false;
+    #[Locked]
     public ActivitTask $activittask;
 
     public function mount(ActivitTask $activittask)
     {
-        $this->activittask = $activittask;
+        $teacher = Auth::guard('teacher')->user();
+
+        $owned = ActivitTask::query()
+            ->where('id', $activittask->id)
+            ->where('teacher_id', $teacher?->id)
+            ->whereHas('discipline', function ($query) use ($teacher) {
+                $query->where('teacher_id', $teacher?->id);
+            })
+            ->first();
+
+        if (! $owned) {
+            abort(404);
+        }
+
+        $this->activittask = $owned;
     }
 
     #[On('open-modal-delete')]

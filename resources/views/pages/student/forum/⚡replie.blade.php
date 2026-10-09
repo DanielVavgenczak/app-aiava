@@ -150,11 +150,20 @@ new #[Layout('layouts::student')] class extends Component {
     protected function loadTopic(): void
     {
         $student = Auth::guard('student')->user();
-
-        $this->topic = ForumTopic::with(['discipline', 'classe', 'owner'])
-            ->withCount('replies')
-            ->where('discipline_id', $student?->discipline_id)
-            ->findOrFail($this->topicId);
+        if ($student) {
+            $this->topic = ForumTopic::with(['discipline', 'classe', 'owner'])
+                ->withCount('replies')
+                ->where('discipline_id', $student->discipline_id)
+                ->findOrFail($this->topicId);
+        } else {
+            $teacher = Auth::guard('teacher')->user();
+            $this->topic = ForumTopic::with(['discipline', 'classe', 'owner'])
+                ->withCount('replies')
+                ->whereHas('discipline', function ($query) use ($teacher) {
+                    $query->where('teacher_id', $teacher->id);
+                })
+                ->findOrFail($this->topicId);
+        }
     }
 
     /**

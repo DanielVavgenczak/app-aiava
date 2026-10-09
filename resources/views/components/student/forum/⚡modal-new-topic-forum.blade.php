@@ -38,15 +38,45 @@ new class extends Component {
         $author = Auth::guard('teacher')->user() ?? Auth::guard('student')->user();
 
         if (Auth::guard('student')->check()) {
+            $student = Auth::guard('student')->user();
+            $discipline = \App\Models\Teacher\Discipline::where('id', $this->discipline_id)
+                ->where('id', $student->discipline_id)
+                ->first();
+
+            if (!$discipline) {
+                $this->error('Você não tem permissão para criar tópicos nesta disciplina.');
+                $this->open = false;
+                return;
+            }
+
             ForumTopic::create([
                 'title' => $this->title,
                 'discipline_id' => $this->discipline_id,
-                'classe_id' => Auth::guard('student')->user()->classe->id,
+                'classe_id' => $student->classe ? $student->classe->id : ($student->classe_id ?? null),
                 'owner_id' => $author->id,
                 'owner_type' => 'App\Models\Teacher\Student',
             ]);
         } else {
             $this->validate(['classe_id' => 'required|exists:classes,id']);
+            $teacher = $author;
+
+            $discipline = \App\Models\Teacher\Discipline::forTeacher($teacher->id)
+                ->where('id', $this->discipline_id)
+                ->first();
+
+            if (!$discipline) {
+                $this->error('Você não tem permissão para criar tópicos nesta disciplina.');
+                $this->open = false;
+                return;
+            }
+
+            if (!\App\Models\Teacher\Classe::where('id', $this->classe_id)
+                ->where('discipline_id', $this->discipline_id)
+                ->exists()) {
+                $this->error('Turma inválida para esta disciplina.');
+                $this->open = false;
+                return;
+            }
 
             ForumTopic::create([
                 'title' => $this->title,

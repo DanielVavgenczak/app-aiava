@@ -15,11 +15,18 @@ new class extends Component {
     #[On('teacher::delete-topic-forum')]
     public function openModal($topicId): void
     {
-        $this->topic = ForumTopic::find($topicId);
+        $teacher = Auth::guard('teacher')->user();
+        $this->topic = ForumTopic::where('id', $topicId)
+            ->whereHas('discipline', function ($q) use ($teacher) {
+                $q->where('teacher_id', $teacher->id);
+            })
+            ->first();
 
-        if ($this->topic && Auth::guard('teacher')->user()?->can('delete', $this->topic)) {
+        if ($this->topic && $teacher?->can('delete', $this->topic)) {
             $this->open = true;
         } else {
+            $this->reset('topic');
+            $this->open = false;
             $this->error('Você não tem permissão para excluir este tópico.');
         }
     }

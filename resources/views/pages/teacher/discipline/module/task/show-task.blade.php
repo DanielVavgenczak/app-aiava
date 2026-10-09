@@ -1,26 +1,29 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{On, Computed};
+use Livewire\Attributes\{On, Computed, Locked};
 use App\Models\Teacher\{ActivitTask};
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 new class extends Component {
     use Toast;
     public bool $showTaskModule = false;
+    #[Locked]
     public ?ActivitTask $activitTask = null;
-    public Task $task;
+    #[Locked]
     public string $taskId = '';
 
     #[Computed]
     public function countAnswers()
     {
-        $this->js("console.log('task id',$this->taskId)");
-        return $this->activitTask->studentAnwsers->count();
+        return $this->activitTask?->studentAnwsers->count() ?? 0;
     }
 
     /** Edit **/
+    #[Locked]
     public ?int $editingQuestionIndex = null;
+    #[Locked]
     public ?int $editingOptionIndex = null;
     public string $editingQuestionTitle = '';
     public string $editingOptionText = '';
@@ -28,26 +31,75 @@ new class extends Component {
     #[On('task-show')]
     public function open($activit_id)
     {
-        $this->js("console.log('vamos ver abrindo o feio')");
-        $this->showTaskModule = true;
-        $this->activitTask = ActivitTask::with([
+        $teacher = Auth::guard('teacher')->user();
+
+        $activitTask = ActivitTask::with([
             'tasks' => function ($query) {
                 $query->with(['studentAnwsers', 'options'])->orderBy('created_at');
             },
-        ])->find((string) $activit_id);
-        $this->js("console.log('infos carregados')");
+        ])
+            ->where('id', $activit_id)
+            ->where('teacher_id', $teacher?->id)
+            ->whereHas('discipline', function ($query) use ($teacher) {
+                $query->where('teacher_id', $teacher?->id);
+            })
+            ->first();
+
+        if (! $activitTask) {
+            $this->reset([
+                'activitTask', 'taskId', 'editingQuestionIndex',
+                'editingOptionIndex', 'editingQuestionTitle', 'editingOptionText',
+            ]);
+            $this->showTaskModule = false;
+            $this->error('Atividade não encontrada ou você não tem permissão para acessá-la.');
+            return;
+        }
+
+        $this->activitTask = $activitTask;
+        $this->taskId = $activitTask->id;
+        $this->showTaskModule = true;
+    }
+
+    private function guardLoadedTask(): bool
+    {
+        if (! $this->activitTask) {
+            $this->error('Atividade não carregada.');
+            $this->showTaskModule = false;
+            return false;
+        }
+
+        return true;
     }
 
     public function startEditingQuestion(int $index)
     {
+        if (! $this->guardLoadedTask()) {
+            return;
+        }
+
+        if (! isset($this->activitTask->tasks[$index])) {
+            $this->error('Questão inválida.');
+            return;
+        }
+
         $this->editingQuestionIndex = $index;
         $this->editingQuestionTitle = $this->activitTask->tasks[$index]['question'];
     }
 
     public function saveQuestionEdit()
     {
+        if (! $this->guardLoadedTask()) {
+            return;
+        }
+
         $this->validate(['editingQuestionTitle' => 'required|min:8']);
-        $taskEdit = $this->activitTask->tasks[$this->editingQuestionIndex];
+        $taskEdit = $this->activitTask->tasks[$this->editingQuestionIndex] ?? null;
+        if (! $taskEdit) {
+            $this->error('Questão inválida.');
+            $this->cancelEditing();
+            return;
+        }
+
         $taskEdit->update([
             'question' => $this->editingQuestionTitle,
         ]);
@@ -57,16 +109,36 @@ new class extends Component {
 
     public function startEditingOption(int $qIndex, int $optIndex)
     {
+        if (! $this->guardLoadedTask()) {
+            return;
+        }
+
+        $task = $this->activitTask->tasks[$qIndex] ?? null;
+        if (! $task || ! isset($task->options[$optIndex])) {
+            $this->error('Opção inválida.');
+            return;
+        }
+
         $this->editingQuestionIndex = $qIndex;
         $this->editingOptionIndex = $optIndex;
-        $this->editingOptionText = $this->activitTask->tasks[$qIndex]->options[$optIndex]->text;
+        $this->editingOptionText = $task->options[$optIndex]->text;
     }
 
     public function saveOptionEdit()
     {
+        if (! $this->guardLoadedTask()) {
+            return;
+        }
+
         $this->validate(['editingOptionText' => 'required|min:1|max:255']);
-        $taskOptionEdit = $this->activitTask->tasks[$this->editingQuestionIndex];
-        $option = $taskOptionEdit->options[$this->editingOptionIndex];
+        $taskOptionEdit = $this->activitTask->tasks[$this->editingQuestionIndex] ?? null;
+        $option = $taskOptionEdit?->options[$this->editingOptionIndex] ?? null;
+        if (! $option) {
+            $this->error('Opção inválida.');
+            $this->cancelEditing();
+            return;
+        }
+
         $option->update([
             'text' => $this->editingOptionText,
         ]);
@@ -96,16 +168,17 @@ new class extends Component {
 
     public function removeQuestion(int $index)
     {
-        $this->js('console.log("removendo a questão")');
-        // $taskToRemove = $this->activitTask->tasks[$index];
-        // $taskToRemove->delete();
-        // $this->activitTask = ActivitTask::with([
-        //     'tasks' => function ($query) {
-        //         $query->with(['studentAnwsers', 'options'])->orderBy('created_at');
-        //     },
-        // ])->find((string) $this->activitTask->id);
-        // $this->success('Questão removida com sucesso');
-        // $this->cancelEditing();
+        if (! $this->guardLoadedTask()) {
+            return;
+        }
+
+        $taskToRemove = $this->activitTask->tasks[$index] ?? null;
+        if (! $taskToRemove) {
+            $this->error('Questão inválida.');
+            return;
+        }
+
+        // Remoção mantida desabilitada conforme comportamento original.
     }
 }; ?>
 <x-mary-drawer wire:model="showTaskModule" class="w-10/12 mx-auto z-50">
@@ -129,7 +202,7 @@ new class extends Component {
                    class="btn btn-sm bg-pink-700 text-white">
                   <x-mary-icon name="o-trash" class="w-6 h-6 mr-1" /> Deletar atividade
                 </button>
-                <livewire:pages.teacher.discipline.module.task.delete-task
+                <livewire:pages::teacher.discipline.module.task.delete-task
                   :activittask="$activitTask"
                   wire:key="activity-{{$activitTask->id}}" />
             @endif

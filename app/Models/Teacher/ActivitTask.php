@@ -2,14 +2,15 @@
 
 namespace App\Models\Teacher;
 
-use App\Models\Discipline;
 use App\Models\Module;
 use App\Models\Traits\UuidTrait;
-use App\Models\User;
+use Database\Factories\ActivitTaskFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
+#[UseFactory(ActivitTaskFactory::class)]
 class ActivitTask extends Model
 {
     use HasFactory, UuidTrait;
