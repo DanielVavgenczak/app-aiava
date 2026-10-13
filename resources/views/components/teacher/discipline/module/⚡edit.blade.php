@@ -1,12 +1,13 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{On, Validate};
+use Livewire\Attributes\{On, Validate, Locked};
 use App\Models\Module;
 
 new class extends Component {
 
     public bool $open = false;
+    #[Locked]
     public $module = null;
     #[Validate('required', message: 'O título do módulo é obrigatório!')]
     public string $title;
@@ -27,10 +28,22 @@ new class extends Component {
     public function update()
     {
         $this->validate();
+
+        $teacherId = auth('teacher')->id();
+
+        $module = Module::whereKey($this->module->id)
+            ->whereHas('discipline', fn ($q) => $q->where('teacher_id', $teacherId))
+            ->first();
+
+        if (! $module) {
+            abort(404);
+        }
+
         try {
-            $this->module->update([
+            $module->update([
                 'title' => $this->title,
             ]);
+            $this->module = $module;
             $this->open = false;
             $this->dispatch('teacher::module-event', type: 'update', msg: 'Aula edita com sucesso!');
             $this->reset('title');

@@ -3,6 +3,7 @@
 use Livewire\Component;
 use Livewire\Attributes\{On, Validate};
 use App\Models\{Module};
+use App\Models\Teacher\Discipline;
 
 new class extends Component {
     public bool $open = false;
@@ -26,7 +27,15 @@ new class extends Component {
             'title' => 'required|string|min:3',
         ]);
 
-         $exists = Module::where('discipline_id', $this->disciplineId)
+        $teacherId = auth('teacher')->id();
+
+        $discipline = Discipline::forTeacher($teacherId)->find($this->disciplineId);
+
+        if (! $discipline) {
+            abort(404);
+        }
+
+         $exists = Module::where('discipline_id', $discipline->id)
                 ->whereNormalizedTitle($this->title)
                 ->exists();
 
@@ -36,7 +45,7 @@ new class extends Component {
         }
        Module::create([
             'title' => $this->title,
-            'discipline_id' => $this->disciplineId,
+            'discipline_id' => $discipline->id,
         ]);
         $this->reset('open', 'title');
         $this->dispatch('teacher::module-event', type: 'create', msg: 'Aula criada com sucesso!');
