@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{Layout, On, Url, Computed};
+use Livewire\Attributes\{Layout, On, Url, Computed, Locked};
 use Livewire\WithPagination;
 use App\Models\Teacher\{Discipline};
 use App\Models\Forum\ForumTopic;
@@ -13,7 +13,9 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     use WithPagination;
 
     public string $selectedTab = 'all-tap';
+    #[Locked]
     public string $disciplineID = '';
+    #[Locked]
     public $discipline;
     public $classes;
 
@@ -88,7 +90,14 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     // ✅ Confirmar deleção
     public function confirmDelete($topicId): void
     {
-        $this->topicToDelete = ForumTopic::find($topicId);
+        $this->topicToDelete = ForumTopic::whereKey($topicId)
+            ->where('discipline_id', $this->discipline->id)
+            ->first();
+
+        if (! $this->topicToDelete) {
+            abort(404);
+        }
+
         $this->showDeleteModal = true;
     }
 
@@ -131,7 +140,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     #[Computed]
     public function allTopics()
     {
-        return ForumTopic::where('discipline_id', $this->disciplineID)
+        return ForumTopic::where('discipline_id', $this->discipline->id)
             ->with(['classe', 'owner', 'discipline'])
             ->orderBy('created_at', 'DESC')
             ->paginate($this->perPage, pageName: 'allPage');
@@ -151,7 +160,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
             ? '%Teacher%'
             : '%Student%';
 
-        return ForumTopic::where('discipline_id', $this->disciplineID)
+        return ForumTopic::where('discipline_id', $this->discipline->id)
             ->where('owner_type', 'LIKE', $ownerType)
             ->where('owner_id', $user->id)
             ->with(['classe', 'owner'])
@@ -162,7 +171,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     #[Computed]
     public function allTopicsCount()
     {
-        return ForumTopic::where('discipline_id', $this->disciplineID)->count();
+        return ForumTopic::where('discipline_id', $this->discipline->id)->count();
     }
 
     #[Computed]
@@ -179,7 +188,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
             ? '%Teacher%'
             : '%Student%';
 
-        return ForumTopic::where('discipline_id', $this->disciplineID)
+        return ForumTopic::where('discipline_id', $this->discipline->id)
             ->where('owner_type', 'LIKE', $ownerType)
             ->where('owner_id', $user->id)
             ->count();

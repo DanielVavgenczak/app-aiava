@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{Layout, On, Url, Computed};
+use Livewire\Attributes\{Layout, On, Url, Computed, Locked};
 use Livewire\WithPagination;
 use App\Models\Teacher\{Discipline};
 use App\Models\Forum\ForumTopic;
@@ -13,7 +13,9 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     use WithPagination;
 
     public string $selectedTab = 'all-tap';
+    #[Locked]
     public string $disciplineID = '';
+    #[Locked]
     public $discipline;
     public $classes;
 
@@ -75,7 +77,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     #[Computed]
     public function allTopics()
     {
-        return ForumTopic::where('discipline_id', $this->disciplineID)
+        return ForumTopic::where('discipline_id', $this->discipline->id)
             ->with(['classe', 'owner', 'discipline'])
             ->orderBy('created_at', 'DESC')
             ->paginate($this->perPage, pageName: 'allPage');
@@ -86,7 +88,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     {
         $teacherId = auth()->guard('teacher')->id();
 
-        return ForumTopic::where('discipline_id', $this->disciplineID)
+        return ForumTopic::where('discipline_id', $this->discipline->id)
             ->where('owner_type', 'LIKE', '%Teacher%')
             ->where('owner_id', $teacherId)
             ->with(['classe', 'owner'])
@@ -97,7 +99,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     #[Computed]
     public function allTopicsCount()
     {
-        return ForumTopic::where('discipline_id', $this->disciplineID)->count();
+        return ForumTopic::where('discipline_id', $this->discipline->id)->count();
     }
 
     #[Computed]
@@ -105,7 +107,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
     {
         $teacherId = auth()->guard('teacher')->id();
 
-        return ForumTopic::where('discipline_id', $this->disciplineID)
+        return ForumTopic::where('discipline_id', $this->discipline->id)
             ->where('owner_type', 'LIKE', '%Teacher%')
             ->where('owner_id', $teacherId)
             ->count();
