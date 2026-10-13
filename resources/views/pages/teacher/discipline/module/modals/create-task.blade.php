@@ -1,8 +1,9 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{On, Validate, Computed};
-use App\Models\Teacher\{Task, ActivitTask};
+use Livewire\Attributes\{On, Validate, Computed, Locked};
+use App\Models\Module;
+use App\Models\Teacher\{Task, ActivitTask, Discipline};
 use App\Support\ActivityValue;
 use Illuminate\Support\Facades\{Auth, DB};
 use Mary\Traits\Toast;
@@ -17,6 +18,7 @@ new class extends Component {
     public $lessons;
 
     public $totalValueExceded = false;
+    #[Locked]
     public $disciplineId;
     public bool $sendData = false;
     public bool $isAvaliative = false;
@@ -446,6 +448,23 @@ new class extends Component {
             'questions' => 'required|array|min:1',
         ]);
 
+        // O módulo (aula) precisa pertencer à disciplina informada e a
+        // disciplina precisa pertencer ao professor autenticado. Evita que um
+        // payload forjado crie atividades em recursos de outro professor.
+        $teacher = Auth::guard('teacher')->user();
+
+        $module = Module::query()
+            ->whereKey($this->selectedLessonId)
+            ->where('discipline_id', $this->disciplineId)
+            ->whereHas('discipline', function ($query) use ($teacher) {
+                $query->where('teacher_id', $teacher?->id);
+            })
+            ->first();
+
+        if (! $module) {
+            abort(404);
+        }
+
         $questionCorrectError = [];
 
         foreach($this->questions as $index => $question){
@@ -515,8 +534,8 @@ new class extends Component {
             $this->close();
             $this->questions = [];
         } catch (\Exception $e) {
-            $this->js("console.log('deu erro em salvar essa parada')");
-            $this->addError('save', 'Erro ao salvar tarefa: ' . $e->getMessage());
+            report($e);
+            $this->addError('save', 'Não foi possível salvar a atividade. Tente novamente.');
         }
     }
 
@@ -1292,6 +1311,11 @@ new class extends Component {
                                         </span>
                                         <x-mary-loading class=" text-pink-700 loading-dots" />
                                     </div>
+                                    @error('save')
+                                        <span class="text-sm tracking-wider text-red-500 error mt-2 block">
+                                            {{ $message }}
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                         <!-- end rest infos -->
