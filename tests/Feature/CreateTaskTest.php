@@ -93,3 +93,93 @@ it('persiste atividade não avaliativa sem nota e vinculada à disciplina', func
     expect($task)->not->toBeNull()
         ->and($task->value)->toBeNull();
 });
+
+it('mantém o total puro: avaliar execedeValue não muta estado nem gera erro', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component] = createTaskComponent($teacher);
+
+    $component
+        ->set('isAvaliative', true)
+        ->set('valueOfActivity', '5,00')
+        ->set('questionNoteValues', [5.0]);
+
+    $instance = $component->instance();
+
+    expect($instance->totalValueExceded)->toBeFalse()
+        ->and($instance->execedeValue())->toBeTrue()
+        ->and($instance->totalValueExceded)->toBeFalse();
+});
+
+it('sinaliza quando a soma das questões atinge o valor da atividade', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component] = createTaskComponent($teacher);
+
+    $component
+        ->set('isAvaliative', true)
+        ->set('valueOfActivity', '5,00')
+        ->set('titleOfQuestion', 'Questao que atinge o limite')
+        ->set('questionTypeSelected', 'text')
+        ->set('valueOfQuestion', '5,00')
+        ->call('addQuestion')
+        ->assertHasErrors('totalUsedValue');
+});
+
+it('sinaliza quando a soma das questões ultrapassa o valor da atividade', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component] = createTaskComponent($teacher);
+
+    $component
+        ->set('isAvaliative', true)
+        ->set('valueOfActivity', '5,00')
+        ->set('titleOfQuestion', 'Primeira questao valendo tres')
+        ->set('questionTypeSelected', 'text')
+        ->set('valueOfQuestion', '3,00')
+        ->call('addQuestion')
+        ->assertHasNoErrors();
+
+    $component
+        ->set('titleOfQuestion', 'Segunda questao valendo tres')
+        ->set('valueOfQuestion', '3,00')
+        ->call('addQuestion')
+        ->assertHasErrors('totalUsedValueExedido');
+});
+
+it('revalida o total quando o valor da atividade muda', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component] = createTaskComponent($teacher);
+
+    $component
+        ->set('isAvaliative', true)
+        ->set('valueOfActivity', '10,00')
+        ->set('questionNoteValues', [6.0])
+        ->set('valueOfActivity', '5,00')
+        ->assertHasErrors('totalUsedValueExedido');
+});
+
+it('não salva atividade avaliativa com soma de questões acima do total', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component, $discipline, $module] = createTaskComponent($teacher);
+
+    $component
+        ->set('isAvaliative', true)
+        ->set('valueOfActivity', '5,00')
+        ->set('selectedLessonId', $module->id)
+        ->set('titleOfQuestion', 'Primeira questao valendo tres')
+        ->set('questionTypeSelected', 'text')
+        ->set('valueOfQuestion', '3,00')
+        ->call('addQuestion');
+
+    $component
+        ->set('titleOfQuestion', 'Segunda questao valendo tres')
+        ->set('valueOfQuestion', '3,00')
+        ->call('addQuestion');
+
+    $component->call('save')->assertHasErrors('totalUsedValueExedido');
+
+    expect(ActivitTask::where('discipline_id', $discipline->id)->exists())->toBeFalse();
+});
