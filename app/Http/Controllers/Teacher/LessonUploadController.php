@@ -39,7 +39,7 @@ class LessonUploadController extends Controller
      * @param int $lesson_id
      * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
-    public function stream($lesson_id)
+    public function stream(Request $request, $lesson_id)
     {
             $lesson = Lesson::with('module.discipline')->findOrFail($lesson_id);
 
@@ -55,9 +55,42 @@ class LessonUploadController extends Controller
 
             $this->adjustMemoryLimit($fileSize);
 
-            return response()->stream(function () use ($path, $fileSize) {
-                $this->readFileChunked($path, $fileSize);
-            }, 200, $this->prepareHeaders($mimeType, $fileSize, $path));
+            $hasRange = (bool) $request->header('Range');
+            [$start, $end] = $this->resolveRange($request, $fileSize);
+            $length = $end - $start + 1;
+
+            $headers = $this->prepareHeaders($mimeType, $length, $path);
+
+            if ($hasRange) {
+                $headers['Content-Range'] = "bytes {$start}-{$end}/{$fileSize}";
+            }
+
+            return response()->stream(function () use ($path, $start, $length) {
+                $this->readFileChunked($path, $start, $length);
+            }, $hasRange ? 206 : 200, $headers);
+    }
+
+    /**
+     * Resolve o intervalo de bytes requisitado, aplicando os limites do arquivo.
+     *
+     * @return array{0:int,1:int}
+     */
+    private function resolveRange(Request $request, int $fileSize): array
+    {
+        $range = $request->header('Range');
+
+        if (! $range || ! preg_match('/bytes=(\d*)-(\d*)/', $range, $matches)) {
+            return [0, max($fileSize - 1, 0)];
+        }
+
+        $start = $matches[1] === '' ? 0 : (int) $matches[1];
+        $end = $matches[2] === '' ? $fileSize - 1 : (int) $matches[2];
+
+        if ($start >= $fileSize || $start > $end) {
+            abort(416, 'Range Not Satisfiable', ['Content-Range' => "bytes */{$fileSize}"]);
+        }
+
+        return [$start, min($end, $fileSize - 1)];
     }
 
     /**
@@ -326,11 +359,11 @@ class LessonUploadController extends Controller
 /*
  * Prepara os headers HTTP para streaming
  */
-private function prepareHeaders(string $mimeType, int $fileSize, string $filePath): array
+private function prepareHeaders(string $mimeType, int $contentLength, string $filePath): array
 {
     return [
         'Content-Type' => $mimeType,
-        'Content-Length' => $fileSize,
+        'Content-Length' => $contentLength,
         'Accept-Ranges' => 'bytes',
         'Cache-Control' => 'private, max-age=604800', // 1 semana
         'Expires' => gmdate('D, d M Y H:i:s', time() + 604800) . ' GMT',
@@ -341,32 +374,13 @@ private function prepareHeaders(string $mimeType, int $fileSize, string $filePat
 
 
     /**
-     * Leitura otimizada do arquivo em chunks com suporte a byte-range
+     * Leitura do arquivo em chunks a partir de um offset, respeitando o tamanho solicitado.
      */
-    private function readFileChunked(string $path, int $fileSize): void
+    private function readFileChunked(string $path, int $start, int $length): void
     {
-          $stream = fopen($path, 'rb');
+        $stream = fopen($path, 'rb');
         if ($stream === false) {
             abort(500, 'Não foi possível abrir o arquivo de vídeo');
-        }
-
-        $start = 0;
-        $end = $fileSize - 1;
-        $length = $fileSize;
-
-        if (isset($_SERVER['HTTP_RANGE'])) {
-            if (!preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches)) {
-                header("HTTP/1.1 416 Range Not Satisfiable");
-                header("Content-Range: bytes */$fileSize");
-                exit;
-            }
-
-            $start = (int)($matches[1] ?? 0);
-            $end = isset($matches[2]) ? (int)$matches[2] : $fileSize - 1;
-            $length = $end - $start + 1;
-
-            header("HTTP/1.1 206 Partial Content");
-            header("Content-Range: bytes $start-$end/$fileSize");
         }
 
         fseek($stream, $start);
@@ -374,24 +388,37 @@ private function prepareHeaders(string $mimeType, int $fileSize, string $filePat
         $bufferSize = 1024 * 8;
         $bytesSent = 0;
 
-        while (!feof($stream) && $bytesSent < $length && connection_status() == 0) {
-            $remaining = $length - $bytesSent;
-            $chunkSize = min($bufferSize, $remaining);
+        while (!feof($stream) && $bytesSent < $length && connection_status() === CONNECTION_NORMAL) {
+            $chunkSize = min($bufferSize, $length - $bytesSent);
+            $chunk = fread($stream, $chunkSize);
 
-            echo fread($stream, $chunkSize);
-            $bytesSent += $chunkSize;
+            if ($chunk === false) {
+                break;
+            }
 
-            if (ob_get_level() > 0) ob_flush();
+            echo $chunk;
+            $bytesSent += strlen($chunk);
+
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+
             flush();
         }
 
-        if (is_resource($stream)) fclose($stream);
+        fclose($stream);
     }
     private function adjustMemoryLimit(int $fileSize): void
         {
             $memoryLimit = ini_get('memory_limit');
+
+            // "-1" indica limite ilimitado; nada a ajustar.
+            if ($memoryLimit === '-1') {
+                return;
+            }
+
             if ($fileSize > $this->convertToBytes($memoryLimit) * 0.5) {
-                ini_set('memory_limit', $fileSize * 2 . 'B');
+                ini_set('memory_limit', (string) ($fileSize * 2));
             }
         }
        private function convertToBytes(string $memoryLimit): int

@@ -6,6 +6,7 @@ use App\Models\Teacher\Classe;
 use App\Models\Teacher\Discipline;
 use App\Models\Teacher\Student;
 use App\Models\Teacher\Teacher;
+use Illuminate\Support\Facades\Storage;
 
 function makeLesson(Teacher $teacher, Discipline $discipline): Lesson
 {
@@ -73,4 +74,45 @@ it('nega stream para professor que não é dono da disciplina', function () {
     $this->actingAs($other, 'teacher')
         ->get(route('media.stream', $lesson->id))
         ->assertForbidden();
+});
+
+it('responde 200 com o tamanho total quando não há Range', function () {
+    Storage::fake('private');
+    $teacher = Teacher::factory()->create();
+    $discipline = Discipline::factory()->for($teacher)->create();
+    $lesson = makeLesson($teacher, $discipline);
+    Storage::disk('private')->put($lesson->path_file, str_repeat('A', 1000));
+
+    $this->actingAs($teacher, 'teacher')
+        ->get(route('media.stream', $lesson->id))
+        ->assertStatus(200)
+        ->assertHeader('Accept-Ranges', 'bytes')
+        ->assertHeader('Content-Length', '1000');
+});
+
+it('responde 206 com Content-Range ao solicitar um intervalo de bytes', function () {
+    Storage::fake('private');
+    $teacher = Teacher::factory()->create();
+    $discipline = Discipline::factory()->for($teacher)->create();
+    $lesson = makeLesson($teacher, $discipline);
+    Storage::disk('private')->put($lesson->path_file, str_repeat('A', 1000));
+
+    $this->actingAs($teacher, 'teacher')
+        ->get(route('media.stream', $lesson->id), ['Range' => 'bytes=0-99'])
+        ->assertStatus(206)
+        ->assertHeader('Content-Range', 'bytes 0-99/1000')
+        ->assertHeader('Content-Length', '100');
+});
+
+it('responde 416 quando o intervalo está fora do arquivo', function () {
+    Storage::fake('private');
+    $teacher = Teacher::factory()->create();
+    $discipline = Discipline::factory()->for($teacher)->create();
+    $lesson = makeLesson($teacher, $discipline);
+    Storage::disk('private')->put($lesson->path_file, str_repeat('A', 1000));
+
+    $this->actingAs($teacher, 'teacher')
+        ->get(route('media.stream', $lesson->id), ['Range' => 'bytes=5000-6000'])
+        ->assertStatus(416)
+        ->assertHeader('Content-Range', 'bytes */1000');
 });
