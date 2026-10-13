@@ -18,6 +18,17 @@ class ActivitTask extends Model
     public $incrementing = false;
     protected $keyType = "uuid";
     protected $fillable = ['id', 'title', 'start', 'end', 'module_id', 'discipline_id', 'teacher_id','total_value','is_avaliative'];
+
+    protected function casts(): array
+    {
+        return [
+            'start' => 'datetime',
+            'end' => 'datetime',
+            'is_avaliative' => 'boolean',
+            'total_value' => 'decimal:2',
+        ];
+    }
+
     public function teacher()
     {
         return $this->belongsTo(Teacher::class);

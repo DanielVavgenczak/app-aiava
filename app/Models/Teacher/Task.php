@@ -17,6 +17,14 @@ class Task extends Model
     protected $keyType = "uuid";
     protected $fillable = ['id', 'question', 'type', 'activit_task_id', 'value', 'order'];
 
+    protected function casts(): array
+    {
+        return [
+            'value' => 'decimal:2',
+            'order' => 'integer',
+        ];
+    }
+
     public function activitTask()
     {
         return $this->belongsTo(ActivitTask::class, 'activit_task_id');

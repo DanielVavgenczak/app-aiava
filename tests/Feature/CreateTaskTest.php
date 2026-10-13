@@ -273,3 +273,40 @@ it('não vaza detalhes do banco ao falhar a persistência', function () {
         ->toBe('Não foi possível salvar a atividade. Tente novamente.')
         ->and(ActivitTask::where('discipline_id', $discipline->id)->exists())->toBeFalse();
 });
+
+it('não adiciona questão de múltipla escolha sem opções suficientes', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component] = createTaskComponent($teacher);
+
+    $component
+        ->set('questionTypeSelected', 'radio')
+        ->set('newOptionText', 'Unica alternativa')
+        ->call('addOptionRadio')
+        ->set('titleOfQuestion', 'Questao com uma unica opcao')
+        ->call('addQuestion')
+        ->assertHasErrors('options');
+
+    expect($component->get('questions'))->toHaveCount(0);
+});
+
+it('aceita questão de múltipla escolha com exatamente duas opções', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component] = createTaskComponent($teacher);
+
+    $component
+        ->set('questionTypeSelected', 'radio')
+        ->set('newOptionText', 'Alternativa A')
+        ->call('addOptionRadio')
+        ->set('newOptionText', 'Alternativa B')
+        ->call('addOptionRadio')
+        ->set('titleOfQuestion', 'Questao com duas opcoes')
+        ->call('addQuestion')
+        ->assertHasNoErrors();
+
+    $questions = $component->get('questions');
+
+    expect($questions)->toHaveCount(1)
+        ->and($questions[0]['options'])->toHaveCount(2);
+});

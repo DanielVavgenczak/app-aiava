@@ -16,6 +16,16 @@ class StudentAnwser extends Model
     protected $keyType = "string";
     protected $fillable = ['id', 'task_id', 'student_id', 'activit_task_id', 'answer_text', 'answer_option_id', 'is_correct', 'order', 'corrected', 'attempt_number'];
 
+    protected function casts(): array
+    {
+        return [
+            'is_correct' => 'boolean',
+            'corrected' => 'boolean',
+            'attempt_number' => 'integer',
+            'order' => 'integer',
+        ];
+    }
+
     /**
      * return student who answered
      */
