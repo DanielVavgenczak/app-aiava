@@ -23,3 +23,13 @@ it('redireciona rota do professor para login', function () {
 it('redireciona rota do aluno para o login do aluno', function () {
     $this->get('/aluno/disciplina')->assertRedirect(route('student.login'));
 });
+
+it('renderiza as rotas de autenticacao', function (string $url) {
+    $this->get($url)->assertOk();
+})->with([
+    '/teacher/login',
+    '/student/login',
+    '/teacher/register',
+    '/forgot-password',
+    '/reset-password/token-de-teste',
+]);
