@@ -26,12 +26,21 @@ new class extends Component {
     public function storeClasse()
     {
         $this->validateMultiple(['class_name', 'disciplineId']);
+
+        $teacher = Auth::guard('teacher')->user();
+
+        $discipline = Discipline::forTeacher($teacher?->id)->find($this->disciplineId);
+
+        if (! $discipline) {
+            abort(404);
+        }
+
         try {
             Classe::create(
                 attributes: [
                     'name' => $this->class_name,
-                    'discipline_id' => $this->disciplineId,
-                    'teacher_id' => Auth::guard('teacher')->user()->id,
+                    'discipline_id' => $discipline->id,
+                    'teacher_id' => $teacher->id,
                 ],
             );
             $this->dispatch('action-event-classe', type: 'create');

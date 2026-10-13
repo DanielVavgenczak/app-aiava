@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{Validate, On};
+use Livewire\Attributes\{Validate, On, Locked};
 use App\Models\Teacher\{Classe, Student,Discipline};
 use Mary\Traits\Toast;
 
@@ -12,6 +12,7 @@ new class extends Component {
     #[Validate('min:5', message: 'O nome da classe deve ter no minimo 5 caracteres')]
     public string $classe_name = '';
     public bool $open = false;
+    #[Locked]
     public ?Classe $classe = null;
     #[Validate('required', message: 'Disciplina é obrigatória!')]
     public string $disciplineId = '';
@@ -37,10 +38,23 @@ new class extends Component {
     {
         $this->js('console.log("Atualizando classe...")');
         $this->validateMultiple(['classe_name', 'disciplineId']);
+
+        $teacher = Auth::guard('teacher')->user();
+
+        $classe = Classe::whereKey($this->classe->id)
+            ->where('teacher_id', $teacher?->id)
+            ->first();
+
+        $discipline = Discipline::forTeacher($teacher?->id)->find($this->disciplineId);
+
+        if (! $classe || ! $discipline) {
+            abort(404);
+        }
+
         try {
-            $this->classe->update([
+            $classe->update([
                 'name' => $this->classe_name,
-                'discipline_id' => $this->disciplineId,
+                'discipline_id' => $discipline->id,
             ]);
             $this->dispatch('action-event-classe', type: 'update');
             $this->open = false;
