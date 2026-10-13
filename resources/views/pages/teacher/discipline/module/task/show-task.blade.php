@@ -146,6 +146,26 @@ new class extends Component {
         $this->success('Sucesso ao editar opção');
     }
 
+    public function updateCorrectOption(int $qIndex, int $optIndex)
+    {
+        if (! $this->guardLoadedTask()) {
+            return;
+        }
+
+        $task = $this->activitTask->tasks[$qIndex] ?? null;
+        if (! $task || ! isset($task->options[$optIndex])) {
+            $this->error('Opção inválida.');
+            return;
+        }
+
+        foreach ($task->options as $index => $option) {
+            $option->update(['correct' => $index === $optIndex]);
+        }
+
+        $this->activitTask->load('tasks.options');
+        $this->success('Alternativa correta atualizada.');
+    }
+
     public function cancelEditing()
     {
         $this->editingQuestionIndex = null;
@@ -246,7 +266,7 @@ new class extends Component {
                                           wire:click="startEditingQuestion({{ $index }})" icon="o-pencil-square"
                                           class="btn-sm btn" spinner />
                                       @if ($task->type !== 'multiple_choice')
-                                        <span class="badge bg-red-300">{{ $task->studentAnwsers->count() }}/span>
+                                        <span class="badge bg-red-300">{{ $task->studentAnwsers->count() }}</span>
                                           {{-- <x-mary-button class="btn-sm" label="Entregas"
                                               badge="{{ $task->studentAnwsers->count() }}"
                                               badge-classes="bg-gray-500 text-white"
@@ -300,7 +320,7 @@ new class extends Component {
                                                 @checked($option['correct']) class="text-indigo-600 border-gray-300">
                                             <span @class([
                                                 'flex-1 cursor-pointer',
-                                                'font-semibold text-indigo-700' => $option['is_correct'],
+                                                'font-semibold text-indigo-700' => $option['correct'],
                                             ])
                                                 wire:click="startEditingOption({{ $index }}, {{ $optIndex }})">
                                                 {{ $option['text'] }}

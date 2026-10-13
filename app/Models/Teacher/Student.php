@@ -40,12 +40,6 @@ class Student extends Authenticatable
         'remember_token',
         'temporary_password'
     ];
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'status' => 'string', // ✅ Cast para string
-        'password_changed_at' => 'datetime',
-    ];
 
     /**
      * Scope para alunos ativos
@@ -209,6 +203,9 @@ class Student extends Authenticatable
             'id' => 'string',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'status' => 'string',
+            'must_change_password' => 'boolean',
+            'password_changed_at' => 'datetime',
         ];
     }
 }
