@@ -24,7 +24,7 @@ new class extends Component {
     public bool $isAvaliative = false;
     public $valueOfActivity = null;
     #[Validate('required')]
-    public $selectedLessonId = null;
+    public $moduleId = null;
     public string $titleOfQuestion = '';
 
     //Order list
@@ -42,7 +42,6 @@ new class extends Component {
     public array $questions = [];
     public $valueOfQuestion = null;
     public array $questionNoteValues = [];
-    public $totalNoteQuestions = 0;
 
     // dates
     public $startDate = null;
@@ -309,12 +308,6 @@ new class extends Component {
       $this->validateTotalValue();
   }
 
-    public function calculateTotalQuestionValue()
-    {
-        //$count = array_sum($this->questionNoteValues);
-        return array_sum(array_column($this->questions, 'value_of_question'));
-    }
-
     public function removeQuestion(int $index)
     {
 
@@ -347,10 +340,6 @@ new class extends Component {
         }
     }
 
-    public function editQuestion($qIndex)
-    {
-        $this->questions[$qIndex]['editing'] = true;
-    }
     public function addOptionRadio()
     {
         $this->validateOnly('newOptionText');
@@ -433,23 +422,18 @@ new class extends Component {
       $this->dispatch('close-create-task');
     }
 
-    public function closeFancybox()
-    {
-        $this->open_create_task = false;
-    }
-
     protected function resetFormCreation()
     {
         $this->titleOfQuestion = '';
         $this->options = [];
         $this->questionTypeSelected = 'radio';
-        $this->selectedLessonId = null;
+        $this->moduleId = null;
     }
 
     public function save()
     {
         $this->validate([
-            'selectedLessonId' => 'required|exists:modules,id',
+            'moduleId' => 'required|exists:modules,id',
             'disciplineId' => 'required|exists:disciplines,id',
             'questions' => 'required|array|min:1',
         ]);
@@ -460,7 +444,7 @@ new class extends Component {
         $teacher = Auth::guard('teacher')->user();
 
         $module = Module::query()
-            ->whereKey($this->selectedLessonId)
+            ->whereKey($this->moduleId)
             ->where('discipline_id', $this->disciplineId)
             ->whereHas('discipline', function ($query) use ($teacher) {
                 $query->where('teacher_id', $teacher?->id);
@@ -512,7 +496,7 @@ new class extends Component {
             $this->sendData = true;
             DB::transaction(function () {
               $activit = ActivitTask::create([
-                  'module_id' => $this->selectedLessonId,
+                  'module_id' => $this->moduleId,
                   'discipline_id' => $this->disciplineId,
                   'teacher_id' => Auth::guard('teacher')->user()->id,
                   'start' => $this->startDate ? $this->startDate . ' 00:00:00' : null,
@@ -997,13 +981,13 @@ new class extends Component {
                             <div class="flex flex-col gap-2 mt-6 p-5 bg-gray-100 rounded-sm">
                                 <div class="mb-2" id="create-question-associate-module-{{ $disciplineId }}">
                                     <label class="block text-[12px] font-bold text-gray-700">Vincular à aula:</label>
-                                    <select class="select !outline-none w-full focus:border-gray-400" wire:model="selectedLessonId">
+                                    <select class="select !outline-none w-full focus:border-gray-400" wire:model="moduleId">
                                        <option value="">Selecione à aula</option>
                                         @foreach ($lessons as $lesson)
                                             <option value="{{ $lesson->id }}">{{ $lesson->title }}</option>
                                         @endforeach
                                     </select>
-                                    @error('selectedLessonId')
+                                    @error('moduleId')
                                       <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                                     @enderror
                                 </div>

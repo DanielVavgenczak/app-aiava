@@ -171,3 +171,32 @@ it('bloqueia submissão quando a janela fecha durante a sessão', function () {
 
     expect(StudentAnwser::where('task_id', $task->id)->exists())->toBeFalse();
 });
+
+it('marca a resposta de múltipla escolha conforme a alternativa selecionada', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit, $task] = makeSubmissionContext($teacher, 'multiple_choice');
+    $correct = TaskOptions::factory()->for($task)->correct()->create();
+    $wrong = TaskOptions::factory()->for($task)->create();
+    $student = makeSubmissionStudent($teacher, $discipline);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test('pages::student.discipline.lesson.show-task-lesson')
+        ->dispatch('student-event-open-task', id: $activit->id)
+        ->set("selectedOptions.{$task->id}", $correct->id)
+        ->call('submitAnswers');
+
+    $answer = StudentAnwser::where('task_id', $task->id)->first();
+
+    expect($answer)->not->toBeNull()
+        ->and($answer->is_correct)->toBeTrue()
+        ->and($answer->answer_option_id)->toBe($correct->id);
+
+    Livewire::test('pages::student.discipline.lesson.show-task-lesson')
+        ->dispatch('student-event-open-task', id: $activit->id)
+        ->set("selectedOptions.{$task->id}", $wrong->id)
+        ->call('submitAnswers');
+
+    expect($answer->fresh()->is_correct)->toBeFalse()
+        ->and($answer->fresh()->answer_option_id)->toBe($wrong->id);
+});

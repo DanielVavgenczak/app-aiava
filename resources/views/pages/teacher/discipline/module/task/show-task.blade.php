@@ -17,7 +17,7 @@ new class extends Component {
     #[Computed]
     public function countAnswers()
     {
-        return $this->activitTask?->studentAnwsers->count() ?? 0;
+        return $this->activitTask?->studentAnwsers()->count() ?? 0;
     }
 
     /** Edit **/

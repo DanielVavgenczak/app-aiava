@@ -3,9 +3,12 @@
 namespace App\Models\Teacher;
 
 use App\Models\Traits\UuidTrait;
+use Database\Factories\TaskOptionsFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[UseFactory(TaskOptionsFactory::class)]
 class TaskOptions extends Model
 {
     use HasFactory, UuidTrait;
