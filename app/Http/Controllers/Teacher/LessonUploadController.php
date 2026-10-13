@@ -222,7 +222,7 @@ class LessonUploadController extends Controller
             // Gera uma URL temporária para o stream do vídeo
             $streamUrl = URL::temporarySignedRoute(
                 'media.stream',
-                now()->addMinutes(2),
+                now()->addMinutes(30),
                 ['lesson_id' => $lesson->id]
             );
 

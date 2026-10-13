@@ -38,5 +38,6 @@ Route::prefix("professor")->middleware('isTeacher')->group(function () {
         ->name('teacher.media.upload');
 
     Route::get("lesson/{lesson_id}", [LessonUploadController::class, 'stream'])
+        ->middleware('signed')
         ->name('teacher.media.stream');
 });

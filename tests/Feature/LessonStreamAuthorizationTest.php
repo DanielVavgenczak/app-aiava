@@ -7,6 +7,7 @@ use App\Models\Teacher\Discipline;
 use App\Models\Teacher\Student;
 use App\Models\Teacher\Teacher;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 function makeLesson(Teacher $teacher, Discipline $discipline): Lesson
 {
@@ -39,6 +40,11 @@ function makeStudentFrom(Teacher $teacher, Discipline $discipline): Student
     ]);
 }
 
+function signedStreamUrl(Lesson $lesson): string
+{
+    return URL::temporarySignedRoute('media.stream', now()->addMinutes(30), ['lesson_id' => $lesson->id]);
+}
+
 it('nega stream de aula de outra disciplina para o aluno', function () {
     $teacher = Teacher::factory()->create();
     $discipline = Discipline::factory()->for($teacher)->create();
@@ -49,7 +55,7 @@ it('nega stream de aula de outra disciplina para o aluno', function () {
     $student = makeStudentFrom($otherTeacher, $otherDiscipline);
 
     $this->actingAs($student, 'student')
-        ->get(route('media.stream', $lesson->id))
+        ->get(signedStreamUrl($lesson))
         ->assertForbidden();
 });
 
@@ -60,7 +66,7 @@ it('autoriza stream da própria disciplina (arquivo ausente => 404)', function (
     $student = makeStudentFrom($teacher, $discipline);
 
     $this->actingAs($student, 'student')
-        ->get(route('media.stream', $lesson->id))
+        ->get(signedStreamUrl($lesson))
         ->assertNotFound();
 });
 
@@ -72,6 +78,16 @@ it('nega stream para professor que não é dono da disciplina', function () {
     $other = Teacher::factory()->create();
 
     $this->actingAs($other, 'teacher')
+        ->get(signedStreamUrl($lesson))
+        ->assertForbidden();
+});
+
+it('rejeita stream sem assinatura válida', function () {
+    $teacher = Teacher::factory()->create();
+    $discipline = Discipline::factory()->for($teacher)->create();
+    $lesson = makeLesson($teacher, $discipline);
+
+    $this->actingAs($teacher, 'teacher')
         ->get(route('media.stream', $lesson->id))
         ->assertForbidden();
 });
@@ -84,7 +100,7 @@ it('responde 200 com o tamanho total quando não há Range', function () {
     Storage::disk('private')->put($lesson->path_file, str_repeat('A', 1000));
 
     $this->actingAs($teacher, 'teacher')
-        ->get(route('media.stream', $lesson->id))
+        ->get(signedStreamUrl($lesson))
         ->assertStatus(200)
         ->assertHeader('Accept-Ranges', 'bytes')
         ->assertHeader('Content-Length', '1000');
@@ -98,7 +114,7 @@ it('responde 206 com Content-Range ao solicitar um intervalo de bytes', function
     Storage::disk('private')->put($lesson->path_file, str_repeat('A', 1000));
 
     $this->actingAs($teacher, 'teacher')
-        ->get(route('media.stream', $lesson->id), ['Range' => 'bytes=0-99'])
+        ->get(signedStreamUrl($lesson), ['Range' => 'bytes=0-99'])
         ->assertStatus(206)
         ->assertHeader('Content-Range', 'bytes 0-99/1000')
         ->assertHeader('Content-Length', '100');
@@ -112,7 +128,7 @@ it('responde 416 quando o intervalo está fora do arquivo', function () {
     Storage::disk('private')->put($lesson->path_file, str_repeat('A', 1000));
 
     $this->actingAs($teacher, 'teacher')
-        ->get(route('media.stream', $lesson->id), ['Range' => 'bytes=5000-6000'])
+        ->get(signedStreamUrl($lesson), ['Range' => 'bytes=5000-6000'])
         ->assertStatus(416)
         ->assertHeader('Content-Range', 'bytes */1000');
 });

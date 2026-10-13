@@ -4,6 +4,7 @@ use Livewire\Component;
 use App\Models\{Lesson};
 use Livewire\Attributes\{On, Locked};
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\URL;
 
 new class extends Component {
     use WithFileUploads;
@@ -49,7 +50,7 @@ new class extends Component {
         }
 
         if ($this->lesson->type === 'video') {
-            $this->video_url = route('media.stream', ['lesson_id' => $this->lesson->id]);
+            $this->video_url = URL::temporarySignedRoute('media.stream', now()->addMinutes(30), ['lesson_id' => $this->lesson->id]);
         }
 
         $this->updateNavigationStates();
@@ -144,7 +145,7 @@ new class extends Component {
                 'path_file' => $path,
             ]);
 
-            $this->video_url = route('media.stream', ['lesson_id' => $lesson->id]);
+            $this->video_url = URL::temporarySignedRoute('media.stream', now()->addMinutes(30), ['lesson_id' => $lesson->id]);
             $this->dispatch('video-load', url: $this->video_url);
             $this->newVideoFile = null;
 
@@ -266,7 +267,7 @@ new class extends Component {
                 <x-mary-icon name="o-document-text" class="w-12 h-12 text-blue-500 mb-4" />
                 <h3 class="text-lg font-medium text-gray-700 mb-2">{{ $lesson->title }}</h3>
                 <p class="text-sm text-gray-500 mb-4">{{ $lesson->original_name }}</p>
-                <a href="{{ route('media.stream', ['lesson_id' => $lesson->id]) }}" target="_blank"
+                <a href="{{ URL::temporarySignedRoute('media.stream', now()->addMinutes(30), ['lesson_id' => $lesson->id]) }}" target="_blank"
                    class="px-6 py-2 text-white transition duration-200 bg-blue-400 rounded-lg hover:bg-blue-500">
                     <x-mary-icon name="o-eye" class="w-4 h-4 inline" /> Visualizar PDF
                 </a>
