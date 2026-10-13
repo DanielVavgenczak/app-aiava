@@ -81,17 +81,30 @@ new class extends Component {
 
     public function storeStudent()
     {
+        $teacher = Auth::guard('teacher')->user();
+
+        $classe = Classe::whereKey($this->classeId)
+            ->where(function ($q) use ($teacher) {
+                $q->where('teacher_id', $teacher?->id)
+                    ->orWhereHas('discipline', fn ($d) => $d->where('teacher_id', $teacher?->id));
+            })
+            ->first();
+
+        if (! $classe) {
+            abort(404);
+        }
+
         try {
-            DB::transaction(function () {
+            DB::transaction(function () use ($classe, $teacher) {
                 foreach ($this->students as $student) {
                     $temporaryPassword = $this->generateRandomPassword(); // Senha temporária padrão
                     Student::create([
                         'full_name' => $student['name'],
                         'email' => $student['email'],
                         'phone' => $student['phone'],
-                        'classe_id' => $this->classeId,
-                        'teacher_id' => Auth::guard('teacher')->user()->id,
-                        'discipline_id' => $this->disciplineId,
+                        'classe_id' => $classe->id,
+                        'teacher_id' => $teacher->id,
+                        'discipline_id' => $classe->discipline_id,
                         'password' => Hash::make($temporaryPassword),
                         'temporary_password' => $temporaryPassword,
                         'must_change_password' => true,

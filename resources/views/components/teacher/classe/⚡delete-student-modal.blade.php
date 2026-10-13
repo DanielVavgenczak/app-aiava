@@ -2,10 +2,11 @@
 
 use Livewire\Component;
 use App\Models\Teacher\{Student};
-use Livewire\Attributes\{On};
+use Livewire\Attributes\{On, Locked};
 
 new class extends Component {
     public bool $open = false;
+    #[Locked]
     public ?Student $student;
 
     #[On('teacher::remove-student')]
@@ -18,8 +19,18 @@ new class extends Component {
 
     public function delete()
     {
+        $teacher = auth('teacher')->user();
+
+        $student = Student::whereKey($this->student->id)
+            ->whereHas('classe', fn ($q) => $q->where('teacher_id', $teacher?->id))
+            ->first();
+
+        if (! $student) {
+            abort(404);
+        }
+
         try {
-            $this->student->delete();
+            $student->delete();
             $this->open = false;
             $this->dispatch("student-event", type: "delete", message:"Aluno deletado com sucesso");
         } catch (\Exception $e) {

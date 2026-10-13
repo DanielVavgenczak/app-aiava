@@ -2,7 +2,7 @@
 
 use Livewire\Component;
 use App\Models\Teacher\{Classe, Student};
-use Livewire\Attributes\{On, Validate};
+use Livewire\Attributes\{On, Validate, Locked};
 use Mary\Traits\Toast;
 
 new class extends Component {
@@ -17,6 +17,7 @@ new class extends Component {
     public string $studentEmail = '';
     public string $studentPhone = '';
 
+    #[Locked]
     public Student $student;
 
     #[On('teacher::edit-student-form')]
@@ -42,12 +43,22 @@ new class extends Component {
 
     public function updateStudent()
     {
+        $teacher = auth('teacher')->user();
+
+        $student = Student::whereKey($this->student->id)
+            ->whereHas('classe', fn ($q) => $q->where('teacher_id', $teacher?->id))
+            ->first();
+
+        if (! $student) {
+            abort(404);
+        }
+
         try {
             $update = [
                 'full_name' => $this->studentName,
                 'email' => $this->studentEmail,
             ];
-            $this->student->update($update);
+            $student->update($update);
             $this->dispatch('student-event', type: 'update', message: 'Aluno atualizado com sucesso!');
             $this->open = false;
         } catch (\Exception $e) {
