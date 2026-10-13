@@ -7,6 +7,7 @@ use App\Models\Teacher\QuestionFeedback;
 use App\Models\Teacher\Student;
 use App\Models\Teacher\StudentAnwser;
 use App\Models\Teacher\Task;
+use App\Models\Teacher\TaskOptions;
 use App\Models\Teacher\Teacher;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
@@ -229,4 +230,55 @@ it('nega montagem do delete-task para professor de fora do escopo', function () 
         'pages::teacher.discipline.module.task.delete-task',
         ['activittask' => $activit],
     ))->toThrow(NotFoundHttpException::class);
+});
+
+it('atualiza a alternativa correta da questão', function () {
+    $teacher = Teacher::factory()->create();
+    [, , $activit] = makeTaskActivity($teacher);
+    $task = Task::factory()->forActivitTask($activit)->create(['type' => 'multiple_choice']);
+
+    $first = TaskOptions::create([
+        'task_id' => $task->id,
+        'text' => 'Alternativa A',
+        'correct' => true,
+        'order' => 0,
+    ]);
+    $second = TaskOptions::create([
+        'task_id' => $task->id,
+        'text' => 'Alternativa B',
+        'correct' => false,
+        'order' => 1,
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    Livewire::test('pages::teacher.discipline.module.task.show-task')
+        ->dispatch('task-show', activit_id: $activit->id)
+        ->call('updateCorrectOption', 0, 1)
+        ->assertHasNoErrors();
+
+    expect($first->fresh()->correct)->toBeFalsy()
+        ->and($second->fresh()->correct)->toBeTruthy();
+});
+
+it('não altera alternativa quando a atividade não pertence ao professor', function () {
+    $owner = Teacher::factory()->create();
+    [, , $activit] = makeTaskActivity($owner);
+    $task = Task::factory()->forActivitTask($activit)->create(['type' => 'multiple_choice']);
+    $option = TaskOptions::create([
+        'task_id' => $task->id,
+        'text' => 'Alternativa A',
+        'correct' => false,
+        'order' => 0,
+    ]);
+
+    $other = Teacher::factory()->create();
+    $this->actingAs($other, 'teacher');
+
+    Livewire::test('pages::teacher.discipline.module.task.show-task')
+        ->dispatch('task-show', activit_id: $activit->id)
+        ->call('updateCorrectOption', 0, 0)
+        ->assertSet('activitTask', null);
+
+    expect($option->fresh()->correct)->toBeFalsy();
 });
