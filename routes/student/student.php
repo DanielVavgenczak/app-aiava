@@ -31,5 +31,5 @@ Route::prefix('aluno')->middleware('isStudent')->group(function () {
 // Streaming de aulas: compartilhado entre professor e aluno.
 // A autorização por vínculo de disciplina é feita no controller.
 Route::get('/aluno/lesson/{lesson_id}', [LessonUploadController::class, 'stream'])
-    ->middleware('teacherOrStudent')
+    ->middleware(['teacherOrStudent', 'signed'])
     ->name('media.stream');
