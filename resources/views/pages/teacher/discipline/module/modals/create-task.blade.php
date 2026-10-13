@@ -498,13 +498,13 @@ new class extends Component {
                         'value' => $this->isAvaliative ? ActivityValue::toFloat($question['value_of_question']) : null,
                     ]);
                     // Quando criar uma nova opção
-                    $lastOrder = $task->options()->max('order');
                     if ($question['type'] === 'radio') {
+                        $lastOrder = (int) ($task->options()->max('order') ?? 0);
                         foreach ($question['options'] as $option) {
                             $task->options()->create([
                                 'text' => $option['text'],
                                 'correct' => $option['is_correct'],
-                                'order' => $lastOrder + 1,
+                                'order' => ++$lastOrder,
                             ]);
                         }
                     }
@@ -940,13 +940,13 @@ new class extends Component {
 
                                 <button
                                     class="btn btn-md bg-gray-100 text-gray-500"
-                                    @click.prevent="handleBackspaceInputTwo">
+                                    @click.prevent="handleBackspaceInput">
                                     <x-mary-icon
                                         name="o-backspace"
                                         class="w-5 h-5 text-gray-600" />
                                 </button>
                             </div>
-                            <p x-show="showMessage" class="text-red-500 text-sm mt-1" x-text="showWarningMessage"></p>
+                            <p x-show="showMessage" class="text-red-500 text-sm mt-1" x-text="mensagem"></p>
 
                             @error('valueOfQuestion')
                             <span class="text-red-500 error text-xs font-semibold tracking-wider">

@@ -4,6 +4,7 @@ use App\Models\Module;
 use App\Models\Teacher\ActivitTask;
 use App\Models\Teacher\Discipline;
 use App\Models\Teacher\Task;
+use App\Models\Teacher\TaskOptions;
 use App\Models\Teacher\Teacher;
 use Livewire\Livewire;
 
@@ -182,4 +183,33 @@ it('não salva atividade avaliativa com soma de questões acima do total', funct
     $component->call('save')->assertHasErrors('totalUsedValueExedido');
 
     expect(ActivitTask::where('discipline_id', $discipline->id)->exists())->toBeFalse();
+});
+
+it('grava as opções de múltipla escolha com ordem incremental', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component, $discipline, $module] = createTaskComponent($teacher);
+
+    $component
+        ->set('questionTypeSelected', 'radio')
+        ->set('newOptionText', 'Alternativa Alfa')
+        ->call('addOptionRadio')
+        ->set('newOptionText', 'Alternativa Beta')
+        ->call('addOptionRadio')
+        ->set('newOptionText', 'Alternativa Gama')
+        ->call('addOptionRadio')
+        ->set('titleOfQuestion', 'Questao de multipla escolha')
+        ->call('addQuestion')
+        ->assertHasNoErrors()
+        ->call('updateCorrectOption', 0, 0)
+        ->set('selectedLessonId', $module->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $activit = ActivitTask::where('discipline_id', $discipline->id)->first();
+    $task = Task::where('activit_task_id', $activit->id)->first();
+
+    $orders = TaskOptions::where('task_id', $task->id)->orderBy('order')->pluck('order')->all();
+
+    expect($orders)->toBe([1, 2, 3]);
 });
