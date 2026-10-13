@@ -91,6 +91,21 @@ it('nega editar disciplina de outro professor', function () {
         ->assertStatus(403);
 });
 
+it('impede editar disciplina alheia ao manipular o id do form', function () {
+    $teacher = Teacher::factory()->create();
+    $own = Discipline::factory()->for($teacher)->create(['title' => 'Minha']);
+    $other = Teacher::factory()->create();
+    $otherDiscipline = Discipline::factory()->for($other)->create(['title' => 'Alheia']);
+
+    Livewire::actingAs($teacher, 'teacher')
+        ->test('teacher.discipline.modals.modal-edit-discipline', ['discipline' => $own])
+        ->set('form.disciplineId', $otherDiscipline->id)
+        ->set('form.title', 'Invadida')
+        ->call('update');
+
+    expect($otherDiscipline->fresh()->title)->toBe('Alheia');
+});
+
 it('aplica soft delete na disciplina ao deletar pelo modal', function () {
     $teacher = Teacher::factory()->create();
     $discipline = Discipline::factory()->for($teacher)->create(['title' => 'Matematica']);

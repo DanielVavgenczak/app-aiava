@@ -95,7 +95,9 @@ class DisciplineForm extends Form
             return null;
         }
 
-        return Discipline::withTrashed()->find($this->disciplineId);
+        return Discipline::withTrashed()
+            ->forTeacher(Auth::guard('teacher')->id())
+            ->find($this->disciplineId);
     }
 
     private function setDisciplineId(string $id)
