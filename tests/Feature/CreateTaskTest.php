@@ -6,6 +6,7 @@ use App\Models\Teacher\Discipline;
 use App\Models\Teacher\Task;
 use App\Models\Teacher\TaskOptions;
 use App\Models\Teacher\Teacher;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 
 function createTaskComponent(Teacher $teacher): array
@@ -212,4 +213,63 @@ it('grava as opções de múltipla escolha com ordem incremental', function () {
     $orders = TaskOptions::where('task_id', $task->id)->orderBy('order')->pluck('order')->all();
 
     expect($orders)->toBe([1, 2, 3]);
+});
+
+it('bloqueia a alteração do disciplineId pelo cliente (Locked)', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component] = createTaskComponent($teacher);
+
+    $other = Discipline::factory()->create();
+
+    $component->set('disciplineId', $other->id);
+})->throws(CannotUpdateLockedPropertyException::class);
+
+it('nega salvar atividade vinculada a módulo de outra disciplina/professor', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component] = createTaskComponent($teacher);
+
+    $otherTeacher = Teacher::factory()->create();
+    $otherDiscipline = Discipline::factory()->for($otherTeacher)->create();
+    $foreignModule = Module::factory()->create(['discipline_id' => $otherDiscipline->id]);
+
+    $component->set('questions', [[
+        'order' => 1,
+        'title' => 'Questao valida para o teste',
+        'type' => 'text',
+        'value_of_question' => null,
+        'options' => null,
+    ]]);
+
+    $component->set('selectedLessonId', $foreignModule->id)
+        ->call('save')
+        ->assertStatus(404);
+
+    expect(ActivitTask::where('module_id', $foreignModule->id)->exists())->toBeFalse();
+});
+
+it('não vaza detalhes do banco ao falhar a persistência', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component, $discipline, $module] = createTaskComponent($teacher);
+
+    // Força um erro de persistência (texto de opção nulo viola NOT NULL).
+    $component
+        ->set('questions', [[
+            'order' => 1,
+            'title' => 'Questao com opcao invalida',
+            'type' => 'radio',
+            'value_of_question' => null,
+            'options' => [
+                ['text' => null, 'is_correct' => true, 'order' => 0],
+            ],
+        ]])
+        ->set('selectedLessonId', $module->id)
+        ->call('save')
+        ->assertHasErrors('save');
+
+    expect($component->errors()->get('save')[0])
+        ->toBe('Não foi possível salvar a atividade. Tente novamente.')
+        ->and(ActivitTask::where('discipline_id', $discipline->id)->exists())->toBeFalse();
 });
