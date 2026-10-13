@@ -47,8 +47,6 @@ new class extends Component {
     // dates
     public $startDate = null;
     public $endDate = null;
-    // remove to activity_task table
-    public $studentAttempts = 0;
     // Tipos de questões disponíveis
     public array $questionTypes = [
         [
@@ -195,13 +193,21 @@ new class extends Component {
         $questionID = $this->nextQuestionOrder++;
         $order = count($this->questions);
 
+        $options = $this->questionTypeSelected === 'radio' ? $this->prepareOptions() : null;
+
+        // Se a questão de múltipla escolha não tem opções suficientes,
+        // prepareOptions() já registrou o erro: não adiciona a questão.
+        if ($this->questionTypeSelected === 'radio' && $options === null) {
+            return;
+        }
+
         //TODO: create column order in table
         $questionData = [
             'order' => count($this->questions) + 1,
             'title' => $this->titleOfQuestion,
             'type' => $this->questionTypeSelected,
             'value_of_question' => $this->valueOfQuestion ?? 0,
-            'options' => $this->questionTypeSelected === 'radio' ? $this->prepareOptions() : null
+            'options' => $options
         ];
 
         $this->questions[] = $questionData;
@@ -219,7 +225,7 @@ new class extends Component {
     /** Order questions and options with new label order */
     private function prepareOptions()
     {
-      if (count($this->options) <= 2) {
+      if (count($this->options) < 2) {
         $this->addError('options', 'Para questões de múltipla escolha, é necessário pelo menos 2 opções.');
         return;
       }
@@ -1281,11 +1287,7 @@ new class extends Component {
                                            <label for="data_and_input" class="text-[12px] font-bold text-gray-800 tracking-wider">Data final</label>
                                            <input type="date" id="data_and_input" wire:model="endDate" class="input !outline-none focus:border-gray-400">
                                          </div>
-                                         <div>
-                                           <label for="atempt_input" class="text-[12px] font-bold text-gray-800 tracking-wider">Tentativas</label>
-                                           <input type="number" id="atempt_input" placeholder="1" wire:model="studentAttempts"  class="input !outline-none focus:border-gray-400">
-                                         </div>
-                                  </div>
+                                   </div>
 
                                 <div class="self-start p-5">
                                     <button

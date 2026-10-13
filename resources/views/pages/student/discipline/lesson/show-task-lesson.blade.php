@@ -68,26 +68,40 @@ new class extends Component {
             return;
         }
 
-        StudentAnwser::create([
-            'task_id' => $task->id,
-            'student_id' => $this->student->id,
-            'activit_task_id' => $this->activitask->id,
-            'answer_option_id' => $option->id,
-            'is_correct' => (bool) $option->correct,
-        ]);
+        StudentAnwser::updateOrCreate(
+            [
+                'task_id' => $task->id,
+                'student_id' => $this->student->id,
+                'attempt_number' => 1,
+            ],
+            [
+                'activit_task_id' => $this->activitask->id,
+                'answer_text' => null,
+                'answer_option_id' => $option->id,
+                'is_correct' => (bool) $option->correct,
+                'corrected' => false,
+            ]
+        );
     }
 
     protected function saveDissertativeAnswer(Task $task)
     {
         //dd($this->dissertativeAnswers[$task->id]);
         if (!empty($this->dissertativeAnswers[$task->id])) {
-            StudentAnwser::create([
-                'task_id' => $task->id,
-                'student_id' => $this->student->id,
-                'activit_task_id' => $this->activitask->id,
-                'answer_text' => $this->dissertativeAnswers[$task->id],
-                'is_correct' => false, // Será definido pelo professor
-            ]);
+            StudentAnwser::updateOrCreate(
+                [
+                    'task_id' => $task->id,
+                    'student_id' => $this->student->id,
+                    'attempt_number' => 1,
+                ],
+                [
+                    'activit_task_id' => $this->activitask->id,
+                    'answer_text' => $this->dissertativeAnswers[$task->id],
+                    'answer_option_id' => null,
+                    'is_correct' => false, // Será definido pelo professor
+                    'corrected' => false,
+                ]
+            );
         }
     }
 
