@@ -3,6 +3,7 @@
 use Livewire\Component;
 use Livewire\Attributes\{On, Locked};
 use App\Models\Teacher\{StudentAnwser, QuestionFeedback, Task};
+use App\Support\ActivityValue;
 use Illuminate\Support\Facades\{Auth, DB};
 use Mary\Traits\Toast;
 new class extends Component {
@@ -14,6 +15,7 @@ new class extends Component {
     #[Locked]
     public string $task_id = '';
     public array $feedbacks = [];
+    public array $grades = [];
 
     #[On('event-teacher-show-student-answer')]
     public function open($task_id)
@@ -26,7 +28,7 @@ new class extends Component {
             ->first();
 
         if (! $task) {
-            $this->reset(['studentAnswer', 'task_id', 'feedbacks']);
+            $this->reset(['studentAnswer', 'task_id', 'feedbacks', 'grades']);
             $this->show = false;
             $this->error('Tarefa não encontrada ou você não tem permissão para acessá-la.');
             return;
@@ -36,6 +38,7 @@ new class extends Component {
         $this->studentAnswer = StudentAnwser::where('task_id', $task->id)
             ->orderBy('created_at')
             ->get();
+        $this->grades = [];
         $this->show = true;
     }
 
@@ -44,11 +47,13 @@ new class extends Component {
         $this->validate(
             [
                 "feedbacks.$studentAnswerId" => 'required|string|min:6|max:1000',
+                "grades.$studentAnswerId" => ['nullable', 'regex:/^\d+([.,]\d{1,2})?$/'],
             ],
             [
                 "feedbacks.$studentAnswerId.required" => 'O feedback é obrigatório.',
                 "feedbacks.$studentAnswerId.min" => 'O feedback deve ter pelo menos :min caracteres.',
                 "feedbacks.$studentAnswerId.max" => 'O feedback deve ter no máximo :max caracteres.',
+                "grades.$studentAnswerId.regex" => 'A nota deve ser um número, ex: 1,0.',
             ],
         );
 
@@ -74,8 +79,11 @@ new class extends Component {
             return;
         }
 
+        $rawGrade = trim((string) ($this->grades[$studentAnswerId] ?? ''));
+        $grade = $rawGrade === '' ? null : ActivityValue::toFloat($rawGrade);
+
         try {
-            DB::transaction(function () use ($answer, $feedback) {
+            DB::transaction(function () use ($answer, $feedback, $grade) {
                 QuestionFeedback::create([
                     'student_anwser_id' => $answer->id,
                     'task_id' => $answer->task_id,
@@ -86,14 +94,15 @@ new class extends Component {
 
                 StudentAnwser::where('student_id', $answer->student_id)
                     ->where('task_id', $answer->task_id)
-                    ->update(['corrected' => true]);
+                    ->update(['corrected' => true, 'grade' => $grade]);
             });
         } catch (\Exception $e) {
-            $this->addError("feedbacks.$studentAnswerId", $e->getMessage());
+            report($e);
+            $this->addError("feedbacks.$studentAnswerId", 'Não foi possível salvar a correção. Tente novamente.');
             return;
         }
 
-        unset($this->feedbacks[$studentAnswerId]);
+        unset($this->feedbacks[$studentAnswerId], $this->grades[$studentAnswerId]);
         $this->success('Feedback enviado com sucesso.');
     }
 }; ?>
@@ -137,8 +146,14 @@ new class extends Component {
                                         wire:model="feedbacks.{{ $answer->id }}" />
                                     <div class="flex justify-end gap-2 items-center">
 
-                                        <x-mary-input class="!outline-none border-0"
-                                            placeholder="Insira a nota ex: 1,0" />
+                                        <div class="flex flex-col">
+                                            <x-mary-input class="!outline-none border-0"
+                                                placeholder="Insira a nota ex: 1,0"
+                                                wire:model="grades.{{ $answer->id }}" />
+                                            @error("grades.{$answer->id}")
+                                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                                            @enderror
+                                        </div>
                                         <button class="btn btn-sm btn-ghost mt-2 self-end bg-gray-200"
                                             wire:loading.attr="disabled"
                                             x-on:click.prevent="$wire.sendFeedback('{{ $answer->id }}')">

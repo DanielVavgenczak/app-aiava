@@ -307,3 +307,50 @@ it('nega qualquer atividade/tarefa quando não há professor autenticado', funct
     expect(ActivitTask::ownedByTeacher(null)->count())->toBe(0)
         ->and(Task::ownedByTeacher(null)->count())->toBe(0);
 });
+
+it('salva a nota informada pelo professor no envio do feedback', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeTaskActivity($teacher);
+    $task = Task::factory()->forActivitTask($activit)->create();
+    $student = makeTaskStudent($teacher, $discipline);
+    $answer = StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $student->id,
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    Livewire::test('pages::teacher.discipline.module.task.student-anwsers')
+        ->dispatch('event-teacher-show-student-answer', task_id: $task->id)
+        ->set("feedbacks.{$answer->id}", 'Bom trabalho, continue assim!')
+        ->set("grades.{$answer->id}", '1,5')
+        ->call('sendFeedback', $answer->id)
+        ->assertHasNoErrors();
+
+    expect((float) $answer->fresh()->grade)->toBe(1.5)
+        ->and($answer->fresh()->corrected)->toBeTrue();
+});
+
+it('rejeita nota inválida e não persiste a correção', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeTaskActivity($teacher);
+    $task = Task::factory()->forActivitTask($activit)->create();
+    $student = makeTaskStudent($teacher, $discipline);
+    $answer = StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $student->id,
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    Livewire::test('pages::teacher.discipline.module.task.student-anwsers')
+        ->dispatch('event-teacher-show-student-answer', task_id: $task->id)
+        ->set("feedbacks.{$answer->id}", 'Bom trabalho, continue assim!')
+        ->set("grades.{$answer->id}", 'abc')
+        ->call('sendFeedback', $answer->id)
+        ->assertHasErrors("grades.{$answer->id}");
+
+    $fresh = $answer->fresh();
+
+    expect($fresh->grade)->toBeNull()
+        ->and($fresh->corrected)->toBeFalsy()
+        ->and(QuestionFeedback::where('student_anwser_id', $answer->id)->exists())->toBeFalse();
+});
