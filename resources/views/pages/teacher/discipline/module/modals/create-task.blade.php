@@ -3,7 +3,8 @@
 use Livewire\Component;
 use Livewire\Attributes\{On, Validate, Computed};
 use App\Models\Teacher\{Task, ActivitTask};
-use Illuminate\Support\Facades\{DB};
+use App\Support\ActivityValue;
+use Illuminate\Support\Facades\{Auth, DB};
 use Mary\Traits\Toast;
 
 new class extends Component {
@@ -82,11 +83,7 @@ new class extends Component {
      *  **/
     public function convertToFloat($value)
     {
-        if(is_numeric($value)){
-            return (float) $value;
-        }
-        $numericValue = (float) str_replace(',', '.', $value);
-        return is_numeric($numericValue) ? $numericValue : 0;
+        return ActivityValue::toFloat($value);
     }
 
 
@@ -186,7 +183,7 @@ new class extends Component {
             $this->addError('titleOfQuestion', 'Questão ja cadastrada');
             return;
         }
-        if ($this->formatarNota($this->valueOfQuestion) > $this->formatarNota($this->valueOfActivity)) {
+        if ($this->convertToFloat($this->valueOfQuestion) > $this->convertToFloat($this->valueOfActivity)) {
             $this->addError('valueOfQuestion', 'O valor da questão não deve ser maior que o da atividade');
             return;
         }
@@ -251,22 +248,7 @@ new class extends Component {
 
     public function formatarNota($valor): string
     {
-        // Converte para float se for string
-        $numero = is_numeric($valor) ? $valor : floatval(str_replace(',', '.', $valor));
-
-        // Remove zeros decimais desnecessários
-        if ($numero == (int)$numero) {
-            return number_format($numero, 0, ',', ''); // 5,00 → 5
-        }
-
-        $formatted = number_format($numero, 2, ',', '');
-
-        // Remove zero à direita se for decimal redondo
-        if (str_ends_with($formatted, '0')) {
-            $formatted = rtrim(rtrim($formatted, '0'), ',');
-        }
-
-        return $formatted; // 5,50 → 5,5 | 5,25 → 5,25
+        return ActivityValue::format($valor);
     }
 
    #[Computed]
@@ -478,14 +460,14 @@ new class extends Component {
                   'start' => $this->startDate,
                   'end' => $this->endDate,
                   'is_avaliative' => $this->isAvaliative ? true : false,
-                  'total_value' => $this->isAvaliative ? $this->formatarNota($this->valueOfActivity) : null
+                  'total_value' => $this->isAvaliative ? ActivityValue::toFloat($this->valueOfActivity) : null
               ]);
                 foreach ($this->questions as $question) {
                     $task = $activit->tasks()->create([
                         'question' => $question['title'],
                         'type' =>  $question['type'] == 'radio' ? 'multiple_choice' : 'dissertative',
                         'order' => $question['order'],
-                        'value' => $this->isAvaliative ? $this->formatarNota($question['value_of_question']) : null,
+                        'value' => $this->isAvaliative ? ActivityValue::toFloat($question['value_of_question']) : null,
                     ]);
                     // Quando criar uma nova opção
                     $lastOrder = $task->options()->max('order');
