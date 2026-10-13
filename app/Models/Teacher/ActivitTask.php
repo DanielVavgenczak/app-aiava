@@ -6,6 +6,7 @@ use App\Models\Module;
 use App\Models\Traits\UuidTrait;
 use Database\Factories\ActivitTaskFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -38,6 +39,20 @@ class ActivitTask extends Model
     {
         return $this->hasMany(StudentAnwser::class, 'activit_task_id');
     }
+
+    /**
+     * Restringe a consulta às atividades pertencentes ao professor informado,
+     * considerando também a disciplina vinculada. Sem professor, nega tudo.
+     */
+    public function scopeOwnedByTeacher(Builder $query, ?Teacher $teacher = null): Builder
+    {
+        return $query
+            ->where('teacher_id', $teacher?->id)
+            ->whereHas('discipline', function ($disciplineQuery) use ($teacher) {
+                $disciplineQuery->where('teacher_id', $teacher?->id);
+            });
+    }
+
     protected static function booted()
     {
         static::creating(function ($model) {

@@ -282,3 +282,28 @@ it('não altera alternativa quando a atividade não pertence ao professor', func
 
     expect($option->fresh()->correct)->toBeFalsy();
 });
+it('escopa atividades e tarefas pelo professor dono via scopeOwnedByTeacher', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeTaskActivity($teacher);
+    $task = Task::factory()->forActivitTask($activit)->create();
+
+    $other = Teacher::factory()->create();
+    [, , $otherActivit] = makeTaskActivity($other);
+    $otherTask = Task::factory()->forActivitTask($otherActivit)->create();
+
+    expect(ActivitTask::ownedByTeacher($teacher)->pluck('id'))
+        ->toContain($activit->id)
+        ->not->toContain($otherActivit->id)
+        ->and(Task::ownedByTeacher($teacher)->pluck('id'))
+        ->toContain($task->id)
+        ->not->toContain($otherTask->id);
+});
+
+it('nega qualquer atividade/tarefa quando não há professor autenticado', function () {
+    $teacher = Teacher::factory()->create();
+    [, , $activit] = makeTaskActivity($teacher);
+    Task::factory()->forActivitTask($activit)->create();
+
+    expect(ActivitTask::ownedByTeacher(null)->count())->toBe(0)
+        ->and(Task::ownedByTeacher(null)->count())->toBe(0);
+});

@@ -15,11 +15,8 @@ new class extends Component {
         $teacher = Auth::guard('teacher')->user();
 
         $owned = ActivitTask::query()
-            ->where('id', $activittask->id)
-            ->where('teacher_id', $teacher?->id)
-            ->whereHas('discipline', function ($query) use ($teacher) {
-                $query->where('teacher_id', $teacher?->id);
-            })
+            ->whereKey($activittask->id)
+            ->ownedByTeacher($teacher)
             ->first();
 
         if (! $owned) {
