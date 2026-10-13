@@ -108,13 +108,21 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
     public function toggleStatus($studentId): void
     {
-        $student = Student::find($studentId);
-        if ($student) {
-            $student->update([
-                'status' => $student->status === 'active' ? 'inactive' : 'active'
-            ]);
-            $this->success('Status do aluno atualizado!');
+        $teacher = auth('teacher')->user();
+
+        $student = Student::where('id', $studentId)
+            ->whereHas('classe', fn ($q) => $q->where('teacher_id', $teacher?->id))
+            ->first();
+
+        if (! $student) {
+            abort(404);
         }
+
+        $student->update([
+            'status' => $student->status === 'active' ? 'inactive' : 'active'
+        ]);
+
+        $this->success('Status do aluno atualizado!');
     }
 
     #[On('student-event')]
