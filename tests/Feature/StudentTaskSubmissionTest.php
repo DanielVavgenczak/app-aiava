@@ -112,3 +112,62 @@ it('impede resposta duplicada para a mesma questao e tentativa no banco', functi
         'attempt_number' => 1,
     ]))->toThrow(QueryException::class);
 });
+
+it('não abre atividade antes da data de início', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit] = makeSubmissionContext($teacher, 'text');
+    $activit->update(['start' => now()->addDay(), 'end' => now()->addDays(2)]);
+    $student = makeSubmissionStudent($teacher, $discipline);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test('pages::student.discipline.lesson.show-task-lesson')
+        ->dispatch('student-event-open-task', id: $activit->id)
+        ->assertSet('show', false);
+});
+
+it('não abre atividade após a data final', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit] = makeSubmissionContext($teacher, 'text');
+    $activit->update(['start' => now()->subDays(2), 'end' => now()->subDay()]);
+    $student = makeSubmissionStudent($teacher, $discipline);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test('pages::student.discipline.lesson.show-task-lesson')
+        ->dispatch('student-event-open-task', id: $activit->id)
+        ->assertSet('show', false);
+});
+
+it('abre atividade dentro da janela de datas', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit] = makeSubmissionContext($teacher, 'text');
+    $activit->update(['start' => now()->subDay(), 'end' => now()->addDay()]);
+    $student = makeSubmissionStudent($teacher, $discipline);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test('pages::student.discipline.lesson.show-task-lesson')
+        ->dispatch('student-event-open-task', id: $activit->id)
+        ->assertSet('show', true);
+});
+
+it('bloqueia submissão quando a janela fecha durante a sessão', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit, $task] = makeSubmissionContext($teacher, 'text');
+    $activit->update(['end' => now()->addHour()]);
+    $student = makeSubmissionStudent($teacher, $discipline);
+
+    $this->actingAs($student, 'student');
+
+    $component = Livewire::test('pages::student.discipline.lesson.show-task-lesson')
+        ->dispatch('student-event-open-task', id: $activit->id)
+        ->assertSet('show', true);
+
+    $this->travel(2)->hours();
+
+    $component->set("dissertativeAnswers.{$task->id}", 'Resposta atrasada')
+        ->call('submitAnswers');
+
+    expect(StudentAnwser::where('task_id', $task->id)->exists())->toBeFalse();
+});

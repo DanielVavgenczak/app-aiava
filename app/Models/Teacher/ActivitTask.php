@@ -46,6 +46,25 @@ class ActivitTask extends Model
         return $this->hasMany(Task::class);
     }
 
+    /**
+     * Indica se a atividade está dentro da janela de disponibilidade.
+     * Datas nulas significam sem restrição.
+     */
+    public function isOpenForAnswers(): bool
+    {
+        $now = now();
+
+        if ($this->start && $now->lt($this->start)) {
+            return false;
+        }
+
+        if ($this->end && $now->gt($this->end)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function studentAnwsers()
     {
         return $this->hasMany(StudentAnwser::class, 'activit_task_id');
