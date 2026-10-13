@@ -3,6 +3,7 @@
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Lesson;
+use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,9 +25,19 @@ new class extends Component {
             'pdfFile' => 'required|file|mimes:pdf|max:102400',
         ]);
 
+        $teacher = Auth::guard('teacher')->user();
+
+        $module = Module::whereKey($this->module_id)
+            ->whereHas('discipline', fn ($q) => $q->where('teacher_id', $teacher?->id))
+            ->first();
+
+        if (! $module) {
+            abort(404);
+        }
+
         try {
             $file = $this->pdfFile;
-            $teacherId = Auth::guard('teacher')->user()->id;
+            $teacherId = $teacher->id;
 
             $nextNumber = $this->getNextBlockNumber();
             $title = sprintf('Bloco %02d', $nextNumber);
@@ -43,7 +54,7 @@ new class extends Component {
                 'path_file' => $path,
                 'title' => $title,
                 'description' => '',
-                'module_id' => $this->module_id,
+                'module_id' => $module->id,
                 'teacher_id' => $teacherId,
                 'type' => 'text',
             ]);
