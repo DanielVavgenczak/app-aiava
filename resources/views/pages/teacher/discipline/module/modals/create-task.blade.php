@@ -112,6 +112,7 @@ new class extends Component {
         $newValue = $this->convertToFloat($this->editingQuestionValue);
         // update to new value
         $this->updateTotalValue($newValue, $this->editingQuestionIndex);
+        $this->validateTotalValue();
         $this->cancelEditing();
     }
 
@@ -144,9 +145,9 @@ new class extends Component {
     }
 
     #[Computed]
-    public function execedeValue()
+    public function execedeValue(): bool
     {
-        return $this->formatarNota($this->totalUsedValue()) === $this->formatarNota($this->valueOfActivity);
+        return $this->totalUsedValue() >= $this->activityValue();
     }
 
     public function selectedQuestionType(string $type)
@@ -206,6 +207,7 @@ new class extends Component {
 
         if ($this->valueOfQuestion) {
           $this->updateTotalValue($this->valueOfQuestion);
+          $this->validateTotalValue();
         }
         $this->reset(['titleOfQuestion', 'options', 'newOptionText']);
         $this->valueOfQuestion = null;
@@ -252,32 +254,51 @@ new class extends Component {
     }
 
    #[Computed]
-  public function totalUsedValue(): string
+  public function totalUsedValue(): float
   {
-      $values = array_map(function($v) {
-          if (is_string($v)) {
-              $v = preg_replace('/[^\d,.]/', '', $v);
-              $v = str_replace(',', '.', $v);
-          }
-          return floatval($v);
-      }, $this->questionNoteValues);
+      $values = array_map(
+          fn ($value) => $this->convertToFloat($value),
+          $this->questionNoteValues,
+      );
 
-      $total = array_sum($values);
+      return round(array_sum($values), 2);
+  }
 
-      // Converte ambos para a mesma precisão (2 casas decimais)
-      $totalNormalized = round($total, 2);
-      $activityValueNormalized = round(floatval(str_replace(',', '.', $this->valueOfActivity)), 2);
+  /** Valor total configurado para a atividade. */
+  private function activityValue(): float
+  {
+      return $this->convertToFloat($this->valueOfActivity);
+  }
 
-      // Comparação com tolerância para evitar problemas de ponto flutuante
-      if (abs($totalNormalized - $activityValueNormalized) < 0.01) { // Tolerância de 0.01
-          $this->totalValueExceded = true;
-          $this->addError('totalUsedValue', 'A soma das notas das questões atingiu o valor máximo da atividade');
-      } elseif ($totalNormalized > $activityValueNormalized) {
-          $this->addError('totalUsedValueExedido', 'O valor total das questões não pode ser maior que o da atividade');
+  /**
+   * Valida a soma das notas fora do ciclo de renderização.
+   * Computed properties não devem mutar estado nem adicionar erros.
+   */
+  public function validateTotalValue(): void
+  {
+      $total = $this->totalUsedValue();
+      $activity = $this->activityValue();
 
+      $this->totalValueExceded = false;
+
+      if ($activity <= 0) {
+          return;
       }
 
-      return number_format($total, 2, ',', '');
+      if ($total > $activity + 0.01) {
+          $this->addError('totalUsedValueExedido', 'O valor total das questões não pode ser maior que o da atividade');
+          return;
+      }
+
+      if (abs($total - $activity) < 0.01) {
+          $this->totalValueExceded = true;
+          $this->addError('totalUsedValue', 'A soma das notas das questões atingiu o valor máximo da atividade');
+      }
+  }
+
+  public function updatedValueOfActivity(): void
+  {
+      $this->validateTotalValue();
   }
 
     public function calculateTotalQuestionValue()
@@ -309,6 +330,8 @@ new class extends Component {
             if ($this->editingQuestionIndex === $index) {
                 $this->cancelEditing();
             }
+
+            $this->validateTotalValue();
 
             $this->dispatch(
               'remove-question',
@@ -447,6 +470,11 @@ new class extends Component {
                   "As seguintes questões de múltipla escolha precisam ter uma alternativa correta selecionada: {$question}"
               );
               return;
+        }
+
+        if ($this->isAvaliative && $this->totalUsedValue() > $this->activityValue() + 0.01) {
+            $this->addError('totalUsedValueExedido', 'O valor total das questões não pode ser maior que o da atividade');
+            return;
         }
 
           try {
