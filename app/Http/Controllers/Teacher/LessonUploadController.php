@@ -11,11 +11,19 @@ use Illuminate\Support\Facades\URL;
 use Pion\Laravel\ChunkUpload\Exceptions\UploadMissingFileException;
 use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
+use Symfony\Component\Process\Process;
 
 class LessonUploadController extends Controller
 {
     // Diretório de armazenamento de vídeos
     private const VIDEO_STORAGE_PATH = 'videos/lessons';
+
+    // Duração máxima permitida para um vídeo (12 minutos, em segundos)
+    private const MAX_VIDEO_DURATION_SECONDS = 720;
+
+    // Extensões de vídeo aceitas no upload
+    private const SUPPORTED_VIDEO_EXTENSIONS = ['mp4', 'webm', 'ogg'];
+
      // Tipos MIME suportados
     private const SUPPORTED_MIME_TYPES = [
         'mp4' => 'video/mp4',
@@ -132,6 +140,29 @@ class LessonUploadController extends Controller
 
         if ($fileReceived->isFinished()) { // Upload completo
             $file = $fileReceived->getFile(); // Obtém o arquivo
+
+            // Valida a extensão e a duração real do vídeo no servidor.
+            // A checagem de duração no navegador pode ser contornada e, no
+            // passado, um arquivo rejeitado permanecia na fila do cliente e
+            // gerava blocos duplicados.
+            if (! $this->isAllowedVideoFile($file)) {
+                unlink($file->getPathname());
+
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Formato de vídeo não suportado. Envie um arquivo MP4, WebM ou OGG.',
+                ], 422);
+            }
+
+            if ($this->videoDurationExceedsLimit($file->getPathname())) {
+                unlink($file->getPathname());
+
+                return response()->json([
+                    'success' => false,
+                    'error' => 'O vídeo excede o limite de 12 minutos.',
+                ], 422);
+            }
+
             $fileName = $this->generateUniqueFileName($file); // Gera um nome único para o arquivo
 
             // Salva o arquivo no armazenamento (usando o disco 'private')
@@ -193,6 +224,73 @@ class LessonUploadController extends Controller
             ->first();
 
         return $lastVideo ? (int) preg_replace('/\D/', '', $lastVideo->title) + 1 : 1;
+    }
+
+    /**
+     * Verifica se a extensão do arquivo enviado é um vídeo suportado.
+     */
+    private function isAllowedVideoFile($file): bool
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        return in_array($extension, self::SUPPORTED_VIDEO_EXTENSIONS, true);
+    }
+
+    /**
+     * Retorna a duração do vídeo em segundos usando o ffprobe.
+     * Retorna null quando a duração não pode ser determinada.
+     */
+    private function videoDurationSeconds(string $path): ?float
+    {
+        if (! $this->ffprobeAvailable()) {
+            return null;
+        }
+
+        $process = new Process([
+            'ffprobe',
+            '-v', 'error',
+            '-show_entries', 'format=duration',
+            '-of', 'default=noprint_wrappers=1:nokey=1',
+            $path,
+        ]);
+
+        $process->setTimeout(30);
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            return null;
+        }
+
+        $duration = trim($process->getOutput());
+
+        return is_numeric($duration) ? (float) $duration : null;
+    }
+
+    /**
+     * Indica se o vídeo excede o limite máximo permitido.
+     * Quando a duração não pode ser determinada, o upload é permitido.
+     */
+    private function videoDurationExceedsLimit(string $path): bool
+    {
+        $duration = $this->videoDurationSeconds($path);
+
+        return $duration !== null && $duration > self::MAX_VIDEO_DURATION_SECONDS;
+    }
+
+    /**
+     * Verifica se o binário ffprobe está disponível no ambiente.
+     */
+    private function ffprobeAvailable(): bool
+    {
+        static $available = null;
+
+        if ($available === null) {
+            $which = new Process(['which', 'ffprobe']);
+            $which->run();
+            $available = $which->isSuccessful();
+        }
+
+        return $available;
     }
 
     /**

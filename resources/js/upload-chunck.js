@@ -16,6 +16,7 @@ document.addEventListener('alpine:init', () => {
                 testMethod: 'POST',
                 uploadMethod: 'POST',
                 simultaneousUploads: 1,
+                maxFiles: 1,
                 testChunks: false,
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -32,8 +33,18 @@ document.addEventListener('alpine:init', () => {
 
             this.resumable.on('fileAdded', (file) => {
                 console.log('File added:', file);
+
+                // Mantém apenas o arquivo recém-selecionado na fila.
+                // Evita que um vídeo rejeitado anteriormente continue na fila
+                // e seja enviado junto (gerando blocos duplicados).
+                this.resumable.files.forEach((queued) => {
+                    if (queued.uniqueIdentifier !== file.uniqueIdentifier) {
+                        this.resumable.removeFile(queued);
+                    }
+                });
+
                 this.file = file;
-                this.validateVideoDuration(file.file);
+                this.validateVideoDuration(file);
             });
 
             this.resumable.on('fileSuccess', (file, message) => {
@@ -126,7 +137,8 @@ document.addEventListener('alpine:init', () => {
             this.resumable.upload();
         },
 
-        validateVideoDuration(file) {
+        validateVideoDuration(resumableFile) {
+            const file = resumableFile.file;
 
             const video = document.getElementById(`temp-video-${moduleId}`);
             video.src = URL.createObjectURL(file);
@@ -135,7 +147,13 @@ document.addEventListener('alpine:init', () => {
                 const duration = video.duration / 60; // Em minutos
                 if (duration > 12) {
                     this.showDurationError = true;
+                    // Remove efetivamente o arquivo inválido da fila do
+                    // ResumableJS; sem isso ele permanece na fila e é enviado
+                    // junto com o próximo vídeo, criando blocos duplicados.
+                    this.resumable.removeFile(resumableFile);
+                    this.resumable.files = [];
                     this.file = null;
+                    this.isFileSelected = false;
                     URL.revokeObjectURL(video.src);
                 } else {
                     this.showDurationError = false;
@@ -147,6 +165,8 @@ document.addEventListener('alpine:init', () => {
             video.onerror = () => {
                 console.error('Erro ao carregar metadados do vídeo');
                 alert('Não foi possível verificar a duração do vídeo. Tente outro arquivo.');
+                this.resumable.removeFile(resumableFile);
+                this.resumable.files = [];
                 this.resetState();
                 URL.revokeObjectURL(video.src);
             };
@@ -164,8 +184,13 @@ document.addEventListener('alpine:init', () => {
         },
 
         cancelSelection() {
+            if (this.file) {
+                this.resumable.removeFile(this.file);
+            }
+            this.resumable.files = [];
             this.file = null;
             this.isFileSelected = false;
+            this.showDurationError = false;
             document.getElementById(`temp-video-preview-${moduleId}`).src = '';
         },
 
@@ -175,6 +200,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         resetState() {
+            this.resumable.files = [];
             this.file = null;
             this.isFileSelected = false;
             this.isUploading = false;
