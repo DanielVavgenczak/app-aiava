@@ -34,6 +34,11 @@ new class extends Component {
             return;
         }
 
+        if (! $activitask->isOpenForAnswers()) {
+            $this->error('Esta atividade não está disponível no momento.');
+            return;
+        }
+
         $this->show = true;
         $this->activitask = $activitask;
         $this->student = $student;
@@ -41,6 +46,11 @@ new class extends Component {
 
     public function submitAnswers()
     {
+        if (! isset($this->activitask) || ! $this->activitask->isOpenForAnswers()) {
+            $this->error('Esta atividade não está disponível no momento.');
+            return;
+        }
+
         foreach ($this->activitask->tasks as $task) {
             if ($task->type === 'multiple_choice') {
                 $this->saveMultipleChoiceAnswer($task);

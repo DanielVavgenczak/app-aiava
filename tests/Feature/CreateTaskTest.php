@@ -310,3 +310,42 @@ it('aceita questão de múltipla escolha com exatamente duas opções', function
     expect($questions)->toHaveCount(1)
         ->and($questions[0]['options'])->toHaveCount(2);
 });
+
+it('bloqueia salvar atividade com data final anterior à inicial', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component, $discipline, $module] = createTaskComponent($teacher);
+
+    $component
+        ->set('titleOfQuestion', 'Questao com datas invertidas')
+        ->set('questionTypeSelected', 'text')
+        ->call('addQuestion')
+        ->set('selectedLessonId', $module->id)
+        ->set('startDate', '2026-10-10')
+        ->set('endDate', '2026-10-01')
+        ->call('save')
+        ->assertHasErrors('endDate');
+
+    expect(ActivitTask::where('discipline_id', $discipline->id)->exists())->toBeFalse();
+});
+
+it('grava a janela da atividade cobrindo todo o dia final', function () {
+    $teacher = Teacher::factory()->create();
+    $this->actingAs($teacher, 'teacher');
+    [$component, $discipline, $module] = createTaskComponent($teacher);
+
+    $component
+        ->set('titleOfQuestion', 'Questao com janela valida')
+        ->set('questionTypeSelected', 'text')
+        ->call('addQuestion')
+        ->set('selectedLessonId', $module->id)
+        ->set('startDate', '2026-10-01')
+        ->set('endDate', '2026-10-10')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $activit = ActivitTask::where('discipline_id', $discipline->id)->first();
+
+    expect($activit->start->format('Y-m-d H:i:s'))->toBe('2026-10-01 00:00:00')
+        ->and($activit->end->format('Y-m-d H:i:s'))->toBe('2026-10-10 23:59:59');
+});

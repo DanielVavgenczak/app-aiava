@@ -471,6 +471,11 @@ new class extends Component {
             abort(404);
         }
 
+        if ($this->startDate && $this->endDate && $this->endDate < $this->startDate) {
+            $this->addError('endDate', 'A data final deve ser igual ou posterior à data de início.');
+            return;
+        }
+
         $questionCorrectError = [];
 
         foreach($this->questions as $index => $question){
@@ -510,8 +515,8 @@ new class extends Component {
                   'module_id' => $this->selectedLessonId,
                   'discipline_id' => $this->disciplineId,
                   'teacher_id' => Auth::guard('teacher')->user()->id,
-                  'start' => $this->startDate,
-                  'end' => $this->endDate,
+                  'start' => $this->startDate ? $this->startDate . ' 00:00:00' : null,
+                  'end' => $this->endDate ? $this->endDate . ' 23:59:59' : null,
                   'is_avaliative' => $this->isAvaliative ? true : false,
                   'total_value' => $this->isAvaliative ? ActivityValue::toFloat($this->valueOfActivity) : null
               ]);
@@ -1286,6 +1291,9 @@ new class extends Component {
                                          <div>
                                            <label for="data_and_input" class="text-[12px] font-bold text-gray-800 tracking-wider">Data final</label>
                                            <input type="date" id="data_and_input" wire:model="endDate" class="input !outline-none focus:border-gray-400">
+                                           @error('endDate')
+                                             <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span>
+                                           @enderror
                                          </div>
                                    </div>
 
