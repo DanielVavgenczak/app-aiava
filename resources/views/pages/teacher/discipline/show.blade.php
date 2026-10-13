@@ -180,6 +180,13 @@ new #[Layout('layouts::teacher')] class extends Component {
         $this->openedTaskShow = false;
     }
 
+    #[On('task-deleted')]
+    public function refreshAfterTaskDeleted()
+    {
+        $this->discipline = $this->loadDisciplineContent($this->disciplineID);
+        $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
+    }
+
 
 
     // #[On('task-deleted')]
@@ -352,8 +359,9 @@ new #[Layout('layouts::teacher')] class extends Component {
                 </div>
             </div>
           <livewire:teacher.discipline.module.create />
-          {{-- <livewire:pages::teacher.discipline.module.task.show-task
-            wire:key="'task-module-' .{{ $discipline->id ?? ''}}" /> --}}
+
+          <livewire:pages::teacher.discipline.module.task.show-task
+            wire:key="task-module-{{ $discipline->id ?? '' }}" />
 
           <livewire:pages::teacher.discipline.module.modals.create-task
             :lessons="$discipline->modules"

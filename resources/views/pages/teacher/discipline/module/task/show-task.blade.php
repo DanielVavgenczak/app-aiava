@@ -180,6 +180,14 @@ new class extends Component {
         $this->dispatch('close-task-show');
     }
 
+    #[On('task-deleted')]
+    public function taskDeleted(): void
+    {
+        $this->activitTask = null;
+        $this->taskId = '';
+        $this->cancelMakeTask();
+    }
+
     public function closeToskDelete()
     {
 
