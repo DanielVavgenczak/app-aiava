@@ -5,6 +5,7 @@ namespace App\Models\Teacher;
 use App\Models\Traits\UuidTrait;
 use Database\Factories\TaskFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -29,5 +30,15 @@ class Task extends Model
     public function studentAnwsers()
     {
         return $this->hasMany(StudentAnwser::class, 'task_id');
+    }
+
+    /**
+     * Restringe a consulta às questões cuja atividade pertence ao professor.
+     */
+    public function scopeOwnedByTeacher(Builder $query, ?Teacher $teacher = null): Builder
+    {
+        return $query->whereHas('activitTask', function ($activitQuery) use ($teacher) {
+            $activitQuery->ownedByTeacher($teacher);
+        });
     }
 }

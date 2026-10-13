@@ -21,13 +21,8 @@ new class extends Component {
         $teacher = Auth::guard('teacher')->user();
 
         $task = Task::query()
-            ->where('id', $task_id)
-            ->whereHas('activitTask', function ($query) use ($teacher) {
-                $query->where('teacher_id', $teacher?->id)
-                    ->whereHas('discipline', function ($disciplineQuery) use ($teacher) {
-                        $disciplineQuery->where('teacher_id', $teacher?->id);
-                    });
-            })
+            ->whereKey($task_id)
+            ->ownedByTeacher($teacher)
             ->first();
 
         if (! $task) {
@@ -62,15 +57,10 @@ new class extends Component {
         // Nunca confiar no ID enviado pelo cliente: a resposta precisa pertencer
         // à tarefa carregada e a tarefa precisa pertencer ao professor logado.
         $answer = StudentAnwser::query()
-            ->where('id', $studentAnswerId)
+            ->whereKey($studentAnswerId)
             ->where('task_id', $this->task_id)
             ->whereHas('task', function ($query) use ($teacher) {
-                $query->whereHas('activitTask', function ($activitQuery) use ($teacher) {
-                    $activitQuery->where('teacher_id', $teacher?->id)
-                        ->whereHas('discipline', function ($disciplineQuery) use ($teacher) {
-                            $disciplineQuery->where('teacher_id', $teacher?->id);
-                        });
-                });
+                $query->ownedByTeacher($teacher);
             })
             ->first();
 

@@ -38,11 +38,8 @@ new class extends Component {
                 $query->with(['studentAnwsers', 'options'])->orderBy('created_at');
             },
         ])
-            ->where('id', $activit_id)
-            ->where('teacher_id', $teacher?->id)
-            ->whereHas('discipline', function ($query) use ($teacher) {
-                $query->where('teacher_id', $teacher?->id);
-            })
+            ->whereKey($activit_id)
+            ->ownedByTeacher($teacher)
             ->first();
 
         if (! $activitTask) {
