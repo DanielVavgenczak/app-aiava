@@ -568,7 +568,7 @@ new class extends Component {
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
     class="fixed inset-0 z-50  bg-white"
-    x-trao.noscroll="$wire.open_create_task"
+    x-trap.noscroll="$wire.open_create_task"
     x-cloak>
     <div class="sticky px-5 top-0 flex items-center justify-between w-full  border-gray-300 border-b-[1px] h-16 "
         id="create-task-header-{{ $disciplineId }}">
@@ -610,98 +610,8 @@ new class extends Component {
             <div class="flex gap-2 mb-6 transition ease-in-out duration-700"
                 id="create-task-value-activity-{{ $disciplineId }}"
                       x-data="{
-                        note: $wire.entangle('valueOfActivity').live,
-                        mensagem: '',
-                        showMessage: false,
-                        mask(event){
-                             let value = event.target.value.replace(/\D/g,''); // apenas números
-                            // se vazio → volta para 0,00
-                            if (!value) {
-                                this.note = '0,00';
-                                this.mensagem = '';
-                                return;
-                            }
-                            // garante no mínimo 3 dígitos para ter casas decimais
-                            while(value.length < 3){
-                                value = '0' + value;
-                            }
-                            // pega inteiro e decimal
-                            let inteiro = value.slice(0, -2);
-                            let decimal = value.slice(-2);
-                            // converte inteiro pra número
-                            let numeroInteiro = parseInt(inteiro);
-
-                            // regra 1: limite máximo
-                            if (numeroInteiro > 10) {
-                                // dividide de novo esse cara
-                                let redivide = inteiro.slice(0,1);
-                                this.note = `${redivide},${decimal[0]}`;
-                                this.showWarningMessage('Valor maximo permitido: 10,0');
-                                return;
-                            }
-
-                            // regra 2: quando for 10, só pode ser 10,0
-                            if (numeroInteiro === 10) {
-                                this.note = '10,0';
-                                if(decimal !== '00'){
-                                    //this.mensagem = 'Valor maximo permitido: 10,0';
-                                    this.showWarningMessage('Valor maximo permitido: 10,0');
-                                }else {
-                                    this.mensagem = '';
-                                }
-                                return;
-                            }
-
-                            // rule 3 #
-                            this.note = `${numeroInteiro},${decimal}`;
-                            // monta valor final normal
-                            this.mensagem = '';
-                        },
-
-                        showWarningMessage(message){
-                          this.mensagem = message;
-                          this.showMessage = true;
-                          setTimeout(() => {
-                            this.showMessage = false;
-                            this.mensagem = '';
-                          },4000)
-                        },
-                        handleBackspaceInput(){
-                          let value = this.note.replace(/\D/g,''); // pega só números
-
-                          // se já estiver vazio → volta para 0,00
-                          if (!value || value === '000') {
-                              this.note = '0,00';
-                              return;
-                          }
-
-                          // remove último dígito (como backspace)
-                          value = value.slice(0, -1);
-
-                          // garante pelo menos 3 dígitos
-                          while(value.length < 3){
-                              value = '0' + value;
-                          }
-
-                          // reaplica a máscara normal
-                          let inteiro = value.slice(0, -2);
-                          let decimal = value.slice(-2);
-
-                          let numeroInteiro = parseInt(inteiro);
-
-                          if (numeroInteiro > 10) {
-                              let redivide = inteiro.slice(0,1);
-                              this.note = `${redivide},${decimal[0]}`;
-                              return;
-                          }
-
-                          if (numeroInteiro === 10) {
-                              this.note = '10,0';
-                              return;
-                          }
-
-                          this.note = `${numeroInteiro},${decimal}`;
-                      }
+                        note: $wire.entangle('valueOfActivity').live.debounce.500ms,
+                        ...window.moneyMask
                       }">
                   <div class="flex flex-col gap-1 w-full" >
                     <label
@@ -823,7 +733,7 @@ new class extends Component {
                                         <div class="mt-2 space-y-2"
                                             id="question-options-list-{{ $disciplineId }}">
                                             @forelse ( $options as $index => $option)
-                                                <div class="flex items-center gap-1 p-3">
+                                                <div wire:key="question-option-{{ $index }}" class="flex items-center gap-1 p-3">
                                                     <input
                                                         wire:model.defer="options.{{ $index }}.text"
                                                         class="input input-sm flex-1 !outline-none focus:border-gray-300" />
@@ -859,102 +769,9 @@ new class extends Component {
                     @if ($this->validIsAvaliative)
                     <div class="mt-4"
                       x-data="{
-                        note: $wire.entangle('valueOfQuestion').live,
-                        mensagem: '',
-                        showMessage: false,
-                        mask(event){
-                             let value = event.target.value.replace(/\D/g,''); // apenas números
-                            // se vazio → volta para 0,00
-                            if (!value) {
-                                this.note = '0,00';
-                                this.mensagem = '';
-                                return;
-                            }
-                            // garante no mínimo 3 dígitos para ter casas decimais
-                            while(value.length < 3){
-                                value = '0' + value;
-                            }
-
-                            // pega inteiro e decimal
-                            let inteiro = value.slice(0, -2);
-                            let decimal = value.slice(-2);
-                            // converte inteiro pra número
-                            let numeroInteiro = parseInt(inteiro);
-
-                            // regra 1: limite máximo
-                            if (numeroInteiro > 10) {
-                                // dividide de novo esse cara
-                                let redivide = inteiro.slice(0,1);
-                                this.note = `${redivide},${decimal[0]}`;
-                                this.showWarningMessage('Valor maximo permitido: 10,0');
-                                return;
-                            }
-
-                            // regra 2: quando for 10, só pode ser 10,0
-                            if (numeroInteiro === 10) {
-                                this.note = '10,0';
-                                if(decimal !== '00'){
-                                    //this.mensagem = 'Valor maximo permitido: 10,0';
-                                    this.showWarningMessage('Valor maximo permitido: 10,0');
-                                }else {
-                                    this.mensagem = '';
-                                }
-                                return;
-                            }
-
-                            // rule 3 #
-                            this.note = `${numeroInteiro},${decimal}`;
-                            // monta valor final normal
-                            this.mensagem = '';
-
-                        },
-
-                        showWarningMessage(message){
-                          this.mensagem = message;
-                          this.showMessage = true;
-                          setTimeout(() => {
-                            this.showMessage = false;
-                            this.mensagem = '';
-                          },4000)
-                        },
-                        handleBackspaceInput(){
-                          let value = this.note.replace(/\D/g,''); // pega só números
-
-                          // se já estiver vazio → volta para 0,00
-                          if (!value || value === '000') {
-                              this.note = '0,00';
-                              return;
-                          }
-
-                          // remove último dígito (como backspace)
-                          value = value.slice(0, -1);
-
-                          // garante pelo menos 3 dígitos
-                          while(value.length < 3){
-                              value = '0' + value;
-                          }
-
-                          // reaplica a máscara normal
-                          let inteiro = value.slice(0, -2);
-                          let decimal = value.slice(-2);
-
-                          let numeroInteiro = parseInt(inteiro);
-
-                          if (numeroInteiro > 10) {
-                              let redivide = inteiro.slice(0,1);
-                              this.note = `${redivide},${decimal[0]}`;
-                              return;
-                          }
-
-                          if (numeroInteiro === 10) {
-                              this.note = '10,0';
-                              return;
-                          }
-
-                          this.note = `${numeroInteiro},${decimal}`;
-                      }
-
-                    }" id="create-task-question-value-{{ $disciplineId }}">
+                        note: $wire.entangle('valueOfQuestion').live.debounce.500ms,
+                        ...window.moneyMask
+                      }" id="create-task-question-value-{{ $disciplineId }}">
                         <div class="flex flex-col gap-1">
                             <label
                                 for="note_to_question_input"
@@ -1057,100 +874,7 @@ new class extends Component {
                             @foreach ($questions as $qIndex => $question)
                                 <div wire:key="question-{{ $qIndex }}" class="p-4 bg-white" x-data="{
                                                   note: $wire.entangle('editingQuestionValue'),
-                                                  mensagem: '',
-                                                  showMessage: false,
-                                                  mask(event){
-                                                      let value = event.target.value.replace(/\D/g,''); // apenas números
-                                                      // se vazio → volta para 0,00
-                                                      if (!value) {
-                                                          this.note = '0,00';
-                                                          this.mensagem = '';
-                                                          return;
-                                                      }
-                                                      // garante no mínimo 3 dígitos para ter casas decimais
-                                                      while(value.length < 3){
-                                                          value = '0' + value;
-                                                      }
-
-                                                      // pega inteiro e decimal
-                                                      let inteiro = value.slice(0, -2);
-                                                      let decimal = value.slice(-2);
-                                                      // converte inteiro pra número
-                                                      let numeroInteiro = parseInt(inteiro);
-
-                                                      // regra 1: limite máximo
-                                                      if (numeroInteiro > 10) {
-                                                          // dividide de novo esse cara
-                                                          let redivide = inteiro.slice(0,1);
-                                                          this.note = `${redivide},${decimal[0]}`;
-                                                          this.showWarningMessage('Valor maximo permitido: 10,0');
-                                                          return;
-                                                      }
-
-                                                      // regra 2: quando for 10, só pode ser 10,0
-                                                      if (numeroInteiro === 10) {
-                                                          this.note = '10,0';
-                                                          if(decimal !== '00'){
-                                                              //this.mensagem = 'Valor maximo permitido: 10,0';
-                                                              this.showWarningMessage('Valor maximo permitido: 10,0');
-                                                          }else {
-                                                              this.mensagem = '';
-                                                          }
-                                                          return;
-                                                      }
-
-                                                      // rule 3 #
-                                                      this.note = `${numeroInteiro},${decimal}`;
-                                                      // monta valor final normal
-                                                      this.mensagem = '';
-
-                                                  },
-
-                                                  showWarningMessage(message){
-                                                    this.mensagem = message;
-                                                    this.showMessage = true;
-                                                    setTimeout(() => {
-                                                      this.showMessage = false;
-                                                      this.mensagem = '';
-                                                    },4000)
-                                                  },
-                                                  handleBackspaceInput(){
-                                                    let value = this.note.replace(/\D/g,''); // pega só números
-
-                                                    // se já estiver vazio → volta para 0,00
-                                                    if (!value || value === '000') {
-                                                        this.note = '0,00';
-                                                        return;
-                                                    }
-
-                                                    // remove último dígito (como backspace)
-                                                    value = value.slice(0, -1);
-
-                                                    // garante pelo menos 3 dígitos
-                                                    while(value.length < 3){
-                                                        value = '0' + value;
-                                                    }
-
-                                                    // reaplica a máscara normal
-                                                    let inteiro = value.slice(0, -2);
-                                                    let decimal = value.slice(-2);
-
-                                                    let numeroInteiro = parseInt(inteiro);
-
-                                                    if (numeroInteiro > 10) {
-                                                        let redivide = inteiro.slice(0,1);
-                                                        this.note = `${redivide},${decimal[0]}`;
-                                                        return;
-                                                    }
-
-                                                    if (numeroInteiro === 10) {
-                                                        this.note = '10,0';
-                                                        return;
-                                                    }
-
-                                                    this.note = `${numeroInteiro},${decimal}`;
-                                                }
-
+                                                  ...window.moneyMask
                                               }">
                                     <!-- Edição do Título -->
                                     @if ($editingQuestionIndex === $qIndex  && $editingQuestionValueIndex === $qIndex && $editingOptionIndex === null)
