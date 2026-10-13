@@ -1,6 +1,7 @@
 /.phpunit.cache
 /node_modules
 /public/build
+/public/build_old
 /public/vendor/devrabiul/
 
 /public/hot
