@@ -14,12 +14,13 @@ class StudentAnwser extends Model
     use HasFactory, UuidTrait;
     public $incrementing = false;
     protected $keyType = "string";
-    protected $fillable = ['id', 'task_id', 'student_id', 'activit_task_id', 'answer_text', 'answer_option_id', 'is_correct', 'order', 'corrected', 'attempt_number'];
+    protected $fillable = ['id', 'task_id', 'student_id', 'activit_task_id', 'answer_text', 'answer_option_id', 'is_correct', 'grade', 'order', 'corrected', 'attempt_number'];
 
     protected function casts(): array
     {
         return [
             'is_correct' => 'boolean',
+            'grade' => 'decimal:2',
             'corrected' => 'boolean',
             'attempt_number' => 'integer',
             'order' => 'integer',
