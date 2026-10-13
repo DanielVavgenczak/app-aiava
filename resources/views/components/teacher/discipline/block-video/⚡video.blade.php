@@ -2,12 +2,13 @@
 
 use Livewire\Component;
 use App\Models\{Lesson};
-use Livewire\Attributes\On;
+use Livewire\Attributes\{On, Locked};
 use Livewire\WithFileUploads;
 
 new class extends Component {
     use WithFileUploads;
 
+    #[Locked]
     public $lesson;
     public $selectedTab = 'material-tab';
     public bool $sureDeleteBlock = false;
@@ -114,7 +115,17 @@ new class extends Component {
 
         try {
             $file = $this->newVideoFile;
-            $lesson = $this->lesson;
+
+            $teacher = auth('teacher')->user();
+
+            $lesson = Lesson::with('module.discipline')
+                ->whereKey($this->lesson->id)
+                ->whereHas('module.discipline', fn ($q) => $q->where('teacher_id', $teacher?->id))
+                ->first();
+
+            if (! $lesson) {
+                abort(404);
+            }
 
             $originalName = $file->getClientOriginalName();
             $extension = $file->getClientOriginalExtension();
@@ -147,7 +158,13 @@ new class extends Component {
     public function deleteBlock()
     {
         try {
-            $lesson = Lesson::with('module')->where('id', $this->lesson->id)->firstOrFail();
+            $teacher = auth('teacher')->user();
+
+            $lesson = Lesson::with('module.discipline')
+                ->whereKey($this->lesson->id)
+                ->whereHas('module.discipline', fn ($q) => $q->where('teacher_id', $teacher?->id))
+                ->firstOrFail();
+
             $path = $lesson->path_file;
             if ($path && Storage::disk('private')->exists($path)) {
                 Storage::disk('private')->delete($path);

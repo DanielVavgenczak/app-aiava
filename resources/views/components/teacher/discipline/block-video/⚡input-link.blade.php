@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use App\Models\Lesson;
+use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 
 new class extends Component
@@ -20,9 +21,17 @@ new class extends Component
             'link' => 'required|max:2048',
         ]);
 
-        try {
-            $teacherId = Auth::guard('teacher')->user()->id;
+        $teacherId = Auth::guard('teacher')->user()->id;
 
+        $module = Module::whereKey($this->module_id)
+            ->whereHas('discipline', fn ($q) => $q->where('teacher_id', $teacherId))
+            ->first();
+
+        if (! $module) {
+            abort(404);
+        }
+
+        try {
             $link = $this->link;
             if (!preg_match('#^https?://#i', $link)) {
                 $link = 'https://' . $link;
@@ -32,7 +41,7 @@ new class extends Component
             $title = sprintf('Bloco %02d', $nextNumber);
 
             $lesson = Lesson::create([
-                'module_id' => $this->module_id,
+                'module_id' => $module->id,
                 'teacher_id' => $teacherId,
                 'title' => $title,
                 'link' => $link,
