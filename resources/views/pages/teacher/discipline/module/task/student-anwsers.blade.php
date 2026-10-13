@@ -35,7 +35,8 @@ new class extends Component {
         }
 
         $this->task_id = $task->id;
-        $this->studentAnswer = StudentAnwser::where('task_id', $task->id)
+        $this->studentAnswer = StudentAnwser::with('student')
+            ->where('task_id', $task->id)
             ->orderBy('created_at')
             ->get();
         $this->grades = [];

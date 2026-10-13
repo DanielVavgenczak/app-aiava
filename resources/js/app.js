@@ -9,7 +9,6 @@ import './upload-chunck';
 import './menu/index';
 import './menu/active';
 import './libs/expand_text';
-import './libs/mask';
 import './libs/money_mask';
 
 import './notification';

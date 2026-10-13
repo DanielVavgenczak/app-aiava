@@ -52,7 +52,7 @@ it('persiste atividade avaliativa com valores numéricos decimais', function () 
         ->set('valueOfQuestion', '2,5')
         ->call('addQuestion')
         ->assertHasNoErrors()
-        ->set('selectedLessonId', $module->id)
+        ->set('moduleId', $module->id)
         ->call('save')
         ->assertHasNoErrors();
 
@@ -80,7 +80,7 @@ it('persiste atividade não avaliativa sem nota e vinculada à disciplina', func
         ->set('questionTypeSelected', 'text')
         ->call('addQuestion')
         ->assertHasNoErrors()
-        ->set('selectedLessonId', $module->id)
+        ->set('moduleId', $module->id)
         ->call('save')
         ->assertHasNoErrors();
 
@@ -170,7 +170,7 @@ it('não salva atividade avaliativa com soma de questões acima do total', funct
     $component
         ->set('isAvaliative', true)
         ->set('valueOfActivity', '5,00')
-        ->set('selectedLessonId', $module->id)
+        ->set('moduleId', $module->id)
         ->set('titleOfQuestion', 'Primeira questao valendo tres')
         ->set('questionTypeSelected', 'text')
         ->set('valueOfQuestion', '3,00')
@@ -203,7 +203,7 @@ it('grava as opções de múltipla escolha com ordem incremental', function () {
         ->call('addQuestion')
         ->assertHasNoErrors()
         ->call('updateCorrectOption', 0, 0)
-        ->set('selectedLessonId', $module->id)
+        ->set('moduleId', $module->id)
         ->call('save')
         ->assertHasNoErrors();
 
@@ -242,7 +242,7 @@ it('nega salvar atividade vinculada a módulo de outra disciplina/professor', fu
         'options' => null,
     ]]);
 
-    $component->set('selectedLessonId', $foreignModule->id)
+    $component->set('moduleId', $foreignModule->id)
         ->call('save')
         ->assertStatus(404);
 
@@ -265,7 +265,7 @@ it('não vaza detalhes do banco ao falhar a persistência', function () {
                 ['text' => null, 'is_correct' => true, 'order' => 0],
             ],
         ]])
-        ->set('selectedLessonId', $module->id)
+        ->set('moduleId', $module->id)
         ->call('save')
         ->assertHasErrors('save');
 
@@ -320,7 +320,7 @@ it('bloqueia salvar atividade com data final anterior à inicial', function () {
         ->set('titleOfQuestion', 'Questao com datas invertidas')
         ->set('questionTypeSelected', 'text')
         ->call('addQuestion')
-        ->set('selectedLessonId', $module->id)
+        ->set('moduleId', $module->id)
         ->set('startDate', '2026-10-10')
         ->set('endDate', '2026-10-01')
         ->call('save')
@@ -338,7 +338,7 @@ it('grava a janela da atividade cobrindo todo o dia final', function () {
         ->set('titleOfQuestion', 'Questao com janela valida')
         ->set('questionTypeSelected', 'text')
         ->call('addQuestion')
-        ->set('selectedLessonId', $module->id)
+        ->set('moduleId', $module->id)
         ->set('startDate', '2026-10-01')
         ->set('endDate', '2026-10-10')
         ->call('save')
