@@ -442,7 +442,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                     {{-- Modal de Edição --}}
                     <livewire:teacher.classe.edit-student-modal :student="$student" :key="'edit-student-'.$student->id"/>
                     <livewire:teacher.classe.delete-student-modal :student="$student" :key="'remove-student-'.$student->id"/>
-                    <livewire:teacher.classe.student-detail :student="$student" :key="'view-student-'.$student->id"/>
                 @endforeach
             </div>
 
@@ -490,6 +489,7 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
 
     {{-- Modais --}}
     <livewire:teacher.classe.new-student-modal />
+    <livewire:teacher.classe.student-detail />
     {{-- <livewire:teacher.classe.edit-student-modal /> --}}
     {{-- <livewire:teacher.classe.remove-student-modal /> --}}
 
