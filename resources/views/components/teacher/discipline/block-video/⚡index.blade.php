@@ -33,7 +33,6 @@ new class extends Component {
     public function closeTourActived()
     {
         $this->open = false;
-        $this->js("console.log('enviando pelo alpinejs')");
     }
 }; ?>
 <x-mary-modal wire:model="open" title="Adicione conteúdo à aula:" subtitle="Adicione videos á aula  {{ $title }}"

@@ -77,7 +77,7 @@ document.addEventListener("alpine:init", () => {
                 isDynamic: false,
                 path: "/professor/forum",
                 tourModule: () => import("./teacher/forum/forum"),
-                tours: ["StartTourTeacherForum", "StartTourTeacherForumInteract"],
+                tours: ["StartTourTeacherForumInteract"],
             },
             {
                 exact: false,
@@ -124,14 +124,6 @@ document.addEventListener("alpine:init", () => {
                 path: "/aluno/perfil",
                 tourModule: () => import("./student/profile"),
                 tours: ["StartTourStudentProfile"],
-            },
-            // painel do estudante
-            {
-                exact: true,
-                isDynamic: false,
-                path: "/aluno/disciplina",
-                tourModule: () => import("./student/discipline"),
-                tours: ["StartTourStudentDiscipline"],
             },
             // painel do estudante
             {
@@ -198,7 +190,6 @@ document.addEventListener("alpine:init", () => {
             await this.start('StartDeleteLesson');
         },
         async initTour() {
-            console.log("init tour");
             this.loading = true;
 
             Livewire.dispatch("tour::close-opened-modals");
@@ -206,10 +197,7 @@ document.addEventListener("alpine:init", () => {
             const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
             for (const page of this.pages) {
-                //console.log("Verificando página para tour:", page.path, "Current path:", currentPath);
                 if (page.exact && currentPath === page.path) {
-                    console.log("Iniciando tour...", currentPath);
-                    //console.log("Iniciando tour...", currentPath);
                     this.openMai = true;
                     try {
                         const tourModule = await page.tourModule();
@@ -230,7 +218,6 @@ document.addEventListener("alpine:init", () => {
                         } catch (error) {
                             console.error("Erro ao carregar tour dinâmico:", error);
                             return null;
-                            this.loading = false;
                         }
                     }
                 }

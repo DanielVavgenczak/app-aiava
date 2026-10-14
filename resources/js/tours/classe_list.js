@@ -232,7 +232,6 @@ export async function StartTourClasseDelete(){
                                         }
                                     },
                                     onHighlighted: async(el) => {
-                                        console.log("Highlighted delete content", el);
                                         const btnCancel = el.querySelector(`#classe-delete-cancel-${dataId}`)
                                         const btnDelete = el.querySelector(`#classe-delete-confirm-${dataId}`)
                                         if(!btnCancel || !btnDelete) return;

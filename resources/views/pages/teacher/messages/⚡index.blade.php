@@ -496,8 +496,6 @@ new #[Layout(name: 'layouts::teacher')] class extends Component
                         label="Iniciar uma conversa" x-on:click="$store.tourguide.start('StartTourInitChatInClasse')" />
                     @endif
                 @endif
-                {{ $this->countDisciplines }}
-
             </div>
         </div>
         <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" >

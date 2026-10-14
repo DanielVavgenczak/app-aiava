@@ -95,7 +95,6 @@ export async function StartTourStudentAccess()
                         if (!studentCount || studentCount.length === 0) {
                             return;
                         }
-                        //console.log('Estundatens', studentCount.length)
                         studentCount.forEach((student) => {
                             student.style.zIndex = "200000000";
                             student.addEventListener('click', async (event) => {
@@ -188,7 +187,6 @@ export async function StartTourStudentEdit()
                         if (!studentCount || studentCount.length === 0) {
                             return;
                         }
-                        //console.log('Estundatens', studentCount.length)
                         studentCount.forEach((student) => {
                             student.style.zIndex = "200000000";
                             student.addEventListener('click', async (event) => {
@@ -349,7 +347,6 @@ export async function StartTourStudentDelete()
                         if (!studentCount || studentCount.length === 0) {
                             return;
                         }
-                        //console.log('Estundatens', studentCount.length)
                         studentCount.forEach((student) => {
                             student.style.zIndex = "200000000";
                             student.addEventListener('click', async (event) => {

@@ -620,7 +620,6 @@ export async function StartTourManagerDisciplineContent(){
                         }
 
                         disciplines.forEach((discipline) => {
-                            console.log("bate aqui?");
                             discipline.style.zIndex = "200000000";
                             discipline.addEventListener('click', async (event) => {
                                 if (disciplineSelected) return;

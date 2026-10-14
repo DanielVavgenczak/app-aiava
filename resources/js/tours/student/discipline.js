@@ -1,8 +1,6 @@
 import { configDriver, AddButtonActions } from "../utils";
 const store = Alpine.store("tourguide");
 
-console.log("carregando student discipline tour");
-
 export async function StartTourStudentDiscipline() {
     store.openMai = false;
 
@@ -102,7 +100,6 @@ export async function StartTourStudentDisciplineShowActivitie() {
     const moduleWrappers = sidebar.querySelectorAll('[id^="module-"]');
     const modulesWithActivity = [];
     if (moduleWrappers.length === 1) {
-        console.log("vai diretor");
         return;
     }
     const driveInLessons = drivertour({
@@ -133,7 +130,6 @@ export async function StartTourStudentDisciplineShowActivitie() {
                     const lessonsContent = el.querySelectorAll(`.lesson-card`);
                     let lessonSelected = false;
                     if (lessonsContent.length === 1) {
-                        console.log("vai diretor aqui mano");
                         return;
                     }
 
@@ -209,7 +205,6 @@ export async function StartTourStudentDisciplineShowActivitie() {
                                             setTimeout(resolve, 500),
                                         );
 
-                                        console.log("ELE DEVE BATER BEM AQUI DRENTI", el);
                                         const taskOpen =
                                             document.querySelector(
                                                 ".opening-task",

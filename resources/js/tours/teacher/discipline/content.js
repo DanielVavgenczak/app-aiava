@@ -14,7 +14,6 @@ Livewire.on("continue-created-content", async (event) => {
   } catch (e) {
     console.error("Erro ao continuar o tour de criação de conteúdo:", e);
   } finally {
-    console.log("Iniciando bloco de upload...");
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await StartTourDisciplineCreateContentUploadBlock();

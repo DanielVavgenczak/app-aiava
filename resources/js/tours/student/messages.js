@@ -9,7 +9,6 @@ export async function StartTourStudentMessages() {
         console.error("ID do estudante não encontrado");
         return;
     }
-    console.log('id do estudante selecionado', studentId);
     const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     const driverObj = drivertour({

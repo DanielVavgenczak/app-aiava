@@ -132,15 +132,6 @@ export async function StartTourInitChatInClasse()
 }
 
 // Função separada para o segundo tour (reutilizável)
-function getSidebarDescription() {
-    const studentsList = document.querySelector(`#students-list-${classeSelectedId}`);
-    if (!studentsList) return "Interagindo com a ferramenta...";
-
-    const studentItems = studentsList.querySelectorAll('.student-item');
-    return studentItems.length > 1
-        ? "Clique em chat em grupo para conversar com a turma, ou escolha um aluno para conversar individualmente."
-        : "Interagindo com a ferramenta...";
-}
 async function startSecondTour(classeSelectedId) {
     await new Promise((resolve) => setTimeout(resolve, 1000));
      const studentsListCont = document.querySelector(`#students-list-${classeSelectedId}`);
@@ -217,7 +208,6 @@ async function startSecondTour(classeSelectedId) {
                             if (isTourClicking) return;
 
                             const studentButton = event.target.closest('.student-item');
-                            console.log('Quantos estudantes tem? ', studentButton.length);
                             if (!studentButton) return;
 
                             event.preventDefault();

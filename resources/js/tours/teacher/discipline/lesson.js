@@ -105,19 +105,16 @@ async function startVideoTour(dataId) {
           let cleanup;
           const handler = async (event) => {
 
-            console.log("esta executando???",event.lesson_id);
             if (event.module_id == dataId) {
               if (typeof cleanup === "function") cleanup();
               window._lastLessonId = event.lesson_id;
               steps[3].element = `button[data-lesson-id="${event.lesson_id}"]`;
               //await new Promise(r => setTimeout(r, 1000));
-              console.log("Novo ID capturado: para o video", event.lesson_id);
               steps[4].element = `#video-player-${event.lesson_id}`;
               resolve();
             }
           };
           cleanup = Livewire.on("after-video-upload", handler);
-          console.log("Esperando evento after-video-upload para o video", cleanup);
           setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 15000);
         });
 
@@ -317,7 +314,6 @@ async function startLinkTour(dataId) {
                             },
                             onHighlighted: async (el) => {
                                 await new Promise(r => setTimeout(r, 1000));
-                                console.log("Bloco encontrado:", el);
                                 await el.click();
                                 // Aqui você pode adicionar mais ações
                                  await driverObj.moveNext();

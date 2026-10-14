@@ -131,8 +131,6 @@ async function runAddCycle(resolve) {
           const addButton = document.querySelector('#action-add-student');
         if (addButton) {
             trackListener(addButton, "click", async () => {
-            console.log('🖱️ Botão Adicionar aluno clicado');
-
             // Aguarda o Livewire processar
             await new Promise((r) => setTimeout(r, 1500));
 
@@ -149,11 +147,8 @@ async function runAddCycle(resolve) {
             // Verifica se o aluno foi adicionado à lista
             const list = document.querySelector("#student-register-list");
             if (list && list.children.length > 0) {
-                console.log('✅ Aluno adicionado, avançando tour');
                 clearInterval(fixInterval);
                 await driverObj.moveNext();
-            } else {
-                console.log('⚠️ Aluno não foi adicionado à lista');
             }
             });
         }
