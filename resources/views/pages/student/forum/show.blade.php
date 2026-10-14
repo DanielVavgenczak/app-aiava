@@ -322,8 +322,8 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                                     $name = $topic->owner->full_name ?? $topic->owner->first_name;
                                                 @endphp
 
-                                                @if($topic->owner->profile?->avatar)
-                                                    <img src="{{ asset('storage/' . $topic->owner->profile->avatar) }}" class="w-10 h-10 rounded-full object-cover" alt="{{ $name }}"/>
+                                                @if ($topic->owner->hasAvatar())
+                                                    <img src="{{ $topic->owner->avatar_url }}" class="w-10 h-10 rounded-full object-cover" alt="{{ $name }}"/>
 
                                                 @else
                                                     <livewire:user-avatar-forum-list initiais="{{ $name }}"/>

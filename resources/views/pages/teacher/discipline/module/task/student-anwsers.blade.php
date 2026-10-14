@@ -118,10 +118,10 @@ new class extends Component {
                             class="p-4 bg-white rounded-md shadow-sm  cursor-pointer transition-all ease-in-out">
                             <div class="flex items-center justify-between mb-3">
                                 <div class="flex items-center gap-3">
-                                    {{-- asset('storage/' . $answer->student->profile->avatar ?? '') ?? --}}
+                                    {{-- avatar do aluno com fallback validado --}}
                                     <div class="flex-shrink-0">
                                         <img class="h-12 w-12 rounded-full"
-                                            src="{{ asset('images/user-noavatar.png') }}" alt="Aluno">
+                                            src="{{ $answer->student->avatar_url }}" alt="Aluno">
                                     </div>
                                     <div class="flex flex-col">
                                         <h3 class="text-gray-800 font-semibold ">
@@ -177,10 +177,10 @@ new class extends Component {
                                 class="p-4 border-[1px] border-gray-200 rounded-md  my-2 cursor-pointer transition-all ease-in-out">
                                 <div class="flex items-center justify-between mb-3">
                                     <div class="flex items-center gap-3">
-                                        {{-- asset('storage/' . $answer->student->profile->avatar ?? '') ?? --}}
+                                        {{-- avatar do aluno com fallback validado --}}
                                         <div class="flex-shrink-0">
                                             <img class="h-12 w-12 rounded-full"
-                                                src="{{ asset('images/user-noavatar.png') }}" alt="Aluno">
+                                                src="{{ $answer->student->avatar_url }}" alt="Aluno">
                                         </div>
                                         <div class="flex flex-col">
                                             <h3 class="text-gray-800 font-semibold ">

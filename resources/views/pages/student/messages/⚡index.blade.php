@@ -271,8 +271,8 @@ new #[Layout(name: 'layouts::student')] class extends Component
                             <div class="flex items-center gap-3">
 
 
-                                @if ($this->teacher->profile?->avatar)
-                                    <img src="{{ asset('storage/' . $this->teacher->profile->avatar) }}"
+                                @if ($this->teacher->hasAvatar())
+                                    <img src="{{ $this->teacher->avatar_url }}"
                                         class="w-10 h-10 rounded-full object-cover" alt="{{ $this->teacher->full_name ?? $this->teacher->first_name }}"/>
 
                                 @else
@@ -342,8 +342,8 @@ new #[Layout(name: 'layouts::student')] class extends Component
                                 <span class="font-bold text-lg">
                                     @if($selectedRecipientType === 'App\Models\Teacher\Teacher')
 
-                                        @if ($this->teacher->profile?->avatar)
-                                            <img src="{{ asset('storage/' . $this->teacher->profile->avatar) }}" class="w-12 h-12 rounded-full object-cover">
+                                        @if ($this->teacher->hasAvatar())
+                                            <img src="{{ $this->teacher->avatar_url }}" class="w-12 h-12 rounded-full object-cover">
                                         @else
 
                                             {{ substr($this->teacher->full_name ?? 'P', 0, 1) }}

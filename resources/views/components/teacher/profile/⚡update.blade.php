@@ -18,11 +18,7 @@ new #[Layout('layouts::teacher')] class extends Component {
     public function mount()
     {
         $this->user = Auth::guard('teacher')->user();
-       if($this->user->profile->avatar == null || $this->user->profile->avatar == '') {
-            $this->image = 'images/user-noavatar.png';
-        } else {
-            $this->image = 'storage/' . $this->user->profile->avatar;
-        }
+        $this->image = $this->user->avatar_url;
     }
 
     #[On('open-modal-update-profile')]
@@ -83,7 +79,7 @@ new #[Layout('layouts::teacher')] class extends Component {
                         crop-after-change
                         crop-mime-type="image/jpeg"
                         :crop-config="['aspectRatio' => 1, 'autoCropArea' => 1, 'viewMode' => 1]">
-                        <img src="{{ asset($image) }}" alt="" class="h-32 object-cover rounded-full" />
+                        <img src="{{ $image }}" alt="" class="h-32 object-cover rounded-full" />
                     </x-mary-file>
                 </div>
             </div>

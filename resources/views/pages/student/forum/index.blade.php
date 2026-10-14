@@ -123,8 +123,8 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                 {{-- Info de Tópicos --}}
                 <div class="flex flex-col items-center justify-center gap-1 text-xs text-gray-600 mb-3">
                     <div class="flex gap-1 items-center">
-                            @if ($disciplineClasseInfo->discipline->teacher->avatar??null)
-                                <img src="{{ asset('storage/' . $disciplineClasseInfo->discipline->teacher->avatar) }}"
+                            @if ($disciplineClasseInfo->discipline->teacher->hasAvatar())
+                                <img src="{{ $disciplineClasseInfo->discipline->teacher->avatar_url }}"
                                     alt="Avatar do Professor" class="w-4 h-4 rounded-full object-cover">
                             @else
                              <x-mary-icon name="o-user-circle" class="w-4 h-4" />

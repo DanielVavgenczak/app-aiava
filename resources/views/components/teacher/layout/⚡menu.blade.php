@@ -54,9 +54,9 @@ new class extends Component {
             <div class="flex flex-col items-center gap-3">
                 {{-- Avatar com Status Online --}}
                 <div class="relative">
-                    @if($this->teacher->profile?->avatar)
+                    @if ($this->teacher->hasAvatar())
                         <img
-                            src="{{ asset('storage/' . $this->teacher->profile->avatar) }}"
+                            src="{{ $this->teacher->avatar_url }}"
                             :class="$store.expandedSidebar.expanded ? 'w-20 h-20' : 'w-12 h-12'"
                             class="rounded-full object-cover border-[1px] border-white shadow-lg transition-all duration-300 ease-in-out"
                             alt="{{ $this->teacher->first_name }}"

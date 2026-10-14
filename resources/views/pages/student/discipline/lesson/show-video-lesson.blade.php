@@ -177,13 +177,13 @@ new class extends Component {
             <div class="mt-4 pt-4 border-t border-gray-100">
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
-                        @if (!$lesson->teacher->profile?->avatar)
-                            <livewire:pages::teacher.components.avatar
-                                initiais="{{ $lesson->teacher->initialLetterToAvatar() }}" class="w-20 h-20" />
-                        @else
-                            <img src="{{ asset('storage/' . $lesson->teacher->profile->avatar) }}"
+                        @if ($lesson->teacher->hasAvatar())
+                            <img src="{{ $lesson->teacher->avatar_url }}"
                                 class="transition-all duration-300 ease-in-out border-2 border-gray-200 rounded-full dark:border-slate-700"
                                 width="80" height="80" style="width: 80px; height: 80px; object-fit:cover;" loading="lazy" />
+                        @else
+                            <livewire:global.user-avatar
+                                initiais="{{ $lesson->teacher->initialLetterToAvatar() }}" class="w-20 h-20" />
                         @endif
                     </div>
                     <div class="flex flex-col gap-1">
