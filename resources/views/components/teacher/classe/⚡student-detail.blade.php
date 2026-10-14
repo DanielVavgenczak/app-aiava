@@ -12,6 +12,9 @@ new class extends Component {
 
     public ?Student $student = null;
 
+    /** Senha temporária em texto plano, exibida ao professor. */
+    public ?string $temporaryPassword = null;
+
     #[On('teacher::view-student')]
     public function open($id)
     {
@@ -26,12 +29,8 @@ new class extends Component {
         }
 
         $this->student = $student;
+        $this->temporaryPassword = $student->temporary_password;
         $this->open = true;
-    }
-
-    public function mount()
-    {
-        //
     }
 
     #[On('student-edit-cancel')]
@@ -39,6 +38,7 @@ new class extends Component {
     {
         $this->open = false;
         $this->student = null;
+        $this->temporaryPassword = null;
     }
 
     public function regeneratePassword($studentId)
@@ -47,28 +47,19 @@ new class extends Component {
 
         $student = Student::where('id', $studentId)
             ->whereHas('classe', fn ($q) => $q->where('teacher_id', $teacher?->id))
-            ->firstOrFail();
+            ->first();
 
-        $newPassword = $this->generateRandomPassword();
-        $student->password = bcrypt($newPassword);
-        $student->temporary_password = $newPassword;
-        $student->must_change_password = true;
-        $student->password_changed_at = null;
-        $student->save();
+        if (! $student) {
+            abort(404);
+        }
+
+        $newPassword = $student->generateTemporaryPassword();
 
         $this->student = $student;
+        $this->temporaryPassword = $newPassword;
+        $this->open = true;
 
-        $this->dispatch('password-regenerated', message: 'Nova senha gerada com sucesso!');
-    }
-
-    private function generateRandomPassword($length = 8)
-    {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $password = '';
-        for ($i = 0; $i < $length; $i++) {
-            $password .= $characters[random_int(0, strlen($characters) - 1)];
-        }
-        return $password;
+        $this->success('Nova senha gerada com sucesso!');
     }
 }; ?>
 <x-mary-modal
@@ -93,7 +84,7 @@ new class extends Component {
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500">Telefone</label>
-                        <p class="text-base">{{ $student->telephone ?? 'Não informado' }}</p>
+                        <p class="text-base">{{ $student->phone ?? 'Não informado' }}</p>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500">CPF</label>
@@ -102,17 +93,43 @@ new class extends Component {
                 </div>
             </div>
 
+            {{-- Acesso --}}
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <h3 class="text-lg font-semibold mb-3">Acesso do aluno</h3>
+                <label class="text-sm font-medium text-gray-500">Senha temporária</label>
+                @if ($temporaryPassword)
+                    <div x-data="{ copied: false }" class="flex items-center gap-2 mt-1">
+                        <code
+                            x-ref="password"
+                            class="px-3 py-1 rounded bg-white border border-gray-200 font-mono text-base"
+                        >{{ $temporaryPassword }}</code>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-ghost"
+                            title="Copiar senha"
+                            x-on:click="navigator.clipboard.writeText($refs.password.textContent); copied = true; setTimeout(() => copied = false, 1500)"
+                        >
+                            <span x-show="!copied"><x-mary-icon name="o-clipboard-document" class="w-4 h-4" /></span>
+                            <span x-show="copied" x-cloak class="text-xs text-green-600">Copiado!</span>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">O aluno deve alterar esta senha no primeiro acesso.</p>
+                @else
+                    <p class="text-base text-gray-500 mt-1">O aluno já alterou a senha para uma de uso pessoal.</p>
+                @endif
+            </div>
+
             {{-- Ações --}}
             <div class="flex justify-end gap-2 pt-4 border-t">
-                @if($student->must_change_password)
-                    <button
-                        wire:click="regeneratePassword({{ $student->id }})"
-                        class="btn btn-warning"
-                    >
-                        <x-mary-icon name="o-arrow-path" class="w-4 h-4" />
-                        Gerar Nova Senha
-                    </button>
-                @endif
+                <button
+                    wire:click="regeneratePassword('{{ $student->id }}')"
+                    wire:loading.attr="disabled"
+                    wire:target="regeneratePassword"
+                    class="btn btn-warning"
+                >
+                    <x-mary-icon name="o-arrow-path" class="w-4 h-4" />
+                    Gerar Nova Senha
+                </button>
 
                 <button
                     wire:click="open = false"
@@ -123,12 +140,4 @@ new class extends Component {
             </div>
         </div>
     @endif
-
-    <script>
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('Copiado!');
-            });
-        }
-    </script>
 </x-mary-modal>
