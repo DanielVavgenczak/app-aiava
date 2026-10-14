@@ -17,8 +17,8 @@ new #[Layout('layouts::teacher')] class extends Component {
             <div class="flex justify-between w-full" id="teacher-profile-section">
                 <div></div>
                 <div id="teacher-profile-avatar">
-                    @if (Auth::guard('teacher')->user()->profile?->avatar)
-                        <img src="{{ asset('storage/' . Auth::guard('teacher')->user()->profile->avatar) }}"
+                    @if (Auth::guard('teacher')->user()->hasAvatar())
+                        <img src="{{ Auth::guard('teacher')->user()->avatar_url }}"
                             class="w-20 h-20 rounded-full object-cover" alt="{{ Auth::guard('teacher')->user()->fullName() }}"/>
                     @else
                         <div class="flex flex-col items-center justify-center gap-3">

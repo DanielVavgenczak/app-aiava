@@ -134,9 +134,9 @@ new class extends Component {
                 >
                     {{-- Avatar --}}
                     <div class="relative">
-                        @if($authenticated?->profile?->avatar)
+                        @if ($authenticated?->hasAvatar())
                             <img
-                                src="{{ asset('storage/' . $authenticated->profile->avatar) }}"
+                                src="{{ $authenticated->avatar_url }}"
                                 alt="{{ $this->userName }}"
                                 class="w-10 h-10 rounded-full object-cover border-2 border-gray-200  group-hover:border-blue-500 transition-colors"
                             />

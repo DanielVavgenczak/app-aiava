@@ -140,8 +140,8 @@ class ForumReplie extends Model
      */
     public function getAuthorAvatarAttribute(): ?string
     {
-        if ($this->author?->profile?->avatar) {
-            return asset('storage/' . $this->author->profile->avatar);
+        if ($this->author?->hasAvatar()) {
+            return $this->author->avatar_url;
         }
 
         return null;

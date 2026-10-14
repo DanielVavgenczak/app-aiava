@@ -352,9 +352,9 @@ new #[Layout(name: 'layouts::teacher')] class extends Component {
                             <div class="flex items-start gap-3 flex-1 min-w-0">
                                 {{-- Avatar --}}
                                 <div class="relative flex-shrink-0">
-                                    @if($student->profile?->avatar)
+                                    @if ($student->hasAvatar())
                                         <img
-                                            src="{{ asset('storage/' . $student->profile->avatar) }}"
+                                            src="{{ $student->avatar_url }}"
                                             alt="{{ $student->first_name }}"
                                             class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 group-hover:border-blue-100 transition-colors"
                                         />

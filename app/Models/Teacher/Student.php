@@ -3,6 +3,7 @@
 namespace App\Models\Teacher;
 
 use App\Models\Forum\ForumTopic;
+use App\Models\Traits\HasAvatarUrl;
 use App\Models\Traits\UuidTrait;
 use App\Traits\GeneratePasswordStudent;
 use Database\Factories\StudentFactory;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Hash;
 #[UseFactory(StudentFactory::class)]
 class Student extends Authenticatable
 {
-    use  HasFactory, UuidTrait, Notifiable, GeneratePasswordStudent;
+    use  HasFactory, UuidTrait, Notifiable, GeneratePasswordStudent, HasAvatarUrl;
 
     protected $keyType = 'string';
     public $incrementing = false;

@@ -19,16 +19,7 @@ new #[Layout('layouts::student')] class extends Component {
     {
         $this->user = Auth::guard('student')->user();
 
-        $profile = $this->user->profile;
-
-        if(!$profile || empty($profile->avatar)) {
-
-            $this->image = 'images/user-noavatar.png';
-
-        } else {
-
-            $this->image = 'storage/' . $profile->avatar;
-        }
+        $this->image = $this->user->avatar_url;
     }
 
     #[On('open-modal-update-profile')]
@@ -89,7 +80,7 @@ new #[Layout('layouts::student')] class extends Component {
                         crop-after-change
                         crop-mime-type="image/jpeg"
                         :crop-config="['aspectRatio' => 1, 'autoCropArea' => 1, 'viewMode' => 1]">
-                        <img src="{{ asset($image) }}" alt="" class="h-32 object-cover rounded-full" />
+                        <img src="{{ $image }}" alt="" class="h-32 object-cover rounded-full" />
                     </x-mary-file>
                 </div>
             </div>
