@@ -24,13 +24,14 @@ new class extends Component {
         $this->initVideo();
     }
 }; ?>
-<div wire:init="initVideo" id="video-player-{{ $lesson_id ?? '' }}" class="relative w-full overflow-hidden bg-black rounded-lg">
-    <video wire:ignore id="videoPlayer" controls width="800px" height="900px"></video>
+<div wire:init="initVideo" id="video-player-{{ $lesson_id ?? '' }}" class="relative w-full aspect-video overflow-hidden bg-black rounded-lg">
+    <video wire:ignore id="videoPlayer-{{ $lesson_id ?? '' }}" class="w-full h-full object-contain" controls playsinline preload="metadata"></video>
 </div>
 @script
     <script>
         $wire.on('init-complete', event => {
-            let video = document.getElementById("videoPlayer");
+            const video = document.getElementById("videoPlayer-{{ $lesson_id }}");
+            if (!video) return;
             video.src = event.url;
         });
     </script>

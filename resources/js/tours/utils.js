@@ -1,8 +1,11 @@
 // Função para adicionar botões personalizados no popover
+// Chaves válidas do driver.js v1: o overlay usa `overlayOpacity` e o recorte
+// usa `stagePadding` (as antigas `opacity`/`padding`/`closeBtnText` eram
+// ignoradas silenciosamente).
 export const configDriver = {
     animate: true,
-    opacity: 0.75,
-    padding: 10,
+    overlayOpacity: 0.75,
+    stagePadding: 10,
     nextBtnText: "Próximo",
     prevBtnText: "Anterior",
     doneBtnText:"Concluir",
@@ -10,13 +13,12 @@ export const configDriver = {
 }
 export const defaultDriverConfig = {
     animate: true,
-    opacity: 0.75,
-    padding: 10,
+    overlayOpacity: 0.75,
+    stagePadding: 10,
     allowClose: true,
     nextBtnText: 'Próximo',
     prevBtnText: 'Anterior',
     doneBtnText: 'Concluir',
-    closeBtnText: 'Fechar',
     showProgress: false
 };
 export function AddButtonActions(popover, title, callback) {
@@ -222,4 +224,168 @@ export function addTourFinishButton(popover, driverObj, {
         removeNav,
         style,
     });
+}
+
+/**
+ * Considera um elemento "oculto" quando não existe ou quando está com
+ * `display:none`/`visibility:hidden`. Depende do `x-show` do Alpine, que
+ * alterna o `display` inline — por isso checamos o estilo inline primeiro.
+ */
+export function isElementHidden(element) {
+    if (!element) return true;
+
+    if (element.style?.display === 'none') return true;
+
+    const view = element.ownerDocument?.defaultView;
+    if (!view) return false;
+
+    const style = view.getComputedStyle(element);
+    return style.display === 'none' || style.visibility === 'hidden';
+}
+
+/**
+ * Aguarda a pré-visualização do vídeo (`#temp-video-preview-<module>`) ganhar
+ * um `src` (arquivo selecionado) e trata os dois casos de falha:
+ *  - timeout (nada selecionado a tempo);
+ *  - aviso de duração (`#message-warning-duration-<module>`) visível (>12min).
+ *
+ * Resolve com o elemento de preview; rejeita com Error em falha.
+ */
+export function waitForVideoPreview(moduleId, {
+    timeout = 15000,
+    previewSelector = `#temp-video-preview-${moduleId}`,
+    warningSelector = `#message-warning-duration-${moduleId}`,
+    root = globalThis.document?.body,
+} = {}) {
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        let timer = null;
+
+        const getPreview = () => {
+            const el = globalThis.document?.querySelector(previewSelector);
+            if (!el) return null;
+            return el.getAttribute('src') || el.getAttribute('data-src') ? el : null;
+        };
+
+        const warningShown = () => {
+            const el = globalThis.document?.querySelector(warningSelector);
+            return Boolean(el) && !isElementHidden(el);
+        };
+
+        const cleanup = () => {
+            observer.disconnect();
+            clearTimeout(timer);
+        };
+
+        const settle = (error, value) => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            if (error) reject(error);
+            else resolve(value);
+        };
+
+        const check = () => {
+            if (settled) return;
+            if (warningShown()) {
+                settle(new Error('O vídeo excede o limite de duração permitido.'));
+                return;
+            }
+            const preview = getPreview();
+            if (preview) settle(null, preview);
+        };
+
+        const observer = new MutationObserver(check);
+
+        const existing = getPreview();
+        if (existing) {
+            settle(null, existing);
+            return;
+        }
+
+        observer.observe(root ?? globalThis.document.body, {
+            attributes: true,
+            attributeFilter: ['src', 'style', 'class'],
+            childList: true,
+            subtree: true,
+        });
+
+        timer = setTimeout(() => {
+            settle(new Error(`Pré-visualização do vídeo não apareceu após ${timeout}ms`));
+        }, timeout);
+
+        check();
+    });
+}
+
+/**
+ * Aguarda o evento Livewire `after-video-upload` do módulo informado, com
+ * cleanup do listener e timeout real. Diferente do fluxo antigo, NÃO avança
+ * o tour quando o upload não é confirmado — rejeita e deixa o chamador decidir.
+ *
+ * @returns {Promise<{module_id: string, lesson_id: string}>}
+ */
+export function waitForUploadComplete(moduleId, {
+    timeout = 60000,
+    livewire = globalThis.Livewire,
+} = {}) {
+    return new Promise((resolve, reject) => {
+        if (!livewire || typeof livewire.on !== 'function') {
+            reject(new Error('Livewire não está disponível para aguardar o upload.'));
+            return;
+        }
+
+        let settled = false;
+        let off = null;
+
+        const cleanup = () => {
+            clearTimeout(timer);
+            if (typeof off === 'function') off();
+        };
+
+        const timer = setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            reject(new Error(`Upload do vídeo não confirmado após ${timeout}ms`));
+        }, timeout);
+
+        off = livewire.on('after-video-upload', (event) => {
+            if (String(event?.module_id) !== String(moduleId)) return;
+            if (settled) return;
+            settled = true;
+            cleanup();
+            resolve(event);
+        });
+    });
+}
+
+/**
+ * Dispara `callback` quando o elemento ficar oculto (`display:none`), corrigindo
+ * o observer antigo que usava `attributeFilter` sem `attributes: true` (e por
+ * isso nunca disparava). Retorna uma função de cleanup.
+ */
+export function whenElementHidden(element, callback, { timeout = 60000 } = {}) {
+    if (!element) return () => {};
+
+    let done = false;
+    let timer = null;
+
+    const observer = new MutationObserver(() => {
+        if (done) return;
+        if (isElementHidden(element)) finish(true);
+    });
+
+    function finish(notify = false) {
+        if (done) return;
+        done = true;
+        observer.disconnect();
+        clearTimeout(timer);
+        if (notify && callback) callback();
+    }
+
+    observer.observe(element, { attributes: true, attributeFilter: ['style', 'class'] });
+    timer = setTimeout(() => finish(false), timeout);
+
+    return () => finish(false);
 }

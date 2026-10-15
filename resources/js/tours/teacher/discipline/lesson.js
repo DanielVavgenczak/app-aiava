@@ -1,155 +1,144 @@
-import { configDriver, AddButtonActions } from "../../utils";
+import {
+  configDriver,
+  AddButtonActions,
+  addTourAction,
+  waitForElement,
+  waitForVideoPreview,
+  waitForUploadComplete,
+  whenElementHidden,
+  sleep,
+} from "../../utils";
 
 let store;
-
-const waitForElement = (selector, timeout = 3000) => {
-  return new Promise((resolve, reject) => {
-    const element = document.querySelector(selector);
-    if (element) return resolve(element);
-    const observer = new MutationObserver((mutations, obs) => {
-      const el = document.querySelector(selector);
-      if (el) { obs.disconnect(); resolve(el); }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => { observer.disconnect(); reject(new Error(`Elemento ${selector} não encontrado após ${timeout}ms`)); }, timeout);
-  });
-};
 
 // ─── TOUR DE VÍDEO ────────────────────────────────────────────
 async function startVideoTour(dataId) {
   store = Alpine.store("tourguide");
-  let lessonIDLASTED = null;
+
+  const moduleId = dataId;
+  let lessonId = null;
+
+  const cancelAction = (popover) =>
+    addTourAction(popover, driverObj, {
+      label: "Cancelar operação",
+      onFinish: () =>
+        Livewire.dispatch("tour-close-modal-upload_block", { open: false }),
+    });
+
+  const abort = async (error) => {
+    console.warn(
+      `Tour de upload de vídeo interrompido: ${error?.message ?? error}`,
+    );
+    await driverObj.destroy();
+    store.openMai = true;
+  };
+
   const steps = [
     {
-      element: `#browser-file-${dataId}`,
+      element: `#browser-file-${moduleId}`,
       popover: {
         description: `Clique para selecionar um arquivo de vídeo do seu computador.`,
-        side: "top", align: "start",
-        onPopoverRender: (popover) => {
-          popover.previousButton?.remove();
-          popover.nextButton?.remove();
-          const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => {
-            Livewire.dispatch("tour-close-modal-upload_block", { open: false });
-            await driverObj.destroy();
-            store.openMai = true;
-         });
-        },
+        side: "top",
+        align: "start",
+        onPopoverRender: (popover) => cancelAction(popover),
       },
       onHighlighted: async () => {
-        const videoEl = document.querySelector(`#temp-video-preview-${dataId}`);
-        if (!videoEl) return;
-        if (videoEl.src && videoEl.src !== "") { await driverObj.moveNext(); return; }
-        const observer = new MutationObserver(async (mutations) => {
-          for (const m of mutations) {
-            if (m.type === "attributes" && m.attributeName === "src" && videoEl.src) {
-              observer.disconnect();
-              await new Promise(r => setTimeout(r, 100));
-              await driverObj.moveNext();
-            }
-          }
-        });
-        observer.observe(videoEl, { attributes: true, attributeFilter: ["src"] });
+        try {
+          await waitForVideoPreview(moduleId, { timeout: 15000 });
+          await sleep(100);
+          await driverObj.moveNext();
+        } catch (error) {
+          await abort(error);
+        }
       },
     },
     {
-      element: `#temp-preview-${dataId}`,
+      element: `#temp-preview-${moduleId}`,
       popover: {
         description: `Confira o vídeo e clique em "Enviar" para fazer o upload.`,
-        side: "top", align: "start",
+        side: "top",
+        align: "start",
+        onPopoverRender: (popover) => cancelAction(popover),
+      },
+      onHighlighted: async () => {
+        const btnSend = document.querySelector(
+          `#lesson-send-video-block-content-${moduleId}`,
+        );
+        if (!btnSend) return;
+        // `once` evita listeners duplicados quando o passo é revisitado.
+        btnSend.addEventListener("click", () => driverObj.moveNext(), {
+          once: true,
+        });
+      },
+    },
+    {
+      element: `#progress-bar-container-${moduleId}`,
+      popover: {
+        description: "Aguarde enquanto o vídeo é processado e enviado.",
         onPopoverRender: (popover) => {
-          popover.previousButton?.remove();
-          popover.nextButton?.remove();
-          const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => {
-            Livewire.dispatch("tour-close-modal-upload_block", { open: false });
-            await driverObj.destroy();
-            store.openMai = true; });
+          cancelAction(popover);
+          // Ao esconder a barra, recentraliza o popover. Usa `attributes: true`
+          // (o observer antigo nunca disparava por omitir essa flag).
+          const container = document.querySelector(
+            `#progress-bar-container-${moduleId}`,
+          );
+          whenElementHidden(container, () => {
+            const popoverEl = document.querySelector(".driver-popover");
+            if (!popoverEl) return;
+            popoverEl.style.position = "fixed";
+            popoverEl.style.top = "50%";
+            popoverEl.style.left = "50%";
+            popoverEl.style.transform = "translate(-50%, -50%)";
+          });
         },
       },
       onHighlighted: async () => {
-        const btnSend = document.querySelector(`#lesson-send-video-block-content-${dataId}`);
-        if (!btnSend) return;
-        btnSend.addEventListener("click", async () => {
-          await new Promise(r => setTimeout(r, 300));
-          await driverObj.moveNext();
-        });
-      },
-    },
-    {
-      element: `#progress-bar-container-${dataId}`,
-      popover: {
-        description: "Aguarde enquanto o vídeo é processado e enviado.",
-        showButtons: [""],
-      },
-      onHighlighted: async () => {
-        const targetEl = document.querySelector(`#progress-bar-container-${dataId}`);
-        if (targetEl) {
-          const obs = new MutationObserver(() => {
-            if (targetEl.style.display === 'none') {
-              const popoverEl = document.querySelector('.driver-popover');
-              if (popoverEl) {
-                popoverEl.style.position = 'fixed';
-                popoverEl.style.top = '50%';
-                popoverEl.style.left = '50%';
-                popoverEl.style.transform = 'translate(-50%, -50%)';
-              }
-              obs.disconnect();
-            }
+        try {
+          const event = await waitForUploadComplete(moduleId, {
+            timeout: 60000,
           });
-          obs.observe(targetEl, { attributeFilter: ['style'] });
+          lessonId = event.lesson_id;
+          steps[3].element = `button[data-lesson-id="${lessonId}"]`;
+          steps[4].element = `#video-player-${lessonId}`;
+          await driverObj.moveNext();
+        } catch (error) {
+          await abort(error);
         }
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        await new Promise((resolve) => {
-          let cleanup;
-          const handler = async (event) => {
-
-            if (event.module_id == dataId) {
-              if (typeof cleanup === "function") cleanup();
-              window._lastLessonId = event.lesson_id;
-              steps[3].element = `button[data-lesson-id="${event.lesson_id}"]`;
-              //await new Promise(r => setTimeout(r, 1000));
-              steps[4].element = `#video-player-${event.lesson_id}`;
-              resolve();
-            }
-          };
-          cleanup = Livewire.on("after-video-upload", handler);
-          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 15000);
-        });
-
-
-        await driverObj.moveNext();
       },
     },
     {
+      element: `button[data-lesson-id="${lessonId}"]`,
       popover: {
         description: "Interagindo com a ferramenta...",
-        showButtons: [""],
+        showButtons: [],
       },
       onHighlighted: async () => {
-        const btn = document.querySelector(`button[data-lesson-id="${window._lastLessonId}"]`);
+        const btn = document.querySelector(
+          `button[data-lesson-id="${lessonId}"]`,
+        );
         if (btn) btn.click();
-        for (let i = 0; i < 50; i++) {
-          if (document.querySelector(`#video-player-${window._lastLessonId}`)) break;
-          await new Promise(r => setTimeout(r, 100));
-        }
-        await new Promise(r => setTimeout(r, 1000));
+        await waitForElement(`#video-player-${lessonId}`, {
+          timeout: 5000,
+        }).catch(() => null);
+        await sleep(1000);
         await driverObj.moveNext();
       },
     },
     {
+      element: `#video-player-${lessonId}`,
       popover: {
         description: "Este é o vídeo que foi adicionado e está sendo reproduzido.",
-        side: "top", align: "center", showButtons: [""],
-        showButtons: [""],
+        side: "top",
+        align: "center",
+        showButtons: [],
       },
       onHighlighted: async () => {
-        await new Promise(r => setTimeout(r, 3000));
+        await sleep(3000);
         await driverObj.destroy();
       },
     },
   ];
+
   const driverObj = drivertour({ ...configDriver, steps: [...steps] });
   await driverObj.drive();
 }
@@ -385,7 +374,7 @@ export async function ContinueUploadBlock(modules, dataId) {
         await new Promise(r => setTimeout(r, 800));
         await el.click();
         await new Promise(r => setTimeout(r, 800));
-        try { await waitForElement(`#option-block-${dataId}`, 1000); }
+        try { await waitForElement(`#option-block-${dataId}`, { timeout: 1000 }); }
         catch (e) { console.error("Modal não renderizou a tempo:", e); }
         await new Promise(r => setTimeout(r, 1000));
         await driverObj.moveNext();
