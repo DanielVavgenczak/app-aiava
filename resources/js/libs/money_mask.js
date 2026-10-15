@@ -24,7 +24,9 @@ window.moneyMask = {
         let numeroInteiro = parseInt(inteiro);
 
         if (numeroInteiro > this.limit) {
-            this.note = `${inteiro.slice(0, 1)},${decimal[0]}`;
+            // Only keep first digit of integer part when above limit
+            let limited = this.limit.toString();
+            this.note = `${limited},${decimal.slice(0, 1)}`;
             this.showWarningMessage();
             return;
         }
@@ -71,7 +73,8 @@ window.moneyMask = {
         let numeroInteiro = parseInt(inteiro);
 
         if (numeroInteiro > this.limit) {
-            this.note = `${inteiro.slice(0, 1)},${decimal[0]}`;
+            let limited = this.limit.toString();
+            this.note = `${limited},${decimal.slice(0, 1)}`;
             return;
         }
 
