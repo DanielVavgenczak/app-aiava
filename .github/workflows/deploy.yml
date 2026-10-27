@@ -101,9 +101,13 @@ jobs:
             [ "$code" = "200" ] || { echo "Healthcheck falhou ($code)"; exit 1; }
 
             docker compose -f docker/docker-compose.prod.yml exec -T app php artisan migrate --force --no-interaction
-            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan config:cache
-            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan route:cache
-            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan view:cache
+
+            docker compose -f docker/docker-compose.prod.yml exec -T app chown -R www-data:www-data storage bootstrap/cache
+            docker compose -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan optimize:clear
+            docker compose -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan config:cache
+            docker compose -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan route:cache
+            docker compose -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan view:cache
+            docker compose -f docker/docker-compose.prod.yml exec -T app chown -R www-data:www-data storage bootstrap/cache
 
             docker image prune -f
             echo "✅ Deploy concluído"
