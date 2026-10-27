@@ -30,8 +30,9 @@
                 'w-[calc(100%-5rem)] left-20'">
             {{ $slot }}
         </main>
+        <livewire:global.teacher-submissions :teacher-id="auth()->guard('teacher')->id()" />
         <button
-            class="btn fixed z-[999] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50 transition-all duration-500 ease-in-out"
+            class="btn fixed z-[997] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50 transition-all duration-500 ease-in-out"
             id="just-chat"
             x-on:click="$store.tourguide.initTour()"
             x-show="!$store.tourguide.openMai">

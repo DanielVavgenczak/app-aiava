@@ -1,7 +1,7 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{Layout, On, Url};
+use Livewire\Attributes\{Layout, On, Url, Computed};
 use App\Models\Teacher\{Discipline};
 use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
@@ -20,6 +20,13 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     #[Url]
     public ?string $highlight = null;
+
+    #[Url]
+    public ?string $activity = null;
+
+    #[Url]
+    public ?string $tab = null;
+
     public function mount(string $id)
     {
         if (session('delete-with-files')) {
@@ -38,6 +45,12 @@ new #[Layout('layouts::teacher')] class extends Component {
         $this->authorizeForUser(Auth::guard('teacher')->user(), 'view', $this->discipline);
 
         $this->allLessons = $this->discipline->modules->flatMap->lessons->values()->toArray();
+
+        if ($this->activity) {
+            $this->openedTaskShow = $this->discipline->modules
+                ->flatMap->activitTasks
+                ->contains(fn ($task) => (string) $task->id === (string) $this->activity);
+        }
     }
     #[On('select-lesson')]
     public function selectedBlock($block_id)
@@ -166,6 +179,40 @@ new #[Layout('layouts::teacher')] class extends Component {
          ->first();
     }
 
+    /**
+     * Aulas filtradas pelo título. Mantém apenas os módulos que possuem ao
+     * menos uma aula correspondente à busca.
+     */
+    #[Computed]
+    public function filteredModules()
+    {
+        $search = trim($this->search_lesson);
+
+        if ($search === '') {
+            return $this->discipline->modules;
+        }
+
+        $needle = mb_strtolower($search);
+
+        return $this->discipline->modules
+            ->map(function ($module) use ($needle) {
+                $filtered = clone $module;
+                $filtered->setRelation(
+                    'lessons',
+                    $module->lessons
+                        ->filter(fn ($lesson) => str_contains(
+                            mb_strtolower((string) $lesson->title),
+                            $needle
+                        ))
+                        ->values()
+                );
+
+                return $filtered;
+            })
+            ->filter(fn ($module) => $module->lessons->isNotEmpty())
+            ->values();
+    }
+
 
     /** Opentask show **/
     public function openTaskShow($task_id)
@@ -215,8 +262,26 @@ new #[Layout('layouts::teacher')] class extends Component {
                         <p class="text-sm text-gray-500">Conteudo da disciplina</p>
                     </div>
                     @if ($discipline->modules->count() > 0)
-                        <div id="content-input-search">
-                          {{-- <input class="input !outline-none" placeholder="Pesquisar aula" wire:model.live="search_lesson" /> --}}
+                        <div id="content-input-search" class="relative w-full max-w-sm">
+                            <x-mary-icon name="o-magnifying-glass" class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                                id="lesson-input-search"
+                                type="text"
+                                wire:model.live.debounce.300ms="search_lesson"
+                                placeholder="Pesquisar aula..."
+                                aria-label="Pesquisar aula pelo título"
+                                class="input input-bordered w-full pl-10 pr-10 !outline-none"
+                            />
+                            @if ($search_lesson)
+                                <button
+                                    type="button"
+                                    wire:click="$set('search_lesson', '')"
+                                    aria-label="Limpar busca de aulas"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    <x-mary-icon name="o-x-mark" class="w-5 h-5" />
+                                </button>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -241,8 +306,12 @@ new #[Layout('layouts::teacher')] class extends Component {
             </div>
             <div class="flex gap-5 relative h-[calc(100vh-180px)]">
                 <div class="w-1/2 h-auto overflow-y-auto" wire:key="module-list-container" id="module-list-all">
-                    @if ($discipline->modules->count() > 0)
-                        @foreach ($discipline->modules as $module)
+                    @php
+                        $modules = $this->filteredModules;
+                    @endphp
+
+                    @if ($modules->count() > 0)
+                        @foreach ($modules as $module)
                             <div
                                 class="w-full bg-white border-[1px] border-gray-100 px-3 py-2 accordion module-card"
                                 wire:key="module-{{ $module->id }}"
@@ -348,8 +417,19 @@ new #[Layout('layouts::teacher')] class extends Component {
                         @endforeach
                     @else
                         <div wire:key="no-modules" class="absolute w-full h-screen bg-white">
-                            <p class="text-sm font-medium text-center text-gray-700 tracking-wider">Essa disciplina não
-                                possui nenhuma aula!</p>
+                            @if (trim($search_lesson) !== '')
+                                <p class="text-sm font-medium text-center text-gray-700 tracking-wider">
+                                    Nenhuma aula encontrada para "{{ $search_lesson }}".
+                                </p>
+                                <div class="flex justify-center mt-3">
+                                    <button type="button" wire:click="$set('search_lesson', '')" class="btn btn-sm btn-ghost">
+                                        Limpar busca
+                                    </button>
+                                </div>
+                            @else
+                                <p class="text-sm font-medium text-center text-gray-700 tracking-wider">Essa disciplina não
+                                    possui nenhuma aula!</p>
+                            @endif
                         </div>
                     @endif
                 </div>
@@ -361,7 +441,12 @@ new #[Layout('layouts::teacher')] class extends Component {
           <livewire:teacher.discipline.module.create />
 
           <livewire:pages::teacher.discipline.module.task.show-task
+            :initial-activity-id="$activity"
+            :initial-tab="$tab"
             wire:key="task-module-{{ $discipline->id ?? '' }}" />
+
+          <livewire:pages::teacher.discipline.module.modals.edit-task
+            wire:key="edit-task-{{ $discipline->id ?? '' }}" />
 
           <livewire:pages::teacher.discipline.module.modals.create-task
             :lessons="$discipline->modules"
@@ -371,15 +456,17 @@ new #[Layout('layouts::teacher')] class extends Component {
 
 
 
-        @if(!$openedTaskShow)
-
         <!-- Modal options tour -->
-          <div x-data class="fixed inset-0 z-50 bg-gray-900/50" x-show="$store.tourguide.openMai">
+          <div x-data class="fixed inset-0 z-[60] bg-gray-900/50" x-show="$store.tourguide.openMai">
               <div
                   class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-full sm:w-1/2 bg-white rounded-lg shadow-lg border-[1px] border-d-200 p-6 flex flex-col gap-5">
                   <div class="flex items-center justify-between">
                     <h2 class="text-[14px] tracking-wide font-medium text-gray-700">
-                      Aqui você pode adicionar novas aulas e blocos
+                      @if ($openedTaskShow)
+                        Aqui você pode gerenciar e corrigir esta atividade
+                      @else
+                        Aqui você pode adicionar novas aulas e blocos
+                      @endif
                       </h2>
                       <x-mary-button
                         class="btn btn-sm btn-ghost"
@@ -388,7 +475,23 @@ new #[Layout('layouts::teacher')] class extends Component {
                       </x-mary-button>
                   </div>
                   <!-- options show !-->
-                  @if (!$openFormNewLesson)
+                  @if ($openedTaskShow)
+                      <!-- options activity task -->
+                      <div class="grid grid-cols-3 gap-3 p-4 bg-gray-100">
+                          <x-mary-button
+                              class="font-medium text-blue-500 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
+                              label="Gerenciar uma atividade"
+                              x-on:click="$store.tourguide.start('StartTourManageActivityTask')" />
+                          <x-mary-button
+                              class="font-medium text-blue-500 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
+                              label="Corrigir entregas"
+                              x-on:click="$store.tourguide.start('StartTourActivityDeliveries')" />
+                          <x-mary-button
+                              class="font-medium text-blue-500 border-[1px] border-blue-400 btn hover:bg-blue-500 hover:text-gray-100"
+                              label="Editar uma atividade"
+                              x-on:click="$store.tourguide.start('StartTourEditActivityTask')" />
+                      </div>
+                  @elseif (!$openFormNewLesson)
                       <div class="grid grid-cols-4 gap-3 p-4 bg-gray-100">
                           <x-mary-button
                               class="text-blue-400 border-[1px] border-blue-400 btn  hover:text-gray-100"
@@ -423,7 +526,6 @@ new #[Layout('layouts::teacher')] class extends Component {
               </div>
               <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
           </div>
-        @endif
 
     </div>
   @script

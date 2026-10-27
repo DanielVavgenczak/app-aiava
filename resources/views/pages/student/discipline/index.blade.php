@@ -65,7 +65,7 @@ new #[Layout('layouts::student')] class extends Component {
                     </div>
                     <div class="mt-6">
                         <a id="discipline-access-btn" class="btn btn-ghost btn-block"
-                            href="{{ route('student.lessons', $discipline->id) }}">Acessar</a>
+                            href="{{ route('student.lessons', $discipline->id) }}" wire:navigate>Acessar</a>
                     </div>
                 </div>
             </div>

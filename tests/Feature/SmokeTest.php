@@ -1,11 +1,13 @@
 <?php
 
+use App\Models\Teacher\Teacher;
+
 it('responde /up com 200', function () {
     $this->get('/up')->assertOk();
 });
 
-it('renderiza a home', function () {
-    $this->get('/')->assertOk();
+it('redireciona convidados da home para o login', function () {
+    $this->get('/')->assertRedirect(route('login'));
 });
 
 it('renderiza o login', function () {
@@ -33,3 +35,12 @@ it('renderiza as rotas de autenticacao', function (string $url) {
     '/forgot-password',
     '/reset-password/token-de-teste',
 ]);
+
+
+it('redireciona professor autenticado da home para disciplinas', function () {
+    $teacher = Teacher::factory()->create();
+
+    $this->actingAs($teacher, 'teacher')
+        ->get('/')
+        ->assertRedirect(route('teacher.discipline'));
+});

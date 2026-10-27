@@ -40,6 +40,19 @@ class Task extends Model
         return $this->hasMany(StudentAnwser::class, 'task_id');
     }
 
+    public function feedbacks()
+    {
+        return $this->hasMany(QuestionFeedback::class, 'task_id');
+    }
+
+    /**
+     * Ordena as questões conforme a posição definida pelo professor.
+     */
+    public function scopeOrdered(Builder $query): Builder
+    {
+        return $query->orderBy('order');
+    }
+
     /**
      * Restringe a consulta às questões cuja atividade pertence ao professor.
      */

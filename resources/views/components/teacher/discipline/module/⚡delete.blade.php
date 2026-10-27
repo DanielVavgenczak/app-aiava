@@ -27,6 +27,8 @@ new class extends Component {
 
     public function deleteModule()
     {
+        $startedTransaction = false;
+
         try {
             $teacher = auth('teacher')->user();
             if (!$teacher || $this->module->discipline->teacher_id !== $teacher->id) {
@@ -38,6 +40,7 @@ new class extends Component {
             }
 
             DB::beginTransaction();
+            $startedTransaction = true;
             $lessons = $this->module->lessons;
             if ($lessons->isNotEmpty()) {
                 $deletou = $this->deleteVideoBlockFile($lessons);
@@ -58,11 +61,15 @@ new class extends Component {
             }
 
             DB::commit();
+            $startedTransaction = false;
             session()->flash('delete-with-files', 'Aula excluída com sucesso!');
             $this->open = false;
             $this->redirect(route('teacher.discipline.show', $discipline), navigate: true);
         } catch (\Exception $e) {
-            DB::rollBack();
+            if ($startedTransaction) {
+                DB::rollBack();
+            }
+
             $this->handleDeleteError($e);
         }
     }

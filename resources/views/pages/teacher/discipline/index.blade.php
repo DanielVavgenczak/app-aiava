@@ -21,9 +21,10 @@ new #[Layout('layouts::teacher')] class extends Component {
         $query = Discipline::where('teacher_id', $teacherId)
             ->withCount('modules');
 
-        // Busca
-        if ($this->search) {
-            $query->where('title', 'like', '%' . $this->search . '%');
+        // Busca (case-insensitive também no PostgreSQL)
+        if (trim($this->search) !== '') {
+            $term = mb_strtolower(trim($this->search));
+            $query->whereRaw('LOWER(title) LIKE ?', ['%' . $term . '%']);
         }
 
         // Ordenação
@@ -51,7 +52,8 @@ new #[Layout('layouts::teacher')] class extends Component {
 
     public function clearFilters(): void
     {
-        $this->reset(['search', 'sortBy']);
+        $this->reset(['search']);
+        $this->sortBy = 'recent';
         $this->resetPage();
     }
 

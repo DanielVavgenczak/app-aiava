@@ -36,7 +36,10 @@ document.addEventListener("alpine:init", () => {
                     "StartTourDisciplineUploadBlockToLessonSelected",
                     "StartTourCreateActivitTask",
                     "StartEditLesson",
-                    "StartDeleteLesson"
+                    "StartDeleteLesson",
+                    "StartTourManageActivityTask",
+                    "StartTourActivityDeliveries",
+                    "StartTourEditActivityTask",
                 ],
             },
             {
@@ -142,6 +145,8 @@ document.addEventListener("alpine:init", () => {
                     "StartTourStudentDiscipline",
                     "StartTourStudentDisciplineShow",
                     "StartTourStudentDisciplineShowActivitie",
+                    "StartTourStudentAnswerActivity",
+                    "StartTourStudentActivityResult",
                 ],
             },
             {

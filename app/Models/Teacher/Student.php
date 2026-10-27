@@ -166,6 +166,16 @@ class Student extends Authenticatable
         return $this->hasOne(StudentProfile::class);
     }
 
+    public function activityAccesses()
+    {
+        return $this->hasMany(ActivityAccess::class, 'student_id');
+    }
+
+    public function studentAnwsers()
+    {
+        return $this->hasMany(StudentAnwser::class, 'student_id');
+    }
+
     public function firstName(): string
     {
         return explode(' ', trim($this->full_name))[0];

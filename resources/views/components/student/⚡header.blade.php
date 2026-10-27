@@ -111,22 +111,7 @@ new class extends Component {
             </button>
 
             {{-- Notifications --}}
-            <div class="relative" x-data="{ open: false }">
-                <div
-                    x-show="open"
-                    @click.away="open = false"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 scale-95"
-                    x-transition:enter-end="opacity-100 scale-100"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100 scale-100"
-                    x-transition:leave-end="opacity-0 scale-95"
-                    class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden"
-                    style="display: none;"
-                >
-
-                </div>
-            </div>
+            <livewire:global.notification-bell :user-type="$userType" :notifiable-id="$authenticated?->id" />
 
 
             {{-- Divider --}}

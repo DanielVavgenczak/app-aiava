@@ -113,7 +113,33 @@ it('rejeita vídeo com mais de 12 minutos e não cria bloco', function () {
 
     $this->actingAs($teacher, 'teacher')
         ->post(route('teacher.media.upload', $module->id), uploadPayload($file))
-        ->assertStatus(422);
+        ->assertStatus(422)
+        ->assertJson([
+            'success' => false,
+            'error' => 'O vídeo excede o limite de 12 minutos.',
+        ]);
+
+    expect(Lesson::where('module_id', $module->id)->count())->toBe(0);
+});
+
+it('rejeita vídeo com menos de 11 segundos e não cria bloco', function () {
+    Storage::fake('private');
+
+    $file = makeVideoUpload(10);
+    if (! $file) {
+        $this->markTestSkipped('ffmpeg/ffprobe indisponível.');
+    }
+
+    $teacher = Teacher::factory()->create();
+    $module = makeUploadModule($teacher);
+
+    $this->actingAs($teacher, 'teacher')
+        ->post(route('teacher.media.upload', $module->id), uploadPayload($file))
+        ->assertStatus(422)
+        ->assertJson([
+            'success' => false,
+            'error' => 'O vídeo deve ter pelo menos 11 segundos.',
+        ]);
 
     expect(Lesson::where('module_id', $module->id)->count())->toBe(0);
 });
@@ -121,7 +147,7 @@ it('rejeita vídeo com mais de 12 minutos e não cria bloco', function () {
 it('aceita vídeo válido e cria exatamente um bloco', function () {
     Storage::fake('private');
 
-    $file = makeVideoUpload(5);
+    $file = makeVideoUpload(11);
     if (! $file) {
         $this->markTestSkipped('ffmpeg/ffprobe indisponível.');
     }

@@ -19,6 +19,19 @@ Broadcast::channel('chat-teacher-student.{userId}', function ($user, $userId) {
     return false;
 }, ['guards' => ['teacher', 'student']]);
 
+// Canal das notificações de atividades (professor ou aluno)
+Broadcast::channel('notifications.{userId}', function ($user, $userId) {
+    if (auth()->guard('teacher')->check()) {
+        return (string) auth()->guard('teacher')->id() === (string) $userId;
+    }
+
+    if (auth()->guard('student')->check()) {
+        return (string) auth()->guard('student')->id() === (string) $userId;
+    }
+
+    return false;
+}, ['guards' => ['teacher', 'student']]);
+
 // Canal da turma (presence channel - mostra quem está online)
 Broadcast::channel('chat.classe.{classeId}', function ($user, $classeId) {
     // Professor: só acessa se for o dono da turma

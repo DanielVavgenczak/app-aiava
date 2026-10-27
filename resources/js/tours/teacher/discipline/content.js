@@ -1,6 +1,11 @@
 import { AddButtonActions, configDriver } from "../../utils";
 import { ContinueUploadBlock } from "./lesson";
 export { StartEditLesson, StartDeleteLesson } from "./lesson";
+export {
+  StartTourManageActivityTask,
+  StartTourActivityDeliveries,
+  StartTourEditActivityTask,
+} from "./task";
 
 // aqu
 Livewire.on("continue-created-content", async (event) => {
@@ -347,7 +352,7 @@ async function startTaskMainTour(disciplieID, store, resolve) {
         element: `#create-task-value-activity-${disciplieID}`,
         popover: {
           description:
-            "Defina a nota total da atividade. Use o teclado numérico e o botão de backspace para corrigir. O valor máximo permitido é 10,0. A soma das notas de todas as questões não pode ultrapassar este valor.",
+            "Defina a nota total da atividade. Use o teclado numérico e o botão de backspace para corrigir. O valor máximo permitido é 100. A soma das notas de todas as questões não pode ultrapassar este valor.",
           onPopoverRender: (popover, { config, state }) => {
             const actions = AddButtonActions(
               popover,
@@ -575,23 +580,6 @@ async function startTaskMainTour(disciplieID, store, resolve) {
         popover: {
           description:
             "Defina o período de disponibilidade da atividade. A data de início é quando a atividade fica visível para os alunos, e a data final é o prazo máximo de entrega. Deixe em branco se não houver prazo.",
-          onPopoverRender: (popover, { config, state }) => {
-            const actions = AddButtonActions(
-              popover,
-              "Voltar ao início",
-            );
-            actions.addEventListener("click", () => {
-              driverObj.destroy();
-              store.openMai = true;
-            });
-          },
-        },
-      },
-      {
-        element: "#atempt_input",
-        popover: {
-          description:
-            "Defina quantas tentativas cada aluno terá para responder a atividade. O valor padrão é 1. Caso não queira limitar, deixe em branco.",
           onPopoverRender: (popover, { config, state }) => {
             const actions = AddButtonActions(
               popover,

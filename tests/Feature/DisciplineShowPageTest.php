@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Lesson;
 use App\Models\Module;
 use App\Models\Teacher\ActivitTask;
 use App\Models\Teacher\Discipline;
@@ -63,4 +64,57 @@ it('responde 403 para outro professor', function () {
     $this->actingAs($other, 'teacher')
         ->get(route('teacher.discipline.show', $discipline->id))
         ->assertForbidden();
+});
+
+it('filtra aulas por título de forma case-insensitive', function () {
+    $teacher = Teacher::factory()->create();
+    $discipline = Discipline::factory()->for($teacher)->create();
+
+    $moduleA = Module::factory()->create(['discipline_id' => $discipline->id]);
+    $moduleB = Module::factory()->create(['discipline_id' => $discipline->id]);
+
+    Lesson::factory()->create([
+        'module_id' => $moduleA->id,
+        'teacher_id' => $teacher->id,
+        'title' => 'Frações equivalentes',
+    ]);
+    Lesson::factory()->create([
+        'module_id' => $moduleB->id,
+        'teacher_id' => $teacher->id,
+        'title' => 'Álgebra básica',
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    Livewire::test('pages::teacher.discipline.show', ['id' => $discipline->id])
+        ->assertSee('Frações equivalentes')
+        ->assertSee('Álgebra básica')
+        ->set('search_lesson', '  frações  ')
+        ->assertSee('Frações equivalentes')
+        ->assertDontSee('Álgebra básica')
+        ->set('search_lesson', '')
+        ->assertSee('Frações equivalentes')
+        ->assertSee('Álgebra básica');
+});
+
+it('exibe estado vazio e limpa a busca de aulas', function () {
+    $teacher = Teacher::factory()->create();
+    $discipline = Discipline::factory()->for($teacher)->create();
+    $module = Module::factory()->create(['discipline_id' => $discipline->id]);
+
+    Lesson::factory()->create([
+        'module_id' => $module->id,
+        'teacher_id' => $teacher->id,
+        'title' => 'Aula de História',
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    Livewire::test('pages::teacher.discipline.show', ['id' => $discipline->id])
+        ->set('search_lesson', 'matemática')
+        ->assertSee('Nenhuma aula encontrada')
+        ->assertSee('matemática')
+        ->assertDontSee('Aula de História')
+        ->set('search_lesson', '')
+        ->assertSee('Aula de História');
 });

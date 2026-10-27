@@ -4,7 +4,7 @@ use Livewire\Component;
 use Livewire\Attributes\{On, Validate, Computed, Locked};
 use App\Models\Module;
 use App\Models\Teacher\{Task, ActivitTask, Discipline};
-use App\Support\ActivityValue;
+use App\Support\{ActivityNotificationService, ActivityValue};
 use Illuminate\Support\Facades\{Auth, DB};
 use Mary\Traits\Toast;
 
@@ -41,6 +41,8 @@ new class extends Component {
     public bool $disabledButton = true;
     public array $questions = [];
     public $valueOfQuestion = null;
+    /** Indica se o professor informou/alterou a nota da questão atual. */
+    public bool $valueOfQuestionTouched = false;
     public array $questionNoteValues = [];
 
     // dates
@@ -85,6 +87,78 @@ new class extends Component {
         return ActivityValue::toFloat($value);
     }
 
+    /**
+     * Regras das notas (atividade e questões): inteiro de 0 a 100.
+     * Para questões ($isQuestion = true), o teto é o valor *restante* da
+     * atividade, ou seja, (nota da atividade − soma das demais questões).
+     * Assim, ao digitar, a questão nunca ultrapassa o saldo ainda disponível.
+     * Ao editar, informe $excludeIndex para não descontar a própria questão.
+     * Em validações por wildcard (save), passe $enforceRemaining = false e
+     * deixe a guarda explícita de soma cuidar do total.
+     *
+     * @param  bool  $isQuestion  aplica o teto do valor restante da atividade
+     * @param  int|null  $excludeIndex  índice da questão a ignorar no cálculo do restante
+     * @param  bool  $enforceRemaining  valida o teto do restante
+     */
+    private function noteRules(bool $required = false, bool $isQuestion = false, ?int $excludeIndex = null, bool $enforceRemaining = true): array
+    {
+        $validate = function ($attribute, $value, $fail) use ($isQuestion, $excludeIndex, $enforceRemaining) {
+            if ($value === null || $value === '') {
+                return;
+            }
+
+            $raw = trim((string) $value);
+
+            if (! preg_match('/^\d{1,3}$/', $raw)) {
+                $fail('A nota deve ser um número inteiro entre 0 e 100.');
+
+                return;
+            }
+
+            $numeric = ActivityValue::toFloat($raw);
+
+            if ($numeric > 100) {
+                $fail('A nota máxima é 100.');
+
+                return;
+            }
+
+            if (! $isQuestion || ! $enforceRemaining) {
+                return;
+            }
+
+            $remaining = $this->remainingValueForQuestion($excludeIndex);
+
+            if ($numeric > $remaining + 0.01) {
+                $fail('A nota da questão não pode exceder o valor restante da atividade ('.ActivityValue::format($remaining).').');
+            }
+        };
+
+        return $required ? ['required', $validate] : ['nullable', $validate];
+    }
+
+    /**
+     * Valor ainda disponível na atividade para uma questão, descontando a soma
+     * das demais questões já lançadas.
+     *
+     * @param  int|null  $excludeIndex  índice da questão a ignorar (edição)
+     */
+    private function remainingValueForQuestion(?int $excludeIndex = null): float
+    {
+        $activity = $this->activityValue();
+
+        $used = 0.0;
+        foreach ($this->questionNoteValues as $index => $value) {
+            if ($excludeIndex !== null && $index === $excludeIndex) {
+                continue;
+            }
+
+            $used += $this->convertToFloat($value);
+        }
+
+        return max(0.0, $activity - $used);
+    }
+
 
     public function startEditingQuestion(int $index)
     {
@@ -98,7 +172,9 @@ new class extends Component {
     {
         $this->validate(rules: [
             'editingQuestionTitle' => 'required|min:8',
-            'editingQuestionValue' => $this->validIsAvaliative() ? 'required' : ''
+            'editingQuestionValue' => $this->validIsAvaliative() ? $this->noteRules(true, true, $this->editingQuestionIndex) : 'nullable',
+        ], messages: [
+            'editingQuestionValue.required' => 'A nota da questão é obrigatória',
         ]);
 
         $oldValue = $this->questions[$this->editingQuestionIndex]['value_of_question'];
@@ -149,6 +225,15 @@ new class extends Component {
         return $this->totalUsedValue() >= $this->activityValue();
     }
 
+    /**
+     * Valor restante da atividade disponível para a próxima questão nova.
+     */
+    #[Computed]
+    public function remainingQuestionValue(): float
+    {
+        return $this->remainingValueForQuestion(null);
+    }
+
     public function selectedQuestionType(string $type)
     {
         if (is_array($type)) {
@@ -157,12 +242,26 @@ new class extends Component {
         $this->questionTypeSelected = $type;
     }
 
+    public function cancelQuestionForm()
+    {
+        $this->titleOfQuestion = '';
+        $this->options = [];
+        $this->newOptionText = '';
+        $this->correctOptionIndex = null;
+        $this->valueOfQuestion = null;
+        $this->valueOfQuestionTouched = false;
+        $this->resetErrorBag('options');
+        $this->resetErrorBag('newOptionText');
+        $this->resetErrorBag('valueOfQuestion');
+        $this->resetErrorBag('titleOfQuestion');
+    }
+
     public function addQuestion()
     {
         $this->validate(
             [
                 'titleOfQuestion' => 'required|min:8',
-                'valueOfQuestion' => $this->validIsAvaliative() ? 'required' : '',
+                'valueOfQuestion' => $this->validIsAvaliative() ? $this->noteRules(true, true) : 'nullable',
             ],
             [
                 'titleOfQuestion.required' => 'O questionário é obrigatório!',
@@ -170,6 +269,14 @@ new class extends Component {
                 'valueOfQuestion.required' => 'A nota da questão é obrigatória',
             ],
         );
+
+        // A máscara preenche o campo com "0" por padrão. Só permitimos criar a
+        // questão quando o professor realmente informar a nota (mesmo que 0),
+        // evitando questões criadas sem nota atribuída.
+        if ($this->validIsAvaliative() && ! $this->valueOfQuestionTouched) {
+            $this->addError('valueOfQuestion', 'Informe a nota da questão antes de criá-la.');
+            return;
+        }
 
         $questionExists = false;
         foreach ($this->questions as $question) {
@@ -181,10 +288,6 @@ new class extends Component {
 
         if($questionExists){
             $this->addError('titleOfQuestion', 'Questão ja cadastrada');
-            return;
-        }
-        if ($this->convertToFloat($this->valueOfQuestion) > $this->convertToFloat($this->valueOfActivity)) {
-            $this->addError('valueOfQuestion', 'O valor da questão não deve ser maior que o da atividade');
             return;
         }
 
@@ -200,6 +303,13 @@ new class extends Component {
             return;
         }
 
+        // Múltipla escolha exige que o professor marque qual alternativa é a
+        // correta, o que facilita a correção automática das respostas.
+        if ($this->questionTypeSelected === 'radio' && ! $this->hasCorrectOptionSelected()) {
+            $this->addError('is_correct_alternative', 'Selecione a alternativa correta da questão antes de criá-la.');
+            return;
+        }
+
         //TODO: create column order in table
         $questionData = [
             'order' => count($this->questions) + 1,
@@ -212,13 +322,27 @@ new class extends Component {
         $this->questions[] = $questionData;
         $this->questionOrderMap[$questionID] = $order;
 
-        if ($this->valueOfQuestion) {
-          $this->updateTotalValue($this->valueOfQuestion);
-          $this->validateTotalValue();
-        }
-        $this->reset(['titleOfQuestion', 'options', 'newOptionText']);
-        $this->valueOfQuestion = null;
+        // Registra sempre o valor (inclusive 0) para manter o alinhamento de
+        // índices com $this->questions (usado no cálculo do restante).
+        $this->updateTotalValue($this->valueOfQuestion ?? 0);
+        $this->validateTotalValue();
 
+        $this->reset(['titleOfQuestion', 'options', 'newOptionText']);
+        $this->correctOptionIndex = null;
+        $this->resetErrorBag('is_correct_alternative');
+        $this->valueOfQuestion = null;
+        $this->valueOfQuestionTouched = false;
+
+    }
+
+    /**
+     * Marca que o professor interagiu com o campo de nota da questão. O estado
+     * inicial (null/"0" gerado pela máscara) não conta como informado.
+     */
+    public function updatedValueOfQuestion(): void
+    {
+        $this->resetErrorBag('valueOfQuestion');
+        $this->valueOfQuestionTouched = true;
     }
 
     /** Order questions and options with new label order */
@@ -305,6 +429,14 @@ new class extends Component {
 
   public function updatedValueOfActivity(): void
   {
+      $raw = is_string($this->valueOfActivity) ? trim($this->valueOfActivity) : $this->valueOfActivity;
+
+      if ($raw !== null && $raw !== '' && ActivityValue::toFloat($raw) > 100) {
+          $this->addError('valueOfActivity', 'A nota máxima é 100.');
+          return;
+      }
+
+      $this->resetErrorBag('valueOfActivity');
       $this->validateTotalValue();
   }
 
@@ -364,7 +496,7 @@ new class extends Component {
 
         $this->options[] = [
           'text' => $this->newOptionText,
-          'is_correct' => $this->correctOptionIndex,
+          'is_correct' => false,
         ];
         $this->newOptionText = '';
         $this->resetErrorBag('newOptionText');
@@ -381,22 +513,40 @@ new class extends Component {
         unset($newOptions[$index]);
 
         // re indexed in array
-        $this->options = array_values($this->options);
+        $this->options = array_values($newOptions);
 
         if ($this->correctOptionIndex === $index) {
             $this->correctOptionIndex = null;
         }elseif($this->correctOptionIndex > $index){
             $this->correctOptionIndex--;
         }
+
+        // Reavalia as flags para não deixar a alternativa correta apontando
+        // para um índice que foi removido/deslocado.
+        foreach ($this->options as $i => &$option) {
+            $option['is_correct'] = $this->correctOptionIndex === $i;
+        }
       }
     }
-
     public function setCorrectOption(int $index)
     {
         foreach ($this->options as $i => &$option) {
             $option['is_correct'] = $i === $index;
         }
         $this->correctOptionIndex = $index;
+        $this->resetErrorBag('is_correct_alternative');
+    }
+
+    /** Há alguma alternativa marcada como correta na questão em edição? */
+    private function hasCorrectOptionSelected(): bool
+    {
+        foreach ($this->options as $option) {
+            if ($option['is_correct'] ?? false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function updateCorrectOption($questionIndex, int $optionIndex)
@@ -428,6 +578,8 @@ new class extends Component {
         $this->options = [];
         $this->questionTypeSelected = 'radio';
         $this->moduleId = null;
+        $this->valueOfQuestion = null;
+        $this->valueOfQuestionTouched = false;
     }
 
     public function save()
@@ -436,6 +588,10 @@ new class extends Component {
             'moduleId' => 'required|exists:modules,id',
             'disciplineId' => 'required|exists:disciplines,id',
             'questions' => 'required|array|min:1',
+            'valueOfActivity' => $this->isAvaliative ? $this->noteRules(true) : 'nullable',
+            'questions.*.value_of_question' => $this->isAvaliative ? $this->noteRules(false, true, null, false) : 'nullable',
+        ], [
+            'valueOfActivity.required' => 'A nota da atividade é obrigatória',
         ]);
 
         // O módulo (aula) precisa pertencer à disciplina informada e a
@@ -494,7 +650,7 @@ new class extends Component {
           try {
            // dd($this->questions, $this->valueOfActivity, $this->isAvaliative);
             $this->sendData = true;
-            DB::transaction(function () {
+            $activit = DB::transaction(function () {
               $activit = ActivitTask::create([
                   'module_id' => $this->moduleId,
                   'discipline_id' => $this->disciplineId,
@@ -523,7 +679,16 @@ new class extends Component {
                         }
                     }
                 }
+
+                return $activit;
             });
+
+            try {
+                ActivityNotificationService::publish($activit);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
             $this->dispatch('task-created-success', message: 'Atividade criada com sucesso!');
             $this->resetFormCreation();
             $this->close();
@@ -594,7 +759,7 @@ new class extends Component {
             <div class="flex gap-2 mb-6 transition ease-in-out duration-700"
                 id="create-task-value-activity-{{ $disciplineId }}"
                       x-data="{
-                        note: $wire.entangle('valueOfActivity').live.debounce.500ms,
+                        note: $wire.entangle('valueOfActivity').live,
                         ...window.moneyMask
                       }">
                   <div class="flex flex-col gap-1 w-full" >
@@ -607,7 +772,8 @@ new class extends Component {
                          <input
                           x-model="note"
                           x-on:input="mask($event)"
-                          placeholder="0,00"
+                          placeholder="0"
+                          inputmode="numeric"
                           class="input input-md !outline-none text-right font-mono focus:border-gray-300"
                         />
                         <button
@@ -676,6 +842,9 @@ new class extends Component {
                                 <span class="text-xs text-gray-600 tracking-wider font-normal  uppercase">minimo 3
                                     alternativas</span>
                             </div>
+                            <span class="text-[11px] text-gray-500">
+                                Marque o círculo ao lado da alternativa correta.
+                            </span>
                             <div class="flex flex-col gap-1">
                                 <div class="flex gap-1">
                                     <input
@@ -706,6 +875,12 @@ new class extends Component {
                                             {{ $message }}
                                         </span>
                                     @enderror
+                                    @error('is_correct_alternative')
+                                        <span
+                                            class="text-pink-500 error text-xs font-semibold tracking-wider">
+                                            {{ $message }}
+                                        </span>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -717,7 +892,13 @@ new class extends Component {
                                         <div class="mt-2 space-y-2"
                                             id="question-options-list-{{ $disciplineId }}">
                                             @forelse ( $options as $index => $option)
-                                                <div wire:key="question-option-{{ $index }}" class="flex items-center gap-1 p-3">
+                                                <div wire:key="question-option-{{ $index }}" class="flex items-center gap-2 p-3">
+                                                    <input type="radio"
+                                                        name="new_question_correct_option"
+                                                        wire:click="setCorrectOption({{ $index }})"
+                                                        @checked($option['is_correct'] ?? false)
+                                                        class="text-indigo-600 border-gray-300"
+                                                        title="Marcar como alternativa correta" />
                                                     <input
                                                         wire:model.defer="options.{{ $index }}.text"
                                                         class="input input-sm flex-1 !outline-none focus:border-gray-300" />
@@ -753,7 +934,7 @@ new class extends Component {
                     @if ($this->validIsAvaliative)
                     <div class="mt-4"
                       x-data="{
-                        note: $wire.entangle('valueOfQuestion').live.debounce.500ms,
+                        note: $wire.entangle('valueOfQuestion').live,
                         ...window.moneyMask
                       }" id="create-task-question-value-{{ $disciplineId }}">
                         <div class="flex flex-col gap-1">
@@ -762,11 +943,16 @@ new class extends Component {
                                 class="text-[12px] text-gray-800 font-bold">
                                 Nota da questão
                             </label>
+                            <span class="text-[11px] text-gray-500">
+                                {{-- Mostra o saldo disponível da atividade para esta questão. --}}
+                                Disponível: {{ $this->formatarNota($this->remainingQuestionValue) }}
+                            </span>
                             <div class="flex items-center gap-2">
                                 <input type="text"
                                  x-model="note"
                                  x-on:input="mask($event)"
-                                 placeholder="0,00"
+                                 placeholder="0"
+                                 inputmode="numeric"
                                  class="input input-md !outline-none text-right font-mono focus:border-gray-300"/>
 
                                 <button
@@ -791,6 +977,8 @@ new class extends Component {
                 <div class="mt-4 self-end">
                     <button
                         class="btn btn-md btn-ghost text-gray-600"
+                        type="button"
+                        wire:click="cancelQuestionForm"
                         id="create-task-cancel-question-{{ $disciplineId }}">
                         Cancelar
                     </button>
@@ -873,6 +1061,8 @@ new class extends Component {
                                             <input
                                               x-model="note"
                                               x-on:input="mask($event)"
+                                              placeholder="0"
+                                              inputmode="numeric"
                                               class="input !outline-none w-20 text-sm text-right"
                                             />
                                             @endif

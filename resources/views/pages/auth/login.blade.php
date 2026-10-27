@@ -27,7 +27,7 @@ new #[Layout('layouts.guest')] class extends Component {
                           timeout: 8000
                       );
                   }
-                  return $this->redirect(route('student.discipline'));
+                  return $this->redirect(route('student.discipline'), navigate: true);
         })(),
             default => $this->tapToast(),
         };
@@ -105,6 +105,4 @@ new #[Layout('layouts.guest')] class extends Component {
                 </p>
             </div>
         </form>
-    </div>
-</div>
 </div>

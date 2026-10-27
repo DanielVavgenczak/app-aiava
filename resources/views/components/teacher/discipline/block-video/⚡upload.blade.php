@@ -18,7 +18,7 @@ new class extends Component {
             class="flex flex-col items-center justify-center gap-4 px-5 py-5 transition-all duration-300 bg-white cursor-pointer rounded-xl hover:bg-indigo-50 hover:border-pink-400">
             <x-mary-icon name="o-video-camera" class="w-10 h-10 text-blue-700" />
             <span class="text-sm font-medium tracking-wide text-blue-500">Clique para adicionar um vídeo</span>
-            <span class="text-xs text-red-500">Apenas formato MP4 (máximo até 12 minutos)</span>
+            <span class="text-xs text-red-500">Apenas formato MP4 (entre 11 segundos e 12 minutos)</span>
         </div>
 
         <!-- Preview Temporário com Botão Enviar -->
@@ -57,7 +57,7 @@ new class extends Component {
         <div id="message-warning-duration-{{ $module_id }}" x-show="showDurationError"
             class="flex items-center gap-3 p-4 border border-red-200 rounded-lg bg-red-50">
             <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5 text-red-600" />
-            <p class="text-sm font-medium text-red-600">O vídeo excede o limite de 12 minutos.</p>
+            <p class="text-sm font-medium text-red-600" x-text="durationErrorMessage"></p>
         </div>
 
         <!-- Mensagem de Sucesso -->

@@ -46,4 +46,3 @@ new #[Layout('layouts::student')] class extends Component {
         </a>
     </div>
 </div>
-</div>

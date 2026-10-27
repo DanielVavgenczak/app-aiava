@@ -38,4 +38,14 @@ class StudentAnwser extends Model
     {
         return $this->belongsTo(Task::class, 'task_id');
     }
+
+    public function answerOption()
+    {
+        return $this->belongsTo(TaskOptions::class, 'answer_option_id');
+    }
+
+    public function feedbacks()
+    {
+        return $this->hasMany(QuestionFeedback::class, 'student_anwser_id');
+    }
 }

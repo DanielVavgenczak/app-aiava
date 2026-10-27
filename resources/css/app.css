@@ -21,6 +21,10 @@
 body {
     font-family: "Catamaran", sans-serif;
 }
+
+[x-cloak] {
+    display: none !important;
+}
 .z-super {
     z-index: 20000000000;
 }

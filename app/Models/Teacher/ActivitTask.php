@@ -70,6 +70,16 @@ class ActivitTask extends Model
         return $this->hasMany(StudentAnwser::class, 'activit_task_id');
     }
 
+    public function accesses()
+    {
+        return $this->hasMany(ActivityAccess::class, 'activit_task_id');
+    }
+
+    public function activityGrades()
+    {
+        return $this->hasMany(ActivityGrade::class, 'activit_task_id');
+    }
+
     /**
      * Restringe a consulta às atividades pertencentes ao professor informado,
      * considerando também a disciplina vinculada. Sem professor, nega tudo.

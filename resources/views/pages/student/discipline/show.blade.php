@@ -1,13 +1,20 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\Layout;
+use Livewire\Attributes\{Layout, On, Url};
 use App\Models\Module;
+use App\Support\ActivityProgress;
 
 new #[Layout('layouts::student')] class extends Component {
     public $discipline_id;
     public $discipline = null; // ✅ Adiciona propriedade para discipline
     public $modules = [];
+    public array $activityProgress = [];
+
+    #[Url]
+    public ?string $activity = null;
+
+    public ?string $highlightModuleId = null;
 
     public function mount($discipline_id): void
     {
@@ -34,9 +41,37 @@ new #[Layout('layouts::student')] class extends Component {
         ->where('discipline_id', $this->discipline_id)
         ->get();
 
+        $this->highlightModuleId = $this->activity
+            ? $this->modules
+                ->first(fn ($module) => $module->activitTasks->contains(
+                    fn ($task) => (string) $task->id === (string) $this->activity
+                ))
+                ?->id
+            : null;
+
         // ✅ OU carrega discipline diretamente (mais seguro)
         $this->discipline = \App\Models\Teacher\Discipline::select('id', 'title')
          ->find($this->discipline_id);
+
+        // Situação de cada atividade para o aluno (acesso, resposta e prazo).
+        $activities = $this->modules->flatMap(fn ($module) => $module->activitTasks);
+        $progress = ActivityProgress::forStudent($student, $activities);
+
+        $this->activityProgress = collect($progress)->map(fn (array $item) => [
+            'status' => $item['status'],
+            'label' => ActivityProgress::label($item['status'], $item['late']),
+            'badge' => ActivityProgress::badgeClass($item['status'], $item['late']),
+            'deadline' => $item['deadline']?->format('d/m/Y H:i'),
+            'available_at' => $item['available_at']?->format('d/m/Y H:i'),
+            'first_accessed_at' => $item['first_accessed_at']?->format('d/m/Y H:i'),
+            'answered_at' => $item['answered_at']?->format('d/m/Y H:i'),
+        ])->all();
+    }
+
+    #[On('student-activity-progress-updated')]
+    public function refreshActivityProgress(): void
+    {
+        $this->loadData();
     }
 }; ?>
 
@@ -47,7 +82,12 @@ new #[Layout('layouts::student')] class extends Component {
     ]" color="blue" tour-id="discipline-show-breadcrumb" />
 
     {{-- Conteúdo --}}
-    <div class="p-5 bg-white rounded-lg shadow" x-data="{ openCollapseId: null }">
+    <div class="p-5 bg-white rounded-lg shadow"
+        x-data="{ openCollapseId: @js($highlightModuleId) }"
+        @if ($activity)
+            x-init="setTimeout(() => document.getElementById('open-activity-{{ $activity }}')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 250)"
+        @endif
+    >
         {{-- ✅ Verifica se discipline existe --}}
             <div class="py-4 border-b border-gray-200" id="discipline-show-header">
                 <h2 class="text-gray-800 tracking-wide text-lg font-semibold">
@@ -122,15 +162,54 @@ new #[Layout('layouts::student')] class extends Component {
                                 @if ($module->activitTasks->count() > 0)
                                     <div class="mt-2 space-y-2 tasks-list-to-student bg-white" id="content-activitie-lesson-{{ $module->id }}">
                                         @foreach ($module->activitTasks as $activitTask)
-                                                <button
-                                                    id="open-activity-{{ $activitTask->id }}"
-                                                    data-tour-activity="{{ $activitTask->id }}"
-                                                     x-on:click="$dispatch('student-event-open-task', { id: '{{ $activitTask->id }}' })"
-                                                    class="tasks-open border-[1px] border-gray-300 w-full flex items-center gap-2 px-4 py-3 hover:bg-blue-50 text-blue-600 font-semibold text-xs uppercase tracking-wider transition-colors rounded"
-                                                >
-                                                    <x-mary-icon name="o-document-text" class="w-4 h-4" />
-                                                    Atividade <span class="text-xs font-normal text-gray-500">({{ $activitTask->created_at->diffForHumans() }} )</span>
-                                                </button>
+                                                @php
+                                                    $progress = $this->activityProgress[$activitTask->id] ?? null;
+                                                    $isOpenForAnswers = $activitTask->isOpenForAnswers();
+                                                    $startsLater = $activitTask->start && $activitTask->start->isFuture();
+                                                    $isPastDeadline = $activitTask->end && $activitTask->end->isPast();
+                                                @endphp
+                                                <div id="activity-{{ $activitTask->id }}" class="flex flex-col gap-1 scroll-mt-28 rounded {{ (string) $activity === (string) $activitTask->id ? 'ring-2 ring-blue-400 bg-blue-50/50 p-1' : '' }}">
+                                                    <div class="flex items-center gap-2">
+                                                        <button
+                                                            id="open-activity-{{ $activitTask->id }}"
+                                                            data-tour-activity="{{ $activitTask->id }}"
+                                                            x-on:click="$dispatch('student-event-open-task', { id: '{{ $activitTask->id }}' })"
+                                                            @disabled(! $isOpenForAnswers)
+                                                            @if ($isOpenForAnswers)
+                                                                title="Abrir atividade"
+                                                            @elseif ($startsLater)
+                                                                title="Disponível a partir de {{ $activitTask->start->format('d/m/Y H:i') }}"
+                                                            @else
+                                                                title="Prazo encerrado em {{ $activitTask->end->format('d/m/Y H:i') }}"
+                                                            @endif
+                                                            class="tasks-open border-[1px] border-gray-300 flex-1 flex items-center gap-2 px-4 py-3 text-blue-600 font-semibold text-xs uppercase tracking-wider transition-colors rounded {{ $isOpenForAnswers ? 'hover:bg-blue-50' : 'cursor-not-allowed opacity-50' }}"
+                                                        >
+                                                            <x-mary-icon name="o-document-text" class="w-4 h-4" />
+                                                            Atividade <span class="text-xs font-normal text-gray-500">({{ $activitTask->created_at->diffForHumans() }} )</span>
+                                                        </button>
+                                                        <button
+                                                            id="open-activity-result-{{ $activitTask->id }}"
+                                                            x-on:click="$dispatch('student-event-open-task-result', { id: '{{ $activitTask->id }}' })"
+                                                            class="border-[1px] border-gray-300 px-3 py-3 hover:bg-green-50 text-green-600 font-semibold text-xs uppercase tracking-wider transition-colors rounded"
+                                                        >
+                                                            <x-mary-icon name="o-chart-bar" class="w-4 h-4" />
+                                                            Resultado
+                                                        </button>
+                                                    </div>
+                                                    @if ($progress)
+                                                        <div class="flex flex-wrap items-center gap-2 pl-1" id="activity-status-{{ $activitTask->id }}">
+                                                            @if ($startsLater)
+                                                                <x-mary-badge value="Disponível em {{ $activitTask->start->format('d/m/Y H:i') }}" class="badge-sm badge-info" />
+                                                            @elseif ($isPastDeadline)
+                                                                <x-mary-badge value="Encerrada em {{ $activitTask->end->format('d/m/Y H:i') }}" class="badge-sm badge-ghost" />
+                                                            @endif
+                                                            <x-mary-badge value="{{ $progress['label'] }}" class="badge-sm {{ $progress['badge'] }}" />
+                                                            @if ($progress['deadline'])
+                                                                <span class="text-[11px] text-gray-500">Prazo: {{ $progress['deadline'] }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                </div>
                                         @endforeach
                                     </div>
                                 @endif
@@ -141,6 +220,9 @@ new #[Layout('layouts::student')] class extends Component {
                         @if ($module->activitTasks->count() > 0)
                             <livewire:pages::student.discipline.lesson.show-task-lesson
                                 :key="'student-task-' . $module->id"
+                            />
+                            <livewire:pages::student.discipline.lesson.task-result
+                                :key="'student-task-result-' . $module->id"
                             />
                         @endif
                     @endforeach
@@ -185,6 +267,14 @@ new #[Layout('layouts::student')] class extends Component {
                     class="btn-md font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-100"
                     label="Acessar atividade"
                     x-on:click="$store.tourguide.start('StartTourStudentDisciplineShowActivitie')" />
+                <x-mary-button
+                    class="btn-md font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-100"
+                    label="Responder atividade"
+                    x-on:click="$store.tourguide.start('StartTourStudentAnswerActivity')" />
+                <x-mary-button
+                    class="btn-md font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-100"
+                    label="Ver resultado da atividade"
+                    x-on:click="$store.tourguide.start('StartTourStudentActivityResult')" />
             </div>
         </div>
         <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />

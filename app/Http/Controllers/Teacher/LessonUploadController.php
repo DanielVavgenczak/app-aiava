@@ -10,16 +10,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Pion\Laravel\ChunkUpload\Exceptions\UploadMissingFileException;
 use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
+use App\Support\VideoDuration;
 use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
-use Symfony\Component\Process\Process;
 
 class LessonUploadController extends Controller
 {
     // Diretório de armazenamento de vídeos
     private const VIDEO_STORAGE_PATH = 'videos/lessons';
-
-    // Duração máxima permitida para um vídeo (12 minutos, em segundos)
-    private const MAX_VIDEO_DURATION_SECONDS = 720;
 
     // Extensões de vídeo aceitas no upload
     private const SUPPORTED_VIDEO_EXTENSIONS = ['mp4', 'webm', 'ogg'];
@@ -187,12 +184,14 @@ class LessonUploadController extends Controller
                 ], 422);
             }
 
-            if ($this->videoDurationExceedsLimit($file->getPathname())) {
+            $durationError = VideoDuration::validationError($file->getPathname());
+
+            if ($durationError !== null) {
                 unlink($file->getPathname());
 
                 return response()->json([
                     'success' => false,
-                    'error' => 'O vídeo excede o limite de 12 minutos.',
+                    'error' => $durationError,
                 ], 422);
             }
 
@@ -267,63 +266,6 @@ class LessonUploadController extends Controller
         $extension = strtolower($file->getClientOriginalExtension());
 
         return in_array($extension, self::SUPPORTED_VIDEO_EXTENSIONS, true);
-    }
-
-    /**
-     * Retorna a duração do vídeo em segundos usando o ffprobe.
-     * Retorna null quando a duração não pode ser determinada.
-     */
-    private function videoDurationSeconds(string $path): ?float
-    {
-        if (! $this->ffprobeAvailable()) {
-            return null;
-        }
-
-        $process = new Process([
-            'ffprobe',
-            '-v', 'error',
-            '-show_entries', 'format=duration',
-            '-of', 'default=noprint_wrappers=1:nokey=1',
-            $path,
-        ]);
-
-        $process->setTimeout(30);
-        $process->run();
-
-        if (! $process->isSuccessful()) {
-            return null;
-        }
-
-        $duration = trim($process->getOutput());
-
-        return is_numeric($duration) ? (float) $duration : null;
-    }
-
-    /**
-     * Indica se o vídeo excede o limite máximo permitido.
-     * Quando a duração não pode ser determinada, o upload é permitido.
-     */
-    private function videoDurationExceedsLimit(string $path): bool
-    {
-        $duration = $this->videoDurationSeconds($path);
-
-        return $duration !== null && $duration > self::MAX_VIDEO_DURATION_SECONDS;
-    }
-
-    /**
-     * Verifica se o binário ffprobe está disponível no ambiente.
-     */
-    private function ffprobeAvailable(): bool
-    {
-        static $available = null;
-
-        if ($available === null) {
-            $which = new Process(['which', 'ffprobe']);
-            $which->run();
-            $available = $which->isSuccessful();
-        }
-
-        return $available;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 use Livewire\Component;
 use App\Models\{Lesson};
+use App\Support\VideoDuration;
 use Livewire\Attributes\{On, Locked};
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\URL;
@@ -128,6 +129,16 @@ new class extends Component {
                 abort(404);
             }
 
+            $durationError = VideoDuration::validationError($file->getPathname());
+
+            if ($durationError !== null) {
+                $this->newVideoFile = null;
+                $this->addError('newVideoFile', $durationError);
+                $this->error($durationError, timeout: 3000, position: 'toast-bottom toast-start');
+
+                return;
+            }
+
             $originalName = $file->getClientOriginalName();
             $extension = $file->getClientOriginalExtension();
             $hashName = pathinfo($originalName, PATHINFO_FILENAME) . '_' . md5(uniqid());
@@ -211,32 +222,38 @@ new class extends Component {
 
     <!-- Botões de ação -->
     <div class="flex justify-end w-full gap-3 px-3 py-3" x-data>
-        <input type="file" x-ref="videoUpdateInput" accept="video/*" class="hidden"
-            x-on:change="
-                const file = $refs.videoUpdateInput.files[0];
-                if (!file) return;
-                const video = document.createElement('video');
-                video.preload = 'metadata';
-                video.onloadedmetadata = () => {
-                    const duration = video.duration / 60;
-                    if (duration > 12) {
-                        alert('O vídeo excede o limite de 12 minutos.');
+        @if ($lesson && $lesson->type === 'video')
+            <input type="file" x-ref="videoUpdateInput" accept="video/*" class="hidden"
+                x-on:change="
+                    const file = $refs.videoUpdateInput.files[0];
+                    if (!file) return;
+                    const video = document.createElement('video');
+                    video.preload = 'metadata';
+                    video.onloadedmetadata = () => {
+                        const duration = video.duration;
+                        if (duration < 11) {
+                            alert('O vídeo deve ter pelo menos 11 segundos.');
+                            $refs.videoUpdateInput.value = '';
+                            URL.revokeObjectURL(video.src);
+                            return;
+                        }
+                        if (duration > 720) {
+                            alert('O vídeo excede o limite de 12 minutos.');
+                            $refs.videoUpdateInput.value = '';
+                            URL.revokeObjectURL(video.src);
+                            return;
+                        }
+                        URL.revokeObjectURL(video.src);
+                        $wire.upload('newVideoFile', file)
+                            .catch(() => { alert('Erro ao enviar vídeo.'); });
+                    };
+                    video.onerror = () => {
+                        alert('Não foi possível verificar a duração do vídeo. Tente outro arquivo.');
                         $refs.videoUpdateInput.value = '';
                         URL.revokeObjectURL(video.src);
-                        return;
-                    }
-                    URL.revokeObjectURL(video.src);
-                    $wire.upload('newVideoFile', file)
-                        .catch(() => { alert('Erro ao enviar vídeo.'); });
-                };
-                video.onerror = () => {
-                    alert('Não foi possível verificar a duração do vídeo. Tente outro arquivo.');
-                    $refs.videoUpdateInput.value = '';
-                    URL.revokeObjectURL(video.src);
-                };
-                video.src = URL.createObjectURL(file);
-            " />
-        @if ($lesson)
+                    };
+                    video.src = URL.createObjectURL(file);
+                " />
             <button x-on:click="$refs.videoUpdateInput.click()"
                     wire:loading.attr="disabled" wire:target="newVideoFile"
                     class="btn btn-sm bg-blue-400 hover:bg-blue-500 text-white">
@@ -248,6 +265,11 @@ new class extends Component {
                 <x-mary-icon name="o-arrow-path" class="w-4 h-4 animate-spin" />
                 Atualizando...
             </span>
+            @error('newVideoFile')
+                <span class="text-sm text-red-600">{{ $message }}</span>
+            @enderror
+        @endif
+        @if ($lesson)
             <button x-on:click="$wire.sureDeleteBlock = true"
                     class="btn btn-sm bg-blue-400 hover:bg-blue-500 text-white">
                 <x-mary-icon name="o-trash" class="w-5 h-5" />

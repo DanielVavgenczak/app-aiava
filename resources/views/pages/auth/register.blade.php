@@ -9,7 +9,7 @@ new #[Layout('layouts.guest')] class extends Component {
     public Register $form;
     public function register(){
         if(!$this->form->store()) return;
-        return $this->redirect(route('login'));
+        return $this->redirect(route('login'), navigate: true);
     }
 }; ?>
 

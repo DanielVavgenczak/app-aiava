@@ -1,4 +1,5 @@
 import Resumable from "resumablejs";
+import { videoDurationError } from "./video-duration";
 document.addEventListener('alpine:init', () => {
     Alpine.data('chunkUpload', (moduleId) => ({
         resumable: null,
@@ -7,6 +8,7 @@ document.addEventListener('alpine:init', () => {
         isUploading: false,
         isUploaded: false,
         showDurationError: false,
+        durationErrorMessage: "",
         lastUploadResponse: null,
 
         init() {
@@ -108,6 +110,7 @@ document.addEventListener('alpine:init', () => {
             this.file = null;
             this.isFileSelected = false;
             this.showDurationError = false;
+            this.durationErrorMessage = "";
             this.isUploaded = false;
 
             // Oculta mensagem de sucesso (se ainda visível)
@@ -144,9 +147,11 @@ document.addEventListener('alpine:init', () => {
             video.src = URL.createObjectURL(file);
 
             video.onloadedmetadata = () => {
-                const duration = video.duration / 60; // Em minutos
-                if (duration > 12) {
+                const durationError = videoDurationError(video.duration);
+
+                if (durationError) {
                     this.showDurationError = true;
+                    this.durationErrorMessage = durationError;
                     // Remove efetivamente o arquivo inválido da fila do
                     // ResumableJS; sem isso ele permanece na fila e é enviado
                     // junto com o próximo vídeo, criando blocos duplicados.
@@ -157,6 +162,7 @@ document.addEventListener('alpine:init', () => {
                     URL.revokeObjectURL(video.src);
                 } else {
                     this.showDurationError = false;
+                    this.durationErrorMessage = "";
                     this.isFileSelected = true; // Mostrar preview temporário
                     this.previewTempVideo();
                 }
@@ -191,6 +197,7 @@ document.addEventListener('alpine:init', () => {
             this.file = null;
             this.isFileSelected = false;
             this.showDurationError = false;
+            this.durationErrorMessage = "";
             document.getElementById(`temp-video-preview-${moduleId}`).src = '';
         },
 
@@ -206,6 +213,7 @@ document.addEventListener('alpine:init', () => {
             this.isUploading = false;
             this.isUploaded = false;
             this.showDurationError = false;
+            this.durationErrorMessage = "";
             document.getElementById(`video-upload-preview-${moduleId}`).src = '';
             document.getElementById(`temp-video-preview-${moduleId}`).src = '';
             document.getElementById(`success-message-${moduleId}`).style.display = 'none';

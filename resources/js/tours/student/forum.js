@@ -1,6 +1,15 @@
 import { configDriver, AddButtonActions } from "../utils";
 const store = Alpine.store("tourguide");
 
+function navigateTo(url) {
+    if (window.Livewire?.navigate) {
+        window.Livewire.navigate(url);
+        return;
+    }
+
+    window.location.href = url;
+}
+
 export async function StartTourStudentForum() {
 
     document.body.style.cursor = 'not-allowed';
@@ -257,7 +266,7 @@ export async function StartTourStudentForumShowSelectTopic() {
         topics.forEach(t => t.removeEventListener('click', handleTopicClick));
         topics.forEach(t => t.style.cursor = '');
 
-        window.location.href = link.href;
+        navigateTo(link.href);
     };
 
     topics.forEach(t => t.addEventListener('click', handleTopicClick));

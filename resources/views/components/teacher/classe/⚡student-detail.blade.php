@@ -1,7 +1,8 @@
 <?php
 
 use Livewire\Component;
-use App\Models\Teacher\Student;
+use App\Models\Teacher\{ActivitTask, Student};
+use App\Support\ActivityProgress;
 use Livewire\Attributes\On;
 use Mary\Traits\Toast;
 
@@ -14,6 +15,9 @@ new class extends Component {
 
     /** Senha temporária em texto plano, exibida ao professor. */
     public ?string $temporaryPassword = null;
+
+    /** Atividades disponibilizadas ao aluno com datas e situação. */
+    public array $activities = [];
 
     #[On('teacher::view-student')]
     public function open($id)
@@ -30,7 +34,41 @@ new class extends Component {
 
         $this->student = $student;
         $this->temporaryPassword = $student->temporary_password;
+        $this->activities = $this->buildActivities($student);
         $this->open = true;
+    }
+
+    /**
+     * Atividades da disciplina do aluno, com primeiro acesso, envio e situação.
+     */
+    protected function buildActivities(Student $student): array
+    {
+        $activities = ActivitTask::query()
+            ->where('discipline_id', $student->discipline_id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $progress = ActivityProgress::forStudent($student, $activities);
+
+        return $activities->map(function (ActivitTask $activity) use ($progress) {
+            $item = $progress[$activity->id] ?? null;
+
+            $status = $item['status'] ?? ActivityProgress::NOT_ACCESSED;
+            $late = $item['late'] ?? false;
+
+            return [
+                'id' => $activity->id,
+                'title' => 'Atividade de '.($activity->created_at?->format('d/m/Y') ?? '—'),
+                'available_at' => ($item['available_at'] ?? $activity->start)?->format('d/m/Y H:i')
+                    ?? $activity->created_at?->format('d/m/Y H:i'),
+                'deadline' => $item['deadline']?->format('d/m/Y H:i'),
+                'first_accessed_at' => $item['first_accessed_at']?->format('d/m/Y H:i'),
+                'answered_at' => $item['answered_at']?->format('d/m/Y H:i'),
+                'status' => $status,
+                'status_label' => ActivityProgress::label($status, $late),
+                'badge' => ActivityProgress::badgeClass($status, $late),
+            ];
+        })->all();
     }
 
     #[On('student-edit-cancel')]
@@ -39,6 +77,7 @@ new class extends Component {
         $this->open = false;
         $this->student = null;
         $this->temporaryPassword = null;
+        $this->activities = [];
     }
 
     public function regeneratePassword($studentId)
@@ -116,6 +155,46 @@ new class extends Component {
                     <p class="text-xs text-gray-500 mt-1">O aluno deve alterar esta senha no primeiro acesso.</p>
                 @else
                     <p class="text-base text-gray-500 mt-1">O aluno já alterou a senha para uma de uso pessoal.</p>
+                @endif
+            </div>
+
+            {{-- Atividades disponibilizadas ao aluno --}}
+            <div class="bg-gray-50 p-4 rounded-lg" id="student-activities-section">
+                <h3 class="text-lg font-semibold mb-3">Atividades</h3>
+                @if (count($activities) === 0)
+                    <p class="text-sm text-gray-500">
+                        Nenhuma atividade disponibilizada para este aluno.
+                    </p>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="table table-sm w-full">
+                            <thead>
+                                <tr>
+                                    <th>Atividade</th>
+                                    <th>Disponibilizada em</th>
+                                    <th>Prazo</th>
+                                    <th>Primeiro acesso</th>
+                                    <th>Envio/conclusão</th>
+                                    <th>Situação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($activities as $activity)
+                                    <tr wire:key="student-activity-{{ $activity['id'] }}">
+                                        <td class="whitespace-nowrap">{{ $activity['title'] }}</td>
+                                        <td class="whitespace-nowrap">{{ $activity['available_at'] ?? '—' }}</td>
+                                        <td class="whitespace-nowrap">{{ $activity['deadline'] ?? 'Sem prazo' }}</td>
+                                        <td class="whitespace-nowrap">{{ $activity['first_accessed_at'] ?? '—' }}</td>
+                                        <td class="whitespace-nowrap">{{ $activity['answered_at'] ?? '—' }}</td>
+                                        <td>
+                                            <x-mary-badge value="{{ $activity['status_label'] }}"
+                                                class="badge-sm {{ $activity['badge'] }}" />
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 @endif
             </div>
 
