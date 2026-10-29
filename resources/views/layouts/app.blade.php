@@ -17,6 +17,7 @@
 
     <!-- Scripts -->
 
+    @include('partials.reverb-config')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 

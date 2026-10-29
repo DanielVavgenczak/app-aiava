@@ -13,6 +13,7 @@
 
     <link rel="icon" type="image/jpeg" href="{{ asset('images/fai.jpeg') }}" />
     <!-- Styles -->
+    @include('partials.reverb-config')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-100">

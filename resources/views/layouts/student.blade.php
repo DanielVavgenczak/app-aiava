@@ -14,6 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Catamaran:wght@100..900&display=swap" rel="stylesheet">
 
     <!-- Scripts -->
+    @include('partials.reverb-config')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
