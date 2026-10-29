@@ -90,18 +90,19 @@ jobs:
             trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
 
             mkdir -p backups
-            if docker compose -f docker/docker-compose.prod.yml ps -q database >/dev/null 2>&1; then
-              docker compose -f docker/docker-compose.prod.yml exec -T database sh -c 'pg_dump -Fc -U "$POSTGRES_USER" "$POSTGRES_DB"' > backups/db_$(date +%Y%m%d_%H%M%S).dump
+            if docker compose --env-file .env -f docker/docker-compose.prod.yml ps -q database >/dev/null 2>&1; then
+              docker compose --env-file .env -f docker/docker-compose.prod.yml exec -T database sh -c 'pg_dump -Fc -U "$POSTGRES_USER" "$POSTGRES_DB"' > backups/db_$(date +%Y%m%d_%H%M%S).dump
             fi
             cp -n .env backups/env_$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+            find backups -maxdepth 1 -type f \( -name 'db_*.dump' -o -name 'env_*' \) -exec chmod 600 {} +
             ls -1t backups/db_*.dump 2>/dev/null | tail -n +11 | xargs -r rm -f
 
             git fetch origin main
             git checkout -q ${{ github.sha }}
 
-            docker compose -f docker/docker-compose.prod.yml pull app
-            docker compose -f docker/docker-compose.prod.yml run --rm --no-deps -T -v "$(pwd)/public:/tmp/public" app sh -c 'cp -a /var/www/html/public/. /tmp/public/'
-            docker compose -f docker/docker-compose.prod.yml up -d --no-build
+            docker compose --env-file .env -f docker/docker-compose.prod.yml pull app
+            docker compose --env-file .env -f docker/docker-compose.prod.yml run --rm --no-deps -T -v "$(pwd)/public:/tmp/public" app sh -c 'cp -a /var/www/html/public/. /tmp/public/'
+            docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --no-build
 
             for i in $(seq 1 30); do
               code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/up || echo 000)
@@ -111,14 +112,14 @@ jobs:
             code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/up || echo 000)
             [ "$code" = "200" ] || { echo "Healthcheck falhou ($code)"; exit 1; }
 
-            docker compose -f docker/docker-compose.prod.yml exec -T app php artisan migrate --force --no-interaction
+            docker compose --env-file .env -f docker/docker-compose.prod.yml exec -T app php artisan migrate --force --no-interaction
 
-            docker compose -f docker/docker-compose.prod.yml exec -T app chown -R www-data:www-data storage bootstrap/cache
-            docker compose -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan optimize:clear
-            docker compose -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan config:cache
-            docker compose -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan route:cache
-            docker compose -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan view:cache
-            docker compose -f docker/docker-compose.prod.yml exec -T app chown -R www-data:www-data storage bootstrap/cache
+            docker compose --env-file .env -f docker/docker-compose.prod.yml exec -T app chown -R www-data:www-data storage bootstrap/cache
+            docker compose --env-file .env -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan optimize:clear
+            docker compose --env-file .env -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan config:cache
+            docker compose --env-file .env -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan route:cache
+            docker compose --env-file .env -f docker/docker-compose.prod.yml exec -T -u www-data app php artisan view:cache
+            docker compose --env-file .env -f docker/docker-compose.prod.yml exec -T app chown -R www-data:www-data storage bootstrap/cache
 
             docker image prune -f
             echo "✅ Deploy concluído"
