@@ -79,21 +79,18 @@ O IAVA (antigo Ailumnus) centraliza o dia a dia de uma turma: o professor organi
 
 ```mermaid
 flowchart LR
-    Browser[Navegador<br/>Livewire + Alpine + Echo]
-
-    subgraph Docker["Docker / VPS"]
-        Nginx[Nginx<br/>HTTP :80]
-        App[App - PHP-FPM<br/>Laravel]
-        Queue[Queue Worker<br/>queue:work]
-        Reverb[Laravel Reverb<br/>WebSocket :8080]
-        Postgres[(PostgreSQL 16)]
-        Redis[(Redis 7)]
-        Storage[(Storage<br/>vídeos e arquivos)]
-    end
+    Browser["Navegador (Livewire + Alpine + Echo)"]
+    Nginx["Nginx HTTP :80"]
+    App["App PHP-FPM / Laravel"]
+    Queue["Queue Worker queue:work"]
+    Reverb["Laravel Reverb WebSocket :8080"]
+    Postgres[("PostgreSQL 16")]
+    Redis[("Redis 7")]
+    Storage[("Storage de vídeos e arquivos")]
 
     Browser -->|HTTP| Nginx
+    Browser ---|WebSocket| Reverb
     Nginx -->|FastCGI| App
-    Browser <-->|WebSocket| Reverb
     App --> Postgres
     App --> Redis
     App --> Storage
@@ -510,16 +507,26 @@ A arquitetura atual com Docker Compose pode ser executada em uma instância EC2.
 
 ```mermaid
 flowchart LR
-    User[Usuário] --> ALB[Application Load Balancer<br/>ACM / TLS]
-    ALB --> Web[ECS Service - Web<br/>PHP-FPM + Nginx]
-    ALB --> Reverb[ECS Service - Reverb<br/>WebSocket]
-    Web --> RDS[(RDS PostgreSQL 16)]
-    Web --> Redis[(ElastiCache Redis 7)]
-    Web --> S3[(S3 - mídia)]
-    Queue[ECS Service - Queue Worker] --> RDS
+    User["Usuário"]
+    ALB["Application Load Balancer (ACM / TLS)"]
+    Web["ECS Service Web (PHP-FPM + Nginx)"]
+    Reverb["ECS Service Reverb (WebSocket)"]
+    Queue["ECS Service Queue Worker"]
+    RDS[("RDS PostgreSQL 16")]
+    Redis[("ElastiCache Redis 7")]
+    S3[("S3 - mídia")]
+    Secrets["Secrets Manager / SSM"]
+
+    User --> ALB
+    ALB --> Web
+    ALB --> Reverb
+    Web --> RDS
+    Web --> Redis
+    Web --> S3
+    Queue --> RDS
     Queue --> Redis
     Queue --> Reverb
-    Web --> Secrets[Secrets Manager / SSM]
+    Web --> Secrets
     Queue --> Secrets
     Reverb --> Secrets
 ```
