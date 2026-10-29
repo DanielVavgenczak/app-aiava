@@ -26,6 +26,6 @@ if (key) {
         enabledTransports: ['ws', 'wss'],
     });
 } else {
-    window.Echo = null;
+    delete window.Echo;
     console.warn('[Reverb] Chave não configurada; notificações em tempo real desativadas.');
 }
