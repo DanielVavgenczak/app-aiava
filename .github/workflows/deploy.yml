@@ -100,6 +100,7 @@ jobs:
             git checkout -q ${{ github.sha }}
 
             docker compose -f docker/docker-compose.prod.yml pull app
+            docker compose -f docker/docker-compose.prod.yml run --rm --no-deps -T -v "$(pwd)/public:/tmp/public" app sh -c 'cp -a /var/www/html/public/. /tmp/public/'
             docker compose -f docker/docker-compose.prod.yml up -d --no-build
 
             for i in $(seq 1 30); do
