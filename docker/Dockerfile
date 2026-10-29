@@ -23,7 +23,12 @@ RUN composer install --no-dev --no-interaction --no-scripts --optimize-autoloade
 
 COPY . /var/www/html
 
-RUN composer dump-autoload --no-dev --optimize --no-scripts \
+RUN mkdir -p bootstrap/cache \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    && composer dump-autoload --no-dev --optimize --no-scripts \
     && php artisan package:discover --ansi \
     && npm run build \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
