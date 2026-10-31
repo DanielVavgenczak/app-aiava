@@ -341,6 +341,7 @@ new class extends Component {
         <div class="mb-3 flex flex-wrap gap-1" id="teacher-deliveries-filters">
             @foreach (['all' => 'Todos', 'pending' => 'Pendentes', 'corrected' => 'Corrigidas'] as $key => $label)
                 <button wire:click="$set('filter', '{{ $key }}')"
+                    data-delivery-filter="{{ $key }}"
                     class="btn btn-xs {{ $filter === $key ? 'btn-primary' : 'btn-ghost border' }}">
                     {{ $label }}
                 </button>
@@ -355,6 +356,8 @@ new class extends Component {
 
             @forelse ($visible as $student)
                 <div wire:key="student-{{ $student['id'] }}"
+                    id="delivery-student-{{ $student['id'] }}"
+                    data-delivery-student="{{ $student['id'] }}"
                     class="w-full p-3 mb-2 rounded border {{ $selectedStudentId === $student['id'] ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:bg-gray-50' }}">
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0">
@@ -383,6 +386,7 @@ new class extends Component {
                             @endif
 
                             <x-mary-button label="Abrir" icon="o-folder-open" class="btn-xs btn-primary"
+                                id="delivery-student-open-{{ $student['id'] }}"
                                 wire:click="selectStudent('{{ $student['id'] }}')" spinner />
                         </div>
                     </div>
@@ -393,7 +397,8 @@ new class extends Component {
         </div>
 
         {{-- Coluna direita: prova respondida do aluno --}}
-        <div class="w-2/3 overflow-y-auto max-h-[75vh]" id="teacher-deliveries-detail">
+        <div class="w-2/3 overflow-y-auto max-h-[75vh]" id="teacher-deliveries-detail"
+            data-selected-student-id="{{ $selectedStudentId ?? '' }}">
             @if (! $selectedStudentId)
                 <div class="h-full flex items-center justify-center text-gray-400">
                     <div class="text-center">

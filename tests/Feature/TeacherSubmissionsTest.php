@@ -98,6 +98,10 @@ it('atualiza a contagem e redireciona para a aba de entregas', function () {
     Livewire::test(TeacherSubmissions::class, ['teacherId' => $teacher->id])
         ->dispatch('activity-notifications-updated')
         ->assertDispatched('teacher-submissions-count', count: 1)
+        ->assertSeeHtml('data-submission-id="'.$notification->id.'"')
+        ->assertSeeHtml('data-student-id="'.$student->id.'"')
+        ->assertSeeHtml('data-discipline-id="'.$discipline->id.'"')
+        ->assertSeeHtml('data-activity-id="'.$activit->id.'"')
         ->call('openSubmission', $notification->id)
         ->assertRedirect(ActivityNotificationService::teacherUrl($activit));
 });

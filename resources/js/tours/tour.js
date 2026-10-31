@@ -1,4 +1,5 @@
 import { StartTourDisciplineCreateContent } from "./teacher/discipline/content";
+import "./teacher/submissions";
 document.addEventListener("alpine:init", () => {
     Alpine.store("tourguide", {
         openMai: false,

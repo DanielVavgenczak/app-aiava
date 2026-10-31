@@ -17,13 +17,22 @@
                 this.bounce = true;
                 setTimeout(() => { this.bounce = false; }, 900);
             });
+        },
+        openModal() {
+            this.open = true;
+            this.$nextTick(() => {
+                if (this.count > 0) {
+                    window.dispatchEvent(new CustomEvent('teacher-submissions-tour-start'));
+                }
+            });
         }
     }"
-    @keydown.escape.window="open = false"
+    @keydown.escape.window="! $store.tourguide.isTourActive && (open = false)"
+    @teacher-submissions-close.window="open = false"
 >
     <button
         type="button"
-        @click="open = true"
+        @click="openModal()"
         class="relative btn btn-circle btn-lg shadow-lg transition-transform"
         :class="bounce ? 'animate-bounce' : ''"
         style="background-color: #2563eb; color: white;"
@@ -72,12 +81,17 @@
                     </button>
                 </div>
 
-                <div class="flex-1 overflow-y-auto">
+                <div id="teacher-submissions-list" class="flex-1 overflow-y-auto">
                     @forelse ($this->submissions as $submission)
                         <button
                             type="button"
                             wire:key="submission-{{ $submission['id'] }}"
                             wire:click="openSubmission('{{ $submission['id'] }}')"
+                            data-submission-id="{{ $submission['id'] }}"
+                            data-student-id="{{ $submission['student_id'] }}"
+                            data-student-name="{{ $submission['student'] }}"
+                            data-discipline-id="{{ $submission['discipline_id'] }}"
+                            data-activity-id="{{ $submission['activity_id'] }}"
                             class="w-full text-left px-6 py-4 hover:bg-blue-50/50 border-b border-gray-50 last:border-0 flex items-start gap-4 transition-colors"
                         >
                             <span class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">

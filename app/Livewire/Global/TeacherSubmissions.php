@@ -142,8 +142,11 @@ class TeacherSubmissions extends Component
         return [
             'id' => (string) $notification->id,
             'student' => $studentName,
+            'student_id' => (string) $notification->student_id,
             'activity' => $activity->title,
+            'activity_id' => (string) $activity->id,
             'discipline' => $discipline,
+            'discipline_id' => (string) $activity->discipline_id,
             'meta' => 'Aguardando correção'.($age ? ' · '.$age : ''),
         ];
     }
