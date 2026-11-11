@@ -216,15 +216,6 @@ new #[Layout('layouts::student')] class extends Component {
                             </div>
                         </div>
 
-                        {{-- Modal de Tarefas --}}
-                        @if ($module->activitTasks->count() > 0)
-                            <livewire:pages::student.discipline.lesson.show-task-lesson
-                                :key="'student-task-' . $module->id"
-                            />
-                            <livewire:pages::student.discipline.lesson.task-result
-                                :key="'student-task-result-' . $module->id"
-                            />
-                        @endif
                     @endforeach
                 </div>
 
@@ -233,6 +224,9 @@ new #[Layout('layouts::student')] class extends Component {
                     <livewire:pages::student.discipline.lesson.show-video-lesson />
                 </div>
             </div>
+
+            <livewire:pages::student.discipline.lesson.show-task-lesson :key="'student-task'" />
+            <livewire:pages::student.discipline.lesson.task-result :key="'student-task-result'" />
         @else
             {{-- ✅ Estado vazio --}}
             <div class="py-12 text-center">

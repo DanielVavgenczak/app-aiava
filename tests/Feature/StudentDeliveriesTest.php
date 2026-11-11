@@ -3,6 +3,7 @@
 use App\Models\Module;
 use App\Models\Teacher\ActivitTask;
 use App\Models\Teacher\ActivityGrade;
+use App\Models\Teacher\ActivityNotification;
 use App\Models\Teacher\Discipline;
 use App\Models\Teacher\Student;
 use App\Models\Teacher\StudentAnwser;
@@ -198,7 +199,12 @@ it('salva a nota final da atividade do aluno', function () {
         ->first();
 
     expect($grade)->not->toBeNull()
-        ->and((float) $grade->final_grade)->toBe(85.0);
+        ->and((float) $grade->final_grade)->toBe(85.0)
+        ->and(ActivityNotification::query()
+            ->where('notifiable_type', Student::class)
+            ->where('notifiable_id', $student->id)
+            ->where('type', ActivityNotification::TYPE_REVIEWED)
+            ->exists())->toBeTrue();
 });
 
 it('rejeita nota final acima do valor da atividade', function () {

@@ -172,14 +172,6 @@ class ActivityNotificationService
             return;
         }
 
-        $notification = ActivityNotification::query()
-            ->where('dedupe_key', self::deliveredKey($activity->teacher_id, $activity->id, $studentId))
-            ->first();
-
-        if (! $notification) {
-            return;
-        }
-
         $answers = StudentAnwser::query()
             ->where('activit_task_id', $activity->id)
             ->where('student_id', $studentId)
@@ -199,14 +191,22 @@ class ActivityNotificationService
             return;
         }
 
-        $notification->delete();
+        $notification = ActivityNotification::query()
+            ->where('dedupe_key', self::deliveredKey($activity->teacher_id, $activity->id, $studentId))
+            ->first();
 
-        ActivityNotificationUpdated::dispatch(
-            (string) $activity->teacher_id,
-            'removed',
-            (string) $activity->id,
-            ActivityNotification::TYPE_DELIVERED,
-        );
+        if ($notification) {
+            $notification->delete();
+
+            ActivityNotificationUpdated::dispatch(
+                (string) $activity->teacher_id,
+                'removed',
+                (string) $activity->id,
+                ActivityNotification::TYPE_DELIVERED,
+            );
+        }
+
+        self::notifyStudentReviewed($activity, $studentId);
     }
 
     public static function forgetActivity(ActivitTask $activity): void
@@ -358,18 +358,6 @@ class ActivityNotificationService
             'description' => self::disciplineTitle($activity).' · '.$activity->title.' · '.self::deadlineLabel($activity),
             'url' => $url,
             'timeout' => 8000,
-            'modal' => [
-                'eyebrow' => $scheduled ? 'Atividade agendada' : 'Nova atividade',
-                'title' => $scheduled ? 'Nova atividade agendada' : 'Nova atividade disponível',
-                'activity' => $activity->title,
-                'discipline' => self::disciplineTitle($activity),
-                'teacher' => $teacherName,
-                'deadline' => self::deadlineLabel($activity),
-                'badge' => $activity->is_avaliative
-                    ? 'Avaliativa · '.ActivityValue::format($activity->total_value).' pts'
-                    : 'Atividade não avaliativa',
-                'url' => $url,
-            ],
         ];
     }
 
@@ -384,6 +372,49 @@ class ActivityNotificationService
             'title' => 'Nova resposta de '.$studentName,
             'description' => $activity->title.' · '.self::disciplineTitle($activity).' · Aguardando correção',
             'url' => self::teacherUrl($activity),
+            'timeout' => 8000,
+        ];
+    }
+
+    protected static function notifyStudentReviewed(ActivitTask $activity, string $studentId): void
+    {
+        $activity->loadMissing(['teacher', 'discipline']);
+
+        $notification = ActivityNotification::firstOrCreate(
+            ['dedupe_key' => self::reviewedKey($activity->id, $studentId)],
+            [
+                'notifiable_type' => Student::class,
+                'notifiable_id' => $studentId,
+                'type' => ActivityNotification::TYPE_REVIEWED,
+                'activit_task_id' => $activity->id,
+                'student_id' => $studentId,
+            ]
+        );
+
+        if (! $notification->wasRecentlyCreated) {
+            return;
+        }
+
+        ActivityNotificationUpdated::dispatch(
+            $studentId,
+            'created',
+            (string) $activity->id,
+            ActivityNotification::TYPE_REVIEWED,
+            notificationId: (string) $notification->id,
+            dedupeKey: $notification->dedupe_key,
+            toast: self::reviewedToast($activity, $notification),
+        );
+    }
+
+    protected static function reviewedToast(ActivitTask $activity, ActivityNotification $notification): array
+    {
+        return [
+            'id' => (string) $notification->id,
+            'key' => $notification->dedupe_key,
+            'kind' => ActivityNotification::TYPE_REVIEWED,
+            'title' => 'Atividade corrigida',
+            'description' => $activity->title.' · '.self::disciplineTitle($activity).' · Veja sua nota e feedback',
+            'url' => self::studentUrl($activity),
             'timeout' => 8000,
         ];
     }
@@ -425,5 +456,10 @@ class ActivityNotificationService
     protected static function deliveredKey(string $teacherId, string $activityId, string $studentId): string
     {
         return 'teacher-delivered:'.$teacherId.':'.$activityId.':'.$studentId;
+    }
+
+    protected static function reviewedKey(string $activityId, string $studentId): string
+    {
+        return 'student-reviewed:'.$activityId.':'.$studentId;
     }
 }

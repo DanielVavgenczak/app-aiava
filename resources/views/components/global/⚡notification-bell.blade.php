@@ -134,12 +134,14 @@ new class extends Component {
 
         if ($this->notifiableType === Student::class) {
             $query->where(function ($query) {
-                $query->where('type', ActivityNotification::TYPE_DELIVERED)
-                    ->orWhereHas('activitTask', function ($query) {
-                        $query->where(function ($query) {
-                            $query->whereNull('end')->orWhere('end', '>=', now());
-                        });
+                $query->whereIn('type', [
+                    ActivityNotification::TYPE_DELIVERED,
+                    ActivityNotification::TYPE_REVIEWED,
+                ])->orWhereHas('activitTask', function ($query) {
+                    $query->where(function ($query) {
+                        $query->whereNull('end')->orWhere('end', '>=', now());
                     });
+                });
             });
         }
 
@@ -164,6 +166,17 @@ new class extends Component {
                 'meta' => trim($this->deadlineLabel($activity).' · '.$age, ' ·'),
                 'icon' => 'o-document-text',
                 'icon_class' => 'bg-blue-50 text-blue-600',
+            ];
+        }
+
+        if ($notification->type === ActivityNotification::TYPE_REVIEWED) {
+            return [
+                'id' => (string) $notification->id,
+                'title' => 'Atividade corrigida',
+                'message' => $activity->title,
+                'meta' => trim('Nota e feedback disponíveis · '.$age, ' ·'),
+                'icon' => 'o-check-circle',
+                'icon_class' => 'bg-emerald-50 text-emerald-600',
             ];
         }
 
@@ -196,7 +209,10 @@ new class extends Component {
     {
         $activity = $notification->activitTask;
 
-        if ($notification->type === ActivityNotification::TYPE_PUBLISHED) {
+        if (in_array($notification->type, [
+            ActivityNotification::TYPE_PUBLISHED,
+            ActivityNotification::TYPE_REVIEWED,
+        ], true)) {
             return ActivityNotificationService::studentUrl($activity);
         }
 
@@ -283,7 +299,6 @@ new class extends Component {
         x-data="{
             toasts: [],
             seen: {},
-            modal: null,
             push(toast) {
                 if (!toast || !toast.id) return;
 
@@ -295,15 +310,10 @@ new class extends Component {
                 this.seen[key] = now;
                 this.toasts.push(toast);
 
-                if (toast.modal) this.modal = toast.modal;
-
                 setTimeout(() => this.remove(toast.id), toast.timeout || 8000);
             },
             remove(id) {
                 this.toasts = this.toasts.filter(toast => toast.id !== id);
-            },
-            closeModal() {
-                this.modal = null;
             },
             go(toast) {
                 if (!toast.url) {
@@ -311,16 +321,8 @@ new class extends Component {
                     return;
                 }
 
-                this.closeModal();
                 this.navigate(toast.url);
                 this.remove(toast.id);
-            },
-            goModal() {
-                if (!this.modal?.url) return;
-
-                const url = this.modal.url;
-                this.closeModal();
-                this.navigate(url);
             },
             navigate(url) {
                 if (window.Livewire && typeof window.Livewire.navigate === 'function') {
@@ -331,7 +333,6 @@ new class extends Component {
             }
         }"
         @activity-toast.window="push($event.detail.toast)"
-        @keydown.escape.window="closeModal()"
     >
         <template x-teleport="body">
             <div class="fixed bottom-44 right-5 z-[999] flex w-80 max-w-[calc(100vw-2.5rem)] flex-col gap-2 pointer-events-none">
@@ -380,73 +381,6 @@ new class extends Component {
                         </div>
                     </div>
                 </template>
-            </div>
-        </template>
-
-        <template x-teleport="body">
-            <div
-                x-show="modal"
-                x-cloak
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100"
-                x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0"
-                class="fixed inset-0 z-[1000] bg-gray-900/50"
-                @click.self="closeModal()"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="activity-modal-title"
-            >
-                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl sm:w-2/3 bg-white rounded-lg shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
-                    <div class="flex justify-between items-center">
-                        <h2 id="activity-modal-title" class="text-lg font-normal text-gray-700" x-text="modal?.title"></h2>
-                        <div class="flex justify-end">
-                            <x-mary-button
-                                icon="o-x-mark"
-                                class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
-                                x-on:click="closeModal()"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                        <div class="rounded-lg bg-gray-50 p-3">
-                            <span class="block text-xs text-gray-500">Atividade</span>
-                            <span class="mt-1 block font-medium text-gray-700" x-text="modal?.activity"></span>
-                        </div>
-                        <div class="rounded-lg bg-gray-50 p-3">
-                            <span class="block text-xs text-gray-500">Disciplina</span>
-                            <span class="mt-1 block font-medium text-gray-700" x-text="modal?.discipline"></span>
-                        </div>
-                        <div class="rounded-lg bg-gray-50 p-3">
-                            <span class="block text-xs text-gray-500">Professor</span>
-                            <span class="mt-1 block font-medium text-gray-700" x-text="modal?.teacher"></span>
-                        </div>
-                        <div class="rounded-lg bg-gray-50 p-3">
-                            <span class="block text-xs text-gray-500">Prazo</span>
-                            <span class="mt-1 block font-medium text-gray-700" x-text="modal?.deadline"></span>
-                        </div>
-                        <div class="rounded-lg bg-gray-50 p-3 sm:col-span-2">
-                            <span class="block text-xs text-gray-500">Tipo</span>
-                            <span class="mt-1 block font-medium text-gray-700" x-text="modal?.badge"></span>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end gap-2">
-                        <x-mary-button
-                            label="Fechar"
-                            class="btn btn-ghost"
-                            x-on:click="closeModal()"
-                        />
-                        <x-mary-button
-                            label="Abrir atividade"
-                            class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
-                            x-on:click="goModal()"
-                        />
-                    </div>
-                </div>
             </div>
         </template>
     </div>

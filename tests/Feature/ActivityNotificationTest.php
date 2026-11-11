@@ -171,7 +171,12 @@ it('mantém a notificação do professor enquanto houver questão pendente', fun
         ->where('notifiable_type', Teacher::class)
         ->where('notifiable_id', $teacher->id)
         ->where('student_id', $student->id)
-        ->exists())->toBeTrue();
+        ->exists())->toBeTrue()
+        ->and(ActivityNotification::query()
+            ->where('notifiable_type', Student::class)
+            ->where('notifiable_id', $student->id)
+            ->where('type', ActivityNotification::TYPE_REVIEWED)
+            ->exists())->toBeFalse();
 
     $second->update(['corrected' => true]);
     ActivityNotificationService::correctionCompleted($activit, $student->id);
@@ -180,7 +185,64 @@ it('mantém a notificação do professor enquanto houver questão pendente', fun
         ->where('notifiable_type', Teacher::class)
         ->where('notifiable_id', $teacher->id)
         ->where('student_id', $student->id)
-        ->exists())->toBeFalse();
+        ->exists())->toBeFalse()
+        ->and(ActivityNotification::query()
+            ->where('notifiable_type', Student::class)
+            ->where('notifiable_id', $student->id)
+            ->where('type', ActivityNotification::TYPE_REVIEWED)
+            ->exists())->toBeTrue();
+});
+
+it('notifica o aluno quando a atividade é corrigida', function () {
+    Event::fake([ActivityNotificationUpdated::class]);
+
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeNotificationContext($teacher);
+    $student = makeNotificationStudent($teacher, $discipline);
+
+    makeNotificationTask($activit, $student, corrected: true);
+    ActivityNotificationService::activityAnswered($activit, $student);
+
+    ActivityNotificationService::correctionCompleted($activit, $student->id);
+
+    $notification = ActivityNotification::query()
+        ->where('notifiable_type', Student::class)
+        ->where('notifiable_id', $student->id)
+        ->where('type', ActivityNotification::TYPE_REVIEWED)
+        ->first();
+
+    expect($notification)->not->toBeNull()
+        ->and($notification->activit_task_id)->toBe($activit->id)
+        ->and($notification->student_id)->toBe($student->id);
+
+    Event::assertDispatched(
+        ActivityNotificationUpdated::class,
+        fn (ActivityNotificationUpdated $event) => $event->notifiableId === (string) $student->id
+            && $event->action === 'created'
+            && $event->type === ActivityNotification::TYPE_REVIEWED
+            && $event->toast['kind'] === ActivityNotification::TYPE_REVIEWED
+            && $event->toast['title'] === 'Atividade corrigida'
+            && str_contains($event->toast['description'], $activit->title)
+            && $event->toast['url'] === ActivityNotificationService::studentUrl($activit)
+    );
+});
+
+it('não duplica a notificação de atividade corrigida', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeNotificationContext($teacher);
+    $student = makeNotificationStudent($teacher, $discipline);
+
+    makeNotificationTask($activit, $student, corrected: true);
+    ActivityNotificationService::activityAnswered($activit, $student);
+
+    ActivityNotificationService::correctionCompleted($activit, $student->id);
+    ActivityNotificationService::correctionCompleted($activit, $student->id);
+
+    expect(ActivityNotification::query()
+        ->where('notifiable_type', Student::class)
+        ->where('notifiable_id', $student->id)
+        ->where('type', ActivityNotification::TYPE_REVIEWED)
+        ->count())->toBe(1);
 });
 
 it('remove a notificação do professor ao salvar a nota final', function () {
@@ -205,7 +267,12 @@ it('remove a notificação do professor ao salvar a nota final', function () {
         ->where('notifiable_type', Teacher::class)
         ->where('notifiable_id', $teacher->id)
         ->where('student_id', $student->id)
-        ->exists())->toBeFalse();
+        ->exists())->toBeFalse()
+        ->and(ActivityNotification::query()
+            ->where('notifiable_type', Student::class)
+            ->where('notifiable_id', $student->id)
+            ->where('type', ActivityNotification::TYPE_REVIEWED)
+            ->exists())->toBeTrue();
 });
 
 it('remove todas as notificações ao deletar a atividade', function () {
@@ -342,6 +409,33 @@ it('bell redireciona o aluno para a atividade destacada', function () {
     ])
         ->call('openNotification', $notification->id)
         ->assertRedirect($url);
+});
+
+it('bell exibe e redireciona a notificação de atividade corrigida', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeNotificationContext($teacher);
+    $student = makeNotificationStudent($teacher, $discipline);
+
+    $notification = ActivityNotification::create([
+        'notifiable_type' => Student::class,
+        'notifiable_id' => $student->id,
+        'dedupe_key' => 'reviewed-'.$activit->id.'-'.$student->id,
+        'type' => ActivityNotification::TYPE_REVIEWED,
+        'activit_task_id' => $activit->id,
+        'student_id' => $student->id,
+    ]);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test('global.notification-bell', [
+        'userType' => 'student',
+        'notifiableId' => $student->id,
+    ])
+        ->assertSee('Atividade corrigida')
+        ->assertSee($activit->title)
+        ->assertSee('1 pendente')
+        ->call('openNotification', $notification->id)
+        ->assertRedirect(ActivityNotificationService::studentUrl($activit));
 });
 
 it('bell redireciona o professor para a aba de entregas', function () {
@@ -562,11 +656,7 @@ it('inclui toast de nova atividade no evento de publicação', function () {
             && str_contains($event->toast['description'], $activit->title)
             && str_contains($event->toast['description'], 'Entrega até')
             && $event->toast['url'] === ActivityNotificationService::studentUrl($activit)
-            && $event->toast['modal']['activity'] === $activit->title
-            && $event->toast['modal']['discipline'] === $discipline->title
-            && $event->toast['modal']['teacher'] === $teacher->fullName()
-            && $event->toast['modal']['deadline'] === 'Entrega até '.$activit->end->format('d/m/Y')
-            && $event->toast['modal']['url'] === ActivityNotificationService::studentUrl($activit)
+            && ! array_key_exists('modal', $event->toast)
     );
 });
 
@@ -588,9 +678,8 @@ it('sinaliza no toast quando a atividade ainda não começou', function () {
     Event::assertDispatched(
         ActivityNotificationUpdated::class,
         fn (ActivityNotificationUpdated $event) => str_contains($event->toast['title'], 'agendada')
-            && $event->toast['modal']['eyebrow'] === 'Atividade agendada'
-            && $event->toast['modal']['title'] === 'Nova atividade agendada'
-            && str_contains($event->toast['modal']['deadline'], 'Disponível a partir de')
+            && str_contains($event->toast['description'], 'Disponível a partir de')
+            && ! array_key_exists('modal', $event->toast)
     );
 });
 

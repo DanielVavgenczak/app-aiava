@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Global;
 
-use App\Models\Teacher\{ActivityNotification, Student, Teacher};
+use App\Models\Teacher\{ActivityNotification, ActivitTask, Student, StudentAnwser, Teacher};
 use App\Support\ActivityNotificationService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\{Computed, Locked, On};
@@ -70,7 +70,8 @@ class TeacherSubmissions extends Component
         return $this->pendingQuery()
             ->with([
                 'activitTask:id,title,start,end,discipline_id,module_id',
-                'student:id,full_name',
+                'student:id,full_name,classe_id',
+                'student.classe:id,name',
                 'activitTask.discipline:id,title',
             ])
             ->latest()
@@ -80,6 +81,85 @@ class TeacherSubmissions extends Component
             ->filter()
             ->values()
             ->all();
+    }
+
+    #[Computed]
+    public function missingSubmissions(): array
+    {
+        $teacher = $this->authorizedUser();
+
+        if (! $teacher) {
+            return [];
+        }
+
+        ActivityNotificationService::prune($teacher);
+
+        $notifications = $this->pendingQuery()
+            ->with([
+                'activitTask:id,title,start,end,discipline_id',
+                'activitTask.discipline:id,title',
+            ])
+            ->latest()
+            ->get();
+
+        $activities = $notifications
+            ->pluck('activitTask')
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        if ($activities->isEmpty()) {
+            return [];
+        }
+
+        $submittedPairs = $notifications
+            ->mapWithKeys(fn (ActivityNotification $notification) => [
+                $notification->activit_task_id.'|'.$notification->student_id => true,
+            ])
+            ->all();
+
+        StudentAnwser::query()
+            ->whereIn('activit_task_id', $activities->pluck('id'))
+            ->get()
+            ->filter(fn (StudentAnwser $answer) => $this->hasValidAnswer($answer))
+            ->each(function (StudentAnwser $answer) use (&$submittedPairs) {
+                $submittedPairs[$answer->activit_task_id.'|'.$answer->student_id] = true;
+            });
+
+        $students = Student::query()
+            ->whereIn('discipline_id', $activities->pluck('discipline_id')->unique()->all())
+            ->active()
+            ->with('classe:id,name')
+            ->orderBy('full_name')
+            ->get()
+            ->groupBy('discipline_id');
+
+        $missing = [];
+
+        foreach ($activities as $activity) {
+            foreach ($students->get($activity->discipline_id, collect()) as $student) {
+                if (isset($submittedPairs[$activity->id.'|'.$student->id])) {
+                    continue;
+                }
+
+                $missing[] = [
+                    'student' => $student->full_name,
+                    'student_id' => (string) $student->id,
+                    'classe' => $student->classe?->name ?? 'Turma não informada',
+                    'activity' => $this->activityLabel($activity),
+                    'activity_id' => (string) $activity->id,
+                    'discipline' => $activity->discipline?->title ?? 'Disciplina',
+                    'discipline_id' => (string) $activity->discipline_id,
+                    'meta' => $this->deadlineLabel($activity),
+                ];
+
+                if (count($missing) >= 50) {
+                    break 2;
+                }
+            }
+        }
+
+        return $missing;
     }
 
     public function openSubmission(string $id): void
@@ -137,18 +217,49 @@ class TeacherSubmissions extends Component
 
         $studentName = $notification->student?->full_name ?? 'Aluno';
         $discipline = $activity->discipline?->title ?? 'Disciplina';
-        $age = $notification->created_at?->diffForHumans();
 
         return [
             'id' => (string) $notification->id,
             'student' => $studentName,
             'student_id' => (string) $notification->student_id,
-            'activity' => $activity->title,
+            'classe' => $notification->student?->classe?->name ?? 'Turma não informada',
+            'activity' => $this->activityLabel($activity),
             'activity_id' => (string) $activity->id,
             'discipline' => $discipline,
             'discipline_id' => (string) $activity->discipline_id,
-            'meta' => 'Aguardando correção'.($age ? ' · '.$age : ''),
+            'submitted_at' => $notification->created_at?->format('d/m/Y'),
         ];
+    }
+
+    protected function hasValidAnswer(StudentAnwser $answer): bool
+    {
+        if ($answer->answer_option_id !== null) {
+            return true;
+        }
+
+        return trim((string) $answer->answer_text) !== '';
+    }
+
+    protected function deadlineLabel($activity): string
+    {
+        if ($activity->start && $activity->start->isFuture()) {
+            return 'Disponível a partir de '.$activity->start->format('d/m/Y');
+        }
+
+        return $activity->end
+            ? 'Prazo: '.$activity->end->format('d/m/Y')
+            : 'Sem prazo';
+    }
+
+    protected function activityLabel(ActivitTask $activity): string
+    {
+        $title = trim((string) $activity->title);
+
+        if ($title === '' || str_starts_with($title, 'atividade ')) {
+            return 'Atividade';
+        }
+
+        return $title;
     }
 
     public function render()

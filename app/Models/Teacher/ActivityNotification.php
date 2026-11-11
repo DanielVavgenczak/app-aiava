@@ -13,6 +13,8 @@ class ActivityNotification extends Model
 
     public const TYPE_DELIVERED = 'delivered';
 
+    public const TYPE_REVIEWED = 'reviewed';
+
     public $incrementing = false;
 
     protected $keyType = 'uuid';

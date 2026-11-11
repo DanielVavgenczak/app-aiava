@@ -370,7 +370,7 @@ new class extends Component {
 
         <div class="min-h-0 flex-1 overflow-y-auto">
             <div class="mx-auto max-w-5xl px-5 py-5 sm:px-7">
-                <div id="teacher-activity-tabs">
+                <div id="teacher-activity-tabs" data-activity-id="{{ $activitTask?->id }}">
                     <x-mary-tabs wire:model="selectedTab"
                         label-class="font-semibold pb-2"
                         active-class="border-b-2 border-blue-500 text-blue-600"

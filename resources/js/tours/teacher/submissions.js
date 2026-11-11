@@ -1,8 +1,13 @@
-import { configDriver, isElementVisible, sleep } from "../utils";
+import { AddButtonActions, configDriver, isElementVisible, sleep } from "../utils.js";
 
 const TOUR_START_EVENT = "teacher-submissions-tour-start";
 const MODAL_CLOSE_EVENT = "teacher-submissions-close";
 const DISCIPLINE_INDEX_URL = "/professor/disciplina";
+const AUTO_STEP_DESCRIPTION = "Interagindo com a ferramenta...";
+const MISSING_TAB_DESCRIPTION =
+    "These students have not submitted the activity.";
+const CANCEL_SELECTOR = "[data-tour-cancel='teacher-submissions']";
+const BACK_SELECTOR = "[data-tour-back='teacher-submissions']";
 const STEP_HOLD_MS = 2000;
 
 let running = false;
@@ -13,11 +18,39 @@ function store() {
     return Alpine.store("tourguide");
 }
 
-function escapeHtml(value) {
-    const element = document.createElement("div");
-    element.textContent = String(value ?? "");
+function closeSubmissionsModal() {
+    window.dispatchEvent(new CustomEvent(MODAL_CLOSE_EVENT));
+}
 
-    return element.innerHTML;
+function addCancelButton(popover) {
+    popover.nextButton?.remove();
+    popover.previousButton?.remove();
+    popover.progress?.remove();
+
+    const button = AddButtonActions(popover, "Cancelar operação");
+    button.dataset.tourCancel = "teacher-submissions";
+
+    if (popover.footer) {
+        popover.footer.style.display = "flex";
+    }
+}
+
+function addBackButton(popover) {
+    popover.nextButton?.remove();
+    popover.previousButton?.remove();
+    popover.progress?.remove();
+
+    const button = AddButtonActions(popover, "Voltar");
+    button.dataset.tourBack = "teacher-submissions";
+
+    if (popover.footer) {
+        popover.footer.style.display = "flex";
+    }
+}
+
+function addMissingReviewActions(popover) {
+    addCancelButton(popover);
+    addBackButton(popover);
 }
 
 function blockKeyboard(event) {
@@ -169,6 +202,24 @@ function submissionContext(row) {
     };
 }
 
+function currentDisciplineId() {
+    const match = window.location.pathname.match(
+        /^\/professor\/disciplina\/([^/]+)\/?$/,
+    );
+
+    return match?.[1] ?? null;
+}
+
+function visibleElement(selector) {
+    const element = document.querySelector(selector);
+
+    return element && isElementVisible(element) ? element : null;
+}
+
+function currentOpenActivityId() {
+    return visibleElement("#teacher-activity-tabs")?.dataset.activityId ?? null;
+}
+
 async function runAutoStep({
     element,
     description,
@@ -223,7 +274,17 @@ async function runSelectionStep(list) {
     });
 
     const onWindowClick = (event) => {
+        const cancel = event.target.closest?.(CANCEL_SELECTOR);
         const row = event.target.closest?.("[data-submission-id]");
+
+        if (cancel) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            selected = true;
+            resolveSelection(null);
+
+            return;
+        }
 
         if (!row || !list.contains(row) || selected) {
             event.preventDefault();
@@ -254,10 +315,11 @@ async function runSelectionStep(list) {
                 allowKeyboardControl: false,
                 popover: {
                     description:
-                        "Choose the student's assignment you would like to grade first.",
+                        "Escolha a atividade do aluno que deseja corrigir primeiro.",
                     side: "left",
                     align: "center",
                     showButtons: [""],
+                    onPopoverRender: addCancelButton,
                 },
             },
         ],
@@ -275,6 +337,167 @@ async function runSelectionStep(list) {
     return context;
 }
 
+async function runTabSelectionStep(tablist) {
+    const tabs = Array.from(
+        tablist.querySelectorAll("[data-submissions-tab]"),
+    );
+    let selected = false;
+    let resolveSelection;
+    let driver;
+
+    const selection = new Promise((resolve) => {
+        resolveSelection = resolve;
+    });
+
+    const onWindowClick = (event) => {
+        const cancel = event.target.closest?.(CANCEL_SELECTOR);
+        const tab = event.target.closest?.("[data-submissions-tab]");
+
+        if (cancel) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            selected = true;
+            resolveSelection(null);
+
+            return;
+        }
+
+        if (!tab || !tabs.includes(tab) || selected) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        selected = true;
+        resolveSelection(tab);
+    };
+
+    window.addEventListener("click", onWindowClick, true);
+
+    driver = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element: tablist,
+                allowKeyboardControl: false,
+                popover: {
+                    description: "Escolha a aba que deseja explorar.",
+                    side: "bottom",
+                    align: "center",
+                    showButtons: [""],
+                    onPopoverRender: addCancelButton,
+                },
+            },
+        ],
+    });
+
+    driver.drive();
+
+    const tab = await selection;
+    window.removeEventListener("click", onWindowClick, true);
+
+    try {
+        await driver.destroy();
+    } catch {}
+
+    return tab;
+}
+
+async function runMissingReviewStep(list) {
+    let resolveSelection;
+    let driver;
+
+    const selection = new Promise((resolve) => {
+        resolveSelection = resolve;
+    });
+
+    const onWindowClick = (event) => {
+        const cancel = event.target.closest?.(CANCEL_SELECTOR);
+        const back = event.target.closest?.(BACK_SELECTOR);
+
+        if (cancel || back) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            resolveSelection(back ? "back" : null);
+
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    };
+
+    window.addEventListener("click", onWindowClick, true);
+
+    driver = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element: list,
+                allowKeyboardControl: false,
+                popover: {
+                    description: MISSING_TAB_DESCRIPTION,
+                    side: "left",
+                    align: "center",
+                    showButtons: [""],
+                    onPopoverRender: addMissingReviewActions,
+                },
+            },
+        ],
+    });
+
+    driver.drive();
+
+    const action = await selection;
+    window.removeEventListener("click", onWindowClick, true);
+
+    try {
+        await driver.destroy();
+    } catch {}
+
+    return action;
+}
+
+async function runSubmittedTabFlow() {
+    const list = await tryWaitFor("#teacher-submissions-list", 4000);
+    const rows = list
+        ? Array.from(list.querySelectorAll("[data-submission-id]"))
+        : [];
+
+    if (rows.length === 0) return;
+
+    const context =
+        rows.length === 1
+            ? { ...submissionContext(rows[0]), row: rows[0] }
+            : await runSelectionStep(list);
+
+    if (!context) {
+        closeSubmissionsModal();
+        return;
+    }
+
+    if (
+        !context.studentId ||
+        !context?.disciplineId ||
+        !context?.activityId
+    ) {
+        return;
+    }
+
+    if (rows.length > 1) {
+        context.row.scrollIntoView({
+            block: "nearest",
+            inline: "nearest",
+        });
+        clickWithoutNavigation(context.row);
+    }
+
+    lockPage();
+    await openSubmissionFlow(context);
+}
+
 function findDeliveriesTab(tabs) {
     return (
         Array.from(tabs.querySelectorAll("button, a, [role='tab']")).find(
@@ -285,6 +508,8 @@ function findDeliveriesTab(tabs) {
 }
 
 async function openDiscipline(context) {
+    if (currentDisciplineId() === context.disciplineId) return;
+
     await navigateTo(DISCIPLINE_INDEX_URL);
 
     const card = await tryWaitFor(
@@ -299,8 +524,7 @@ async function openDiscipline(context) {
 
     await runAutoStep({
         element: card,
-        description:
-            "Esta é a disciplina do aluno. Vou abrir o conteúdo para localizar a atividade entregue.",
+        description: AUTO_STEP_DESCRIPTION,
         side: "bottom",
     });
 
@@ -317,8 +541,7 @@ async function openDiscipline(context) {
     const navigation = waitForNavigation();
     await runAutoStep({
         element: manager,
-        description:
-            'Vou clicar em "Gerenciar Conteúdo" para acessar as aulas e atividades.',
+        description: AUTO_STEP_DESCRIPTION,
         side: "top",
         after: () => navigateWithLivewire(manager.href),
     });
@@ -335,80 +558,101 @@ async function openDiscipline(context) {
 }
 
 async function openActivity(context) {
-    const task = await tryWaitFor(
-        `#tasks-list-${context.activityId}`,
-        10000,
-    );
+    const openActivityId = currentOpenActivityId();
 
-    if (!task) return;
+    if (openActivityId && openActivityId !== context.activityId) {
+        const close = visibleElement('[data-tour="teacher-activity-close"]');
 
-    await runAutoStep({
-        element: task,
-        description:
-            "Esta é a atividade entregue pelo aluno. Vou abrir o gerenciador da atividade.",
-        side: "right",
-        after: () => clickWithFocusTrapsDisabled(task),
-    });
+        if (close) {
+            clickWithFocusTrapsDisabled(close);
+            await sleep(400);
+        }
+    }
+
+    if (currentOpenActivityId() !== context.activityId) {
+        const task = await tryWaitFor(
+            `#tasks-list-${context.activityId}`,
+            10000,
+        );
+
+        if (!task) return;
+
+        await runAutoStep({
+            element: task,
+            description: AUTO_STEP_DESCRIPTION,
+            side: "right",
+            after: () => clickWithFocusTrapsDisabled(task),
+        });
+    }
 
     const tabs = await tryWaitFor("#teacher-activity-tabs", 10000);
     if (!tabs) return;
 
-    const deliveriesTab = findDeliveriesTab(tabs);
-    if (!deliveriesTab) return;
+    if (!visibleElement("#teacher-deliveries-list")) {
+        const deliveriesTab = findDeliveriesTab(tabs);
+        if (!deliveriesTab) return;
 
-    await runAutoStep({
-        element: deliveriesTab,
-        description:
-            'Vou abrir a aba "Entregas" para localizar a resposta do aluno.',
-        side: "bottom",
-        align: "start",
-        after: () => clickWithFocusTrapsDisabled(deliveriesTab),
-    });
+        await runAutoStep({
+            element: deliveriesTab,
+            description: AUTO_STEP_DESCRIPTION,
+            side: "bottom",
+            align: "start",
+            after: () => clickWithFocusTrapsDisabled(deliveriesTab),
+        });
 
-    await tryWaitFor("#teacher-deliveries-list", 10000);
+        await tryWaitFor("#teacher-deliveries-list", 10000);
+    }
 
     const allFilter = await tryWaitFor('[data-delivery-filter="all"]', 6000);
-    if (allFilter) {
+    if (allFilter && !allFilter.classList.contains("btn-primary")) {
         await runAutoStep({
             element: allFilter,
-            description:
-                'Vou selecionar o filtro "Todos" para exibir todas as entregas.',
+            description: AUTO_STEP_DESCRIPTION,
             side: "bottom",
             align: "start",
             after: () => clickWithFocusTrapsDisabled(allFilter),
         });
     }
 
-    const studentRow = await tryWaitFor(
-        `#delivery-student-${context.studentId}`,
-        10000,
-    );
-    if (!studentRow) return;
-
-    const openStudent =
-        studentRow.querySelector(
-            `#delivery-student-open-${context.studentId}`,
-        ) ?? studentRow.querySelector('button[wire\\:click*="selectStudent"]');
-
-    if (!openStudent) return;
-
-    await runAutoStep({
-        element: studentRow,
-        description: `Vou abrir a entrega de ${escapeHtml(context.studentName)}.`,
-        side: "right",
-        align: "start",
-        after: () => clickWithFocusTrapsDisabled(openStudent),
-    });
-
-    const detail = await tryWaitFor(
+    let detail = visibleElement(
         `#teacher-deliveries-detail[data-selected-student-id="${context.studentId}"]`,
-        10000,
     );
+
+    if (!detail) {
+        const studentRow = await tryWaitFor(
+            `#delivery-student-${context.studentId}`,
+            10000,
+        );
+        if (!studentRow) return;
+
+        const openStudent =
+            studentRow.querySelector(
+                `#delivery-student-open-${context.studentId}`,
+            ) ?? studentRow.querySelector(
+                'button[wire\\:click*="selectStudent"]',
+            );
+
+        if (!openStudent) return;
+
+        await runAutoStep({
+            element: studentRow,
+            description: AUTO_STEP_DESCRIPTION,
+            side: "right",
+            align: "start",
+            after: () => clickWithFocusTrapsDisabled(openStudent),
+        });
+
+        detail = await tryWaitFor(
+            `#teacher-deliveries-detail[data-selected-student-id="${context.studentId}"]`,
+            10000,
+        );
+    }
+
     if (!detail) return;
 
     await runAutoStep({
         element: detail,
-        description: "Assignment submitted.",
+        description: AUTO_STEP_DESCRIPTION,
         hold: 5000,
         side: "left",
         align: "start",
@@ -416,7 +660,7 @@ async function openActivity(context) {
 }
 
 async function openSubmissionFlow(context) {
-    window.dispatchEvent(new CustomEvent(MODAL_CLOSE_EVENT));
+    closeSubmissionsModal();
     await sleep(500);
     await openDiscipline(context);
     await openActivity(context);
@@ -425,8 +669,13 @@ async function openSubmissionFlow(context) {
 export async function StartTourTeacherSubmissions() {
     if (running) return;
 
-    const list = await tryWaitFor("#teacher-submissions-list", 4000);
-    if (!list || !list.querySelector("[data-submission-id]")) return;
+    const submittedTab = await tryWaitFor(
+        "#teacher-submissions-tab-submitted",
+        4000,
+    );
+    const tablist = submittedTab?.closest('[role="tablist"]');
+
+    if (!tablist) return;
 
     running = true;
     const tourStore = store();
@@ -436,21 +685,35 @@ export async function StartTourTeacherSubmissions() {
     try {
         guardWindowOpen();
 
-        const context = await runSelectionStep(list);
+        let selectedTab = await runTabSelectionStep(tablist);
 
-        if (
-            !context?.studentId ||
-            !context?.disciplineId ||
-            !context?.activityId
-        ) {
+        while (selectedTab?.dataset.submissionsTab === "missing") {
+            selectedTab.click();
+
+            const missingList = await tryWaitFor(
+                "#teacher-submissions-missing-list",
+                4000,
+            );
+
+            if (!missingList) return;
+
+            const action = await runMissingReviewStep(missingList);
+
+            if (!action) {
+                closeSubmissionsModal();
+                return;
+            }
+
+            selectedTab = await runTabSelectionStep(tablist);
+        }
+
+        if (!selectedTab) {
+            closeSubmissionsModal();
             return;
         }
 
-        context.row.scrollIntoView({ block: "nearest", inline: "nearest" });
-        clickWithoutNavigation(context.row);
-
-        lockPage();
-        await openSubmissionFlow(context);
+        selectedTab.click();
+        await runSubmittedTabFlow();
     } catch (error) {
         console.error("Erro no tour de entregas:", error);
     } finally {

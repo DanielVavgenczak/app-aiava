@@ -311,7 +311,7 @@ new class extends Component {
 @endphp
 <x-mary-drawer wire:model="show" class="w-11/12 max-w-5xl mx-auto p-0!" close-on-escape
     role="dialog" aria-modal="true" aria-labelledby="student-activity-heading">
-    <div id="student-activity-drawer" class="flex h-dvh flex-col overflow-hidden bg-gray-50"
+    <div id="student-activity-drawer" data-activity-id="{{ $activit_task_id }}" class="flex h-dvh flex-col overflow-hidden bg-gray-50"
         x-data="{
             answered: {{ $answeredCount }},
             countAnswered() {

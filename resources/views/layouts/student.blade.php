@@ -29,6 +29,7 @@
         'w-[calc(100%-5rem)] left-20'">
         {{ $slot }}
         </main>
+        <livewire:global.student-activities :student-id="auth()->guard('student')->id()" />
         <x-mary-button
             class="fixed z-[999] bg-blue-200 right-5 bottom-5 btn-circle btn-lg text-gray-50"
             x-on:click="$store.tourguide.initTour()"
