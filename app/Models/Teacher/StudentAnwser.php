@@ -5,6 +5,7 @@ namespace App\Models\Teacher;
 use App\Models\Traits\UuidTrait;
 use Database\Factories\StudentAnwserFactory;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -47,5 +48,29 @@ class StudentAnwser extends Model
     public function feedbacks()
     {
         return $this->hasMany(QuestionFeedback::class, 'student_anwser_id');
+    }
+
+    public function scopeForStudent(Builder $query, string $studentId): Builder
+    {
+        return $query->where('student_id', $studentId);
+    }
+
+    public function scopeWithValidAnswer(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->whereNotNull('answer_option_id')
+                ->orWhere(function (Builder $query) {
+                    $query->whereNotNull('answer_text')
+                        ->whereRaw("TRIM(answer_text) <> ''");
+                });
+        });
+    }
+
+    public function scopeReviewed(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->where('corrected', true)
+                ->orWhereHas('feedbacks');
+        });
     }
 }

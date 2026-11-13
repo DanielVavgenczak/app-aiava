@@ -2,7 +2,9 @@
     class="fixed z-[998] right-5 bottom-24"
     x-data="{
         open: false,
+        activeTab: @js($this->pendingCount > 0 ? 'pending' : ($this->reviewedCount > 0 ? 'reviewed' : 'pending')),
         count: {{ $this->pendingCount }},
+        reviewedCount: {{ $this->reviewedCount }},
         bounce: false,
         init() {
             window.addEventListener('student-activities-count', (e) => {
@@ -13,15 +15,23 @@
                 }
                 this.count = newCount;
             });
+            window.addEventListener('student-activities-reviewed-count', (e) => {
+                this.reviewedCount = e.detail.count || 0;
+            });
             window.addEventListener('student-activities:new', () => {
+                this.bounce = true;
+                setTimeout(() => { this.bounce = false; }, 900);
+            });
+            window.addEventListener('student-activities:reviewed', () => {
                 this.bounce = true;
                 setTimeout(() => { this.bounce = false; }, 900);
             });
         },
         openModal() {
             this.open = true;
+            this.activeTab = this.count > 0 ? 'pending' : 'reviewed';
             this.$nextTick(() => {
-                if (this.count > 0) {
+                if (this.count > 0 || this.reviewedCount > 0) {
                     window.dispatchEvent(new CustomEvent('student-activities-tour-start'));
                 }
             });
@@ -36,8 +46,8 @@
         class="relative btn btn-circle btn-lg shadow-lg transition-transform"
         :class="bounce ? 'animate-bounce' : ''"
         style="background-color: #2563eb; color: white;"
-        aria-label="Ver atividades pendentes"
-        title="Atividades pendentes"
+        aria-label="Ver atividades"
+        title="Atividades"
     >
         <x-mary-icon name="o-clipboard-document-list" class="w-6 h-6" />
         <span
@@ -106,8 +116,8 @@
             <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-2xl max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden">
                 <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <div>
-                        <h2 id="student-activities-title" class="text-lg font-semibold text-gray-900">Atividades pendentes</h2>
-                        <p class="text-sm text-gray-500">Atividades que você ainda precisa responder</p>
+                        <h2 id="student-activities-title" class="text-lg font-semibold text-gray-900">Minhas atividades</h2>
+                        <p class="text-sm text-gray-500">Acompanhe suas pendências e as correções do professor</p>
                     </div>
                     <button
                         type="button"
@@ -119,7 +129,40 @@
                     </button>
                 </div>
 
-                <div id="student-activities-list" class="flex-1 overflow-y-auto">
+                <div class="px-6 pt-4">
+                    <div id="student-activities-tabs" role="tablist" class="flex gap-2 border-b border-gray-100">
+                        <button
+                            type="button"
+                            role="tab"
+                            id="student-activities-tab-pending"
+                            data-activities-tab="pending"
+                            aria-controls="student-activities-list"
+                            :aria-selected="activeTab === 'pending'"
+                            @click="activeTab = 'pending'"
+                            class="border-b-2 px-3 pb-2 text-sm font-semibold transition-colors"
+                            :class="activeTab === 'pending' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        >
+                            Pendentes
+                            <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ count($this->activities) }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            id="student-activities-tab-reviewed"
+                            data-activities-tab="reviewed"
+                            aria-controls="student-activities-reviewed-list"
+                            :aria-selected="activeTab === 'reviewed'"
+                            @click="activeTab = 'reviewed'"
+                            class="border-b-2 px-3 pb-2 text-sm font-semibold transition-colors"
+                            :class="activeTab === 'reviewed' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        >
+                            Corrigidas
+                            <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ count($this->reviewedActivities) }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div x-show="activeTab === 'pending'" id="student-activities-list" class="flex-1 overflow-y-auto">
                     @forelse ($this->activities as $activity)
                         <button
                             type="button"
@@ -152,8 +195,42 @@
                     @endforelse
                 </div>
 
+                <div x-show="activeTab === 'reviewed'" x-cloak id="student-activities-reviewed-list" class="flex-1 overflow-y-auto">
+                    @forelse ($this->reviewedActivities as $activity)
+                        <button
+                            type="button"
+                            wire:key="student-reviewed-activity-{{ $activity['id'] }}"
+                            wire:click="openReviewedActivity('{{ $activity['id'] }}')"
+                            data-student-reviewed-activity-id="{{ $activity['id'] }}"
+                            data-activity-id="{{ $activity['activity_id'] }}"
+                            data-discipline-id="{{ $activity['discipline_id'] }}"
+                            data-activity-title="{{ $activity['title'] }}"
+                            class="w-full text-left px-6 py-4 hover:bg-emerald-50/50 border-b border-gray-50 last:border-0 flex items-start gap-4 transition-colors"
+                        >
+                            <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                                <x-mary-icon name="o-check-circle" class="w-5 h-5" />
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between gap-3">
+                                    <p class="text-sm font-semibold text-gray-900 truncate">{{ $activity['title'] }}</p>
+                                    <span class="text-xs text-gray-400 shrink-0">{{ $activity['meta'] }}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">{{ $activity['discipline'] }}</p>
+                            </div>
+                            <x-mary-icon name="o-chevron-right" class="w-5 h-5 text-gray-400 shrink-0 mt-2" />
+                        </button>
+                    @empty
+                        <div class="px-6 py-12 text-center">
+                            <x-mary-icon name="o-clipboard-document-list" class="w-10 h-10 text-gray-400 mx-auto" />
+                            <p class="mt-3 text-sm font-medium text-gray-900">Nenhuma atividade corrigida</p>
+                            <p class="mt-1 text-sm text-gray-500">Quando o professor corrigir suas atividades, elas aparecerão aqui.</p>
+                        </div>
+                    @endforelse
+                </div>
+
                 <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/50">
-                    <p class="text-xs text-center text-gray-500">Clique em uma atividade para abri-la</p>
+                    <p x-show="activeTab === 'pending'" class="text-xs text-center text-gray-500">Clique em uma atividade para abri-la</p>
+                    <p x-show="activeTab === 'reviewed'" x-cloak class="text-xs text-center text-gray-500">Clique em uma atividade corrigida para ver o resultado</p>
                 </div>
             </div>
         </div>

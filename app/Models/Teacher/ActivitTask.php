@@ -93,6 +93,28 @@ class ActivitTask extends Model
             });
     }
 
+    /**
+     * Atividades da disciplina do aluno que já foram enviadas e revisadas
+     * pelo professor, seja por correção/feedback ou por nota final.
+     */
+    public function scopeReviewedForStudent(Builder $query, Student $student): Builder
+    {
+        return $query
+            ->where('discipline_id', $student->discipline_id)
+            ->whereHas('studentAnwsers', function (Builder $query) use ($student) {
+                $query->forStudent($student->id)->withValidAnswer();
+            })
+            ->where(function (Builder $query) use ($student) {
+                $query
+                    ->whereHas('studentAnwsers', function (Builder $query) use ($student) {
+                        $query->forStudent($student->id)->reviewed();
+                    })
+                    ->orWhereHas('activityGrades', function (Builder $query) use ($student) {
+                        $query->where('student_id', $student->id);
+                    });
+            });
+    }
+
     protected static function booted()
     {
         static::creating(function ($model) {

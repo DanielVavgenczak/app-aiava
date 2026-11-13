@@ -102,7 +102,12 @@ new class extends Component {
 };
 ?>
 <x-mary-drawer wire:model="show" class="w-11/12 mx-auto" with-close-button close-on-escape>
-    <button class="btn-close absolute right-4 top-4 cursor-pointer" wire:click="close">
+    <button
+        class="btn-close absolute right-4 top-4 cursor-pointer"
+        data-tour="student-result-close"
+        wire:click="close"
+        aria-label="Fechar resultado da atividade"
+    >
         <x-mary-icon name="o-x-mark" class="w-6 h-6 text-gray-600 hover:text-gray-800" />
     </button>
 
@@ -110,7 +115,7 @@ new class extends Component {
         <h2 class="text-lg font-semibold text-gray-800">Resultado da atividade</h2>
     </header>
 
-    <div class="w-11/12 mx-auto">
+    <div id="student-result-drawer" data-activity-id="{{ $activit_task_id }}" class="w-11/12 mx-auto">
         <div id="student-result-status" class="mb-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
             <div class="flex items-center justify-between gap-2 mb-2">
                 <span class="text-sm font-semibold text-gray-700">Situação da atividade</span>
