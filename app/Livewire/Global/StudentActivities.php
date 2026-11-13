@@ -10,13 +10,32 @@ use Livewire\Component;
 
 class StudentActivities extends Component
 {
+    public const LOGIN_ALERT_SESSION_KEY = 'student.pending-activities-alert';
+
     #[Locked]
     public ?string $studentId = null;
+
+    public bool $showLoginAlert = false;
+
+    public int $loginPendingCount = 0;
 
     public function mount(?string $studentId = null): void
     {
         $studentId = $studentId ?? Auth::guard('student')->id();
         $this->studentId = $studentId ? (string) $studentId : null;
+
+        $this->showLoginAlert = (bool) session()->pull(self::LOGIN_ALERT_SESSION_KEY, false);
+
+        if ($this->showLoginAlert) {
+            $this->loginPendingCount = $this->availablePendingQuery()->count();
+            $this->showLoginAlert = $this->loginPendingCount > 0;
+        }
+    }
+
+    public function dismissLoginAlert(): void
+    {
+        $this->showLoginAlert = false;
+        $this->loginPendingCount = 0;
     }
 
     #[On('echo-private:notifications.{studentId},.activity.notification.updated')]
@@ -131,6 +150,14 @@ class StudentActivities extends Component
                                     ->whereRaw("TRIM(answer_text) <> ''");
                             });
                     });
+            });
+    }
+
+    protected function availablePendingQuery()
+    {
+        return $this->pendingQuery()
+            ->where(function ($query) {
+                $query->whereNull('start')->orWhere('start', '<=', now());
             });
     }
 

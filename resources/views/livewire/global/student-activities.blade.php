@@ -49,6 +49,44 @@
         </span>
     </button>
 
+    @if ($showLoginAlert)
+        <template x-teleport="body">
+            <div
+                role="alert"
+                data-pending-activities-alert
+                class="fixed bottom-24 right-5 z-[1000] w-[calc(100vw-2.5rem)] max-w-sm rounded-xl border border-red-200 border-l-4 border-l-red-500 bg-red-50 p-4 shadow-xl"
+            >
+                <div class="flex items-start gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
+                        <x-mary-icon name="o-exclamation-triangle" class="h-5 w-5" />
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm font-semibold text-red-800">Atividades pendentes</p>
+                        <p class="mt-1 text-sm text-red-700">
+                            Você tem {{ $loginPendingCount }} {{ $loginPendingCount === 1 ? 'atividade pendente' : 'atividades pendentes' }} para enviar.
+                        </p>
+                        <button
+                            type="button"
+                            wire:click="dismissLoginAlert"
+                            @click="openModal()"
+                            class="mt-3 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700"
+                        >
+                            Ver atividades
+                        </button>
+                    </div>
+                    <button
+                        type="button"
+                        wire:click="dismissLoginAlert"
+                        class="btn btn-ghost btn-xs btn-circle text-red-700"
+                        aria-label="Fechar alerta de atividades pendentes"
+                    >
+                        <x-mary-icon name="o-x-mark" class="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+        </template>
+    @endif
+
     <template x-teleport="body">
         <div
             x-show="open"

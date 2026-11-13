@@ -143,6 +143,89 @@ it('atualiza a lista e a contagem ao receber eventos em tempo real', function ()
         ->assertSeeHtml('data-student-activity-id="'.$third->id.'"');
 });
 
+it('sinaliza atividades pendentes no login do aluno', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline] = makeStudentActivitiesContext($teacher);
+    $student = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+    ]);
+
+    Livewire::test('pages::auth.login')
+        ->set('form.email', $student->email)
+        ->set('form.password', 'password')
+        ->call('login')
+        ->assertRedirect(route('student.discipline'))
+        ->assertSessionHas(StudentActivities::LOGIN_ALERT_SESSION_KEY, true);
+});
+
+it('exibe alerta vermelho persistente para atividades disponíveis pendentes', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline] = makeStudentActivitiesContext($teacher);
+    $student = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+    ]);
+
+    session()->flash(StudentActivities::LOGIN_ALERT_SESSION_KEY, true);
+
+    $this->actingAs($student, 'student');
+
+    $component = Livewire::test(StudentActivities::class, ['studentId' => $student->id])
+        ->assertSet('showLoginAlert', true)
+        ->assertSet('loginPendingCount', 1)
+        ->assertSee('Você tem 1 atividade pendente para enviar.')
+        ->assertSeeHtml('data-pending-activities-alert')
+        ->assertSeeHtml('role="alert"')
+        ->assertSeeHtml('bg-red-50')
+        ->call('dismissLoginAlert')
+        ->assertSet('showLoginAlert', false)
+        ->assertDontSeeHtml('data-pending-activities-alert');
+
+    expect($component->instance()->loginPendingCount)->toBe(0);
+});
+
+it('não alerta quando a atividade pendente ainda não está disponível', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeStudentActivitiesContext($teacher);
+    $activit->update([
+        'start' => now()->addDay(),
+        'end' => now()->addWeek(),
+    ]);
+    $student = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+    ]);
+
+    session()->flash(StudentActivities::LOGIN_ALERT_SESSION_KEY, true);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test(StudentActivities::class, ['studentId' => $student->id])
+        ->assertSet('showLoginAlert', false)
+        ->assertSet('loginPendingCount', 0)
+        ->assertDontSee('Você tem 1 atividade pendente para enviar.');
+});
+
+it('não alerta quando não há atividades disponíveis pendentes', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeStudentActivitiesContext($teacher);
+    $activit->update(['end' => now()->subDay()]);
+    $student = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+    ]);
+
+    session()->flash(StudentActivities::LOGIN_ALERT_SESSION_KEY, true);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test(StudentActivities::class, ['studentId' => $student->id])
+        ->assertSet('showLoginAlert', false)
+        ->assertSet('loginPendingCount', 0)
+        ->assertDontSee('Você tem 1 atividade pendente para enviar.');
+});
+
 it('remove da lista atividades já respondidas no polling', function () {
     $teacher = Teacher::factory()->create();
     [$discipline, , $activit] = makeStudentActivitiesContext($teacher);

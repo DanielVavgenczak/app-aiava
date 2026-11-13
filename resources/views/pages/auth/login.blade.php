@@ -3,6 +3,7 @@
 use Livewire\Component;
 use Livewire\Attributes\{Layout};
 use App\Livewire\Forms\Auth\Login;
+use App\Livewire\Global\StudentActivities;
 use Mary\Traits\Toast;
 
 new #[Layout('layouts.guest')] class extends Component {
@@ -21,6 +22,8 @@ new #[Layout('layouts.guest')] class extends Component {
               return $this->redirect(route('teacher.discipline'), navigate: true);
         })(),
         'student' => (function() {
+                  session()->flash(StudentActivities::LOGIN_ALERT_SESSION_KEY, true);
+
                   if (session('must_change_password')) {
                       $this->warning(
                           'Você está usando a senha padrão. Por segurança, altere sua senha no perfil.',
