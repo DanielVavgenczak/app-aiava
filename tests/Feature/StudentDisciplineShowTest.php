@@ -45,6 +45,25 @@ it('responde 404 para disciplina de outro aluno', function () {
         ->assertNotFound();
 });
 
+it('destaca o botão de resultado em vermelho depois do prazo', function () {
+    $teacher = Teacher::factory()->create();
+    $discipline = Discipline::factory()->for($teacher)->create();
+    $module = Module::factory()->create(['discipline_id' => $discipline->id]);
+    $student = makeStudentFor($teacher, $discipline);
+
+    $activity = ActivitTask::factory()
+        ->forDiscipline($discipline, $module, $teacher)
+        ->create(['end' => now()->subDay()]);
+    Task::factory()->forActivitTask($activity)->create(['type' => 'dissertative']);
+
+    $this->actingAs($student, 'student')
+        ->get(route('student.lessons', $discipline->id))
+        ->assertOk()
+        ->assertSeeHtml('data-result-state="overdue"')
+        ->assertSeeHtml('border-red-300 text-red-600 hover:bg-red-50')
+        ->assertSeeHtml('Prazo encerrado - ver resultado');
+});
+
 it('renderiza um único drawer de atividade mesmo com vários módulos', function () {
     $teacher = Teacher::factory()->create();
     $discipline = Discipline::factory()->for($teacher)->create();

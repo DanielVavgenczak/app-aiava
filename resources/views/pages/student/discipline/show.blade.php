@@ -189,8 +189,14 @@ new #[Layout('layouts::student')] class extends Component {
                                                         </button>
                                                         <button
                                                             id="open-activity-result-{{ $activitTask->id }}"
+                                                            data-result-state="{{ $isPastDeadline ? 'overdue' : 'open' }}"
                                                             x-on:click="$dispatch('student-event-open-task-result', { id: '{{ $activitTask->id }}' })"
-                                                            class="border-[1px] border-gray-300 px-3 py-3 hover:bg-green-50 text-green-600 font-semibold text-xs uppercase tracking-wider transition-colors rounded"
+                                                            @class([
+                                                                'inline-flex items-center justify-center gap-1.5 border-[1px] px-3 py-3 font-semibold text-xs uppercase tracking-wider transition-colors rounded',
+                                                                'border-red-300 text-red-600 hover:bg-red-50' => $isPastDeadline,
+                                                                'border-gray-300 text-green-600 hover:bg-green-50' => ! $isPastDeadline,
+                                                            ])
+                                                            title="{{ $isPastDeadline ? 'Prazo encerrado - ver resultado' : 'Ver resultado da atividade' }}"
                                                         >
                                                             <x-mary-icon name="o-chart-bar" class="w-4 h-4" />
                                                             Resultado
