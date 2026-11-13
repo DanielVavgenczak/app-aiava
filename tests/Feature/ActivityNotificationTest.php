@@ -227,6 +227,46 @@ it('notifica o aluno quando a atividade é corrigida', function () {
     );
 });
 
+it('notifica apenas o aluno corrigido quando há mais de um aluno na atividade', function () {
+    Event::fake([ActivityNotificationUpdated::class]);
+
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeNotificationContext($teacher);
+    $reviewedStudent = makeNotificationStudent($teacher, $discipline);
+    $otherStudent = makeNotificationStudent($teacher, $discipline);
+
+    makeNotificationTask($activit, $reviewedStudent, corrected: true);
+    makeNotificationTask($activit, $otherStudent, corrected: true);
+    ActivityNotificationService::activityAnswered($activit, $reviewedStudent);
+    ActivityNotificationService::activityAnswered($activit, $otherStudent);
+
+    ActivityNotificationService::correctionCompleted($activit, $reviewedStudent->id);
+
+    expect(ActivityNotification::query()
+        ->where('notifiable_type', Student::class)
+        ->where('notifiable_id', $reviewedStudent->id)
+        ->where('type', ActivityNotification::TYPE_REVIEWED)
+        ->exists())->toBeTrue()
+        ->and(ActivityNotification::query()
+            ->where('notifiable_type', Student::class)
+            ->where('notifiable_id', $otherStudent->id)
+            ->where('type', ActivityNotification::TYPE_REVIEWED)
+            ->exists())->toBeFalse();
+
+    Event::assertDispatched(
+        ActivityNotificationUpdated::class,
+        fn (ActivityNotificationUpdated $event) => $event->notifiableId === (string) $reviewedStudent->id
+            && $event->action === 'created'
+            && $event->type === ActivityNotification::TYPE_REVIEWED
+    );
+
+    Event::assertNotDispatched(
+        ActivityNotificationUpdated::class,
+        fn (ActivityNotificationUpdated $event) => $event->notifiableId === (string) $otherStudent->id
+            && $event->type === ActivityNotification::TYPE_REVIEWED
+    );
+});
+
 it('não duplica a notificação de atividade corrigida', function () {
     $teacher = Teacher::factory()->create();
     [$discipline, , $activit] = makeNotificationContext($teacher);

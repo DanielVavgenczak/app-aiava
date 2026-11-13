@@ -43,8 +43,16 @@ class StudentActivities extends Component
     {
         $this->pollActivities();
 
-        if (($payload['action'] ?? null) === 'created' && ($payload['type'] ?? null) === ActivityNotification::TYPE_PUBLISHED) {
+        if (($payload['action'] ?? null) !== 'created') {
+            return;
+        }
+
+        if (($payload['type'] ?? null) === ActivityNotification::TYPE_PUBLISHED) {
             $this->dispatch('student-activities:new');
+        }
+
+        if (($payload['type'] ?? null) === ActivityNotification::TYPE_REVIEWED) {
+            $this->dispatch('student-activities:reviewed');
         }
     }
 
@@ -59,6 +67,7 @@ class StudentActivities extends Component
 
         ActivityNotificationService::prune($student);
         $this->dispatch('student-activities-count', count: $this->pendingQuery()->count());
+        $this->dispatch('student-activities-reviewed-count', count: $this->reviewedQuery($student)->count());
     }
 
     #[Computed]
@@ -96,6 +105,49 @@ class StudentActivities extends Component
             ->all();
     }
 
+    #[Computed]
+    public function reviewedCount(): int
+    {
+        $student = $this->authorizedUser();
+
+        if (! $student) {
+            return 0;
+        }
+
+        ActivityNotificationService::prune($student);
+
+        return $this->reviewedQuery($student)->count();
+    }
+
+    #[Computed]
+    public function reviewedActivities(): array
+    {
+        $student = $this->authorizedUser();
+
+        if (! $student) {
+            return [];
+        }
+
+        ActivityNotificationService::prune($student);
+
+        return $this->reviewedQuery($student)
+            ->with([
+                'discipline:id,title',
+                'studentAnwsers' => fn ($query) => $query
+                    ->forStudent($student->id)
+                    ->reviewed()
+                    ->latest('updated_at'),
+                'activityGrades' => fn ($query) => $query->where('student_id', $student->id),
+            ])
+            ->latest('created_at')
+            ->get()
+            ->map(fn (ActivitTask $activity) => $this->presentReviewed($activity))
+            ->filter()
+            ->sortByDesc('reviewed_at_ts')
+            ->values()
+            ->all();
+    }
+
     public function openActivity(string $id): void
     {
         $student = $this->authorizedUser();
@@ -105,6 +157,23 @@ class StudentActivities extends Component
         }
 
         $activity = $this->pendingQuery()->find($id);
+
+        if (! $activity) {
+            return;
+        }
+
+        $this->redirect(ActivityNotificationService::studentUrl($activity), navigate: true);
+    }
+
+    public function openReviewedActivity(string $id): void
+    {
+        $student = $this->authorizedUser();
+
+        if (! $student) {
+            return;
+        }
+
+        $activity = $this->reviewedQuery($student)->find($id);
 
         if (! $activity) {
             return;
@@ -161,16 +230,55 @@ class StudentActivities extends Component
             });
     }
 
+    protected function reviewedQuery(Student $student)
+    {
+        return ActivitTask::query()->reviewedForStudent($student);
+    }
+
     protected function present(ActivitTask $activity): ?array
     {
         return [
             'id' => (string) $activity->id,
             'activity_id' => (string) $activity->id,
             'discipline_id' => (string) $activity->discipline_id,
-            'title' => $activity->title,
+            'title' => $this->activityLabel($activity),
             'discipline' => $activity->discipline?->title ?? 'Disciplina',
             'meta' => trim('Pendente · '.$this->deadlineLabel($activity), ' ·'),
         ];
+    }
+
+    protected function presentReviewed(ActivitTask $activity): ?array
+    {
+        $reviewedAt = collect([
+            $activity->studentAnwsers->max('updated_at'),
+            $activity->activityGrades
+                ->map(fn ($grade) => $grade->registered_at ?? $grade->updated_at)
+                ->filter()
+                ->max(),
+        ])->filter()->sortDesc()->first();
+
+        return [
+            'id' => (string) $activity->id,
+            'activity_id' => (string) $activity->id,
+            'discipline_id' => (string) $activity->discipline_id,
+            'title' => $this->activityLabel($activity),
+            'discipline' => $activity->discipline?->title ?? 'Disciplina',
+            'meta' => $reviewedAt
+                ? 'Corrigida em '.$reviewedAt->format('d/m/Y')
+                : 'Corrigida pelo professor',
+            'reviewed_at_ts' => $reviewedAt?->timestamp ?? 0,
+        ];
+    }
+
+    protected function activityLabel(ActivitTask $activity): string
+    {
+        $title = trim((string) $activity->title);
+
+        if ($title === '' || str_starts_with($title, 'atividade ')) {
+            return 'Atividade';
+        }
+
+        return $title;
     }
 
     protected function deadlineLabel(ActivitTask $activity): string

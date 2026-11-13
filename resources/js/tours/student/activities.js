@@ -1,4 +1,4 @@
-import { configDriver, isElementVisible, sleep } from "../utils";
+import { configDriver, isElementVisible, sleep } from "../utils.js";
 
 const TOUR_START_EVENT = "student-activities-tour-start";
 const MODAL_CLOSE_EVENT = "student-activities-close";
@@ -170,8 +170,16 @@ function currentOpenActivityId() {
     return visibleElement("#student-activity-drawer")?.dataset.activityId ?? null;
 }
 
+function currentOpenResultActivityId() {
+    return visibleElement("#student-result-drawer")?.dataset.activityId ?? null;
+}
+
 function activityUrl(context) {
     return `/aluno/disciplina/${context.disciplineId}?activity=${context.activityId}#open-activity-${context.activityId}`;
+}
+
+function reviewedActivityUrl(context) {
+    return `/aluno/disciplina/${context.disciplineId}?activity=${context.activityId}#open-activity-result-${context.activityId}`;
 }
 
 async function runAutoStep({
@@ -217,7 +225,11 @@ async function runAutoStep({
     await done;
 }
 
-async function runSelectionStep(list) {
+async function runSelectionStep(
+    list,
+    rowSelector = "[data-student-activity-id]",
+    description = "Escolha a atividade que deseja abrir primeiro.",
+) {
     const startedAt = Date.now();
     let selected = false;
     let resolveSelection;
@@ -228,7 +240,7 @@ async function runSelectionStep(list) {
     });
 
     const onWindowClick = (event) => {
-        const row = event.target.closest?.("[data-student-activity-id]");
+        const row = event.target.closest?.(rowSelector);
 
         if (!row || !list.contains(row) || selected) {
             event.preventDefault();
@@ -258,8 +270,7 @@ async function runSelectionStep(list) {
                 element: list,
                 allowKeyboardControl: false,
                 popover: {
-                    description:
-                        "Escolha a atividade que deseja abrir primeiro.",
+                    description,
                     side: "left",
                     align: "center",
                     showButtons: [""],
@@ -328,6 +339,87 @@ async function navigateToActivity(context) {
     navigateWithLivewire(activityUrl(context));
     await navigation;
     lockPage();
+}
+
+async function navigateToReviewedResult(context) {
+    if (
+        currentDisciplineId() === context.disciplineId &&
+        currentActivityId() === context.activityId
+    ) {
+        return;
+    }
+
+    const navigation = waitForNavigation();
+    navigateWithLivewire(reviewedActivityUrl(context));
+    await navigation;
+    lockPage();
+}
+
+async function openReviewedResult(context) {
+    if (currentOpenResultActivityId() === context.activityId) {
+        await runAutoStep({
+            element: visibleElement(
+                `#student-result-drawer[data-activity-id="${context.activityId}"]`,
+            ),
+            hold: 5000,
+            side: "left",
+            align: "start",
+        });
+
+        return;
+    }
+
+    if (currentOpenResultActivityId()) {
+        const closeResult = visibleElement('[data-tour="student-result-close"]');
+
+        if (closeResult) {
+            clickWithFocusTrapsDisabled(closeResult);
+            await sleep(500);
+        }
+    }
+
+    if (currentOpenActivityId()) {
+        const closeActivity = visibleElement(
+            '#student-activity-drawer button[aria-label="Fechar atividade"]',
+        );
+
+        if (closeActivity) {
+            clickWithFocusTrapsDisabled(closeActivity);
+            await sleep(500);
+        }
+    }
+
+    const item = await ensureActivityVisible(context.activityId);
+    if (!item) return;
+
+    item.scrollIntoView({ behavior: "smooth", block: "center" });
+    await sleep(300);
+
+    const resultButton = item.querySelector(
+        `#open-activity-result-${context.activityId}`,
+    );
+
+    if (!resultButton) return;
+
+    await runAutoStep({
+        element: item,
+        side: "right",
+        after: () => clickWithFocusTrapsDisabled(resultButton),
+    });
+
+    const drawer = await tryWaitFor(
+        `#student-result-drawer[data-activity-id="${context.activityId}"]`,
+        10000,
+    );
+
+    if (!drawer) return;
+
+    await runAutoStep({
+        element: drawer,
+        hold: 5000,
+        side: "left",
+        align: "start",
+    });
 }
 
 async function openDiscipline(context) {
@@ -445,13 +537,40 @@ async function openActivityFlow(context) {
     await openActivity(context);
 }
 
+async function openReviewedActivityFlow(context) {
+    window.dispatchEvent(new CustomEvent(MODAL_CLOSE_EVENT));
+    await sleep(500);
+    await openDiscipline(context);
+    await navigateToReviewedResult(context);
+    await openReviewedResult(context);
+}
+
 export async function StartTourStudentActivities() {
     if (running) return;
 
-    const list = await tryWaitFor("#student-activities-list", 4000);
-    const rows = list
-        ? Array.from(list.querySelectorAll("[data-student-activity-id]"))
+    const tabs = await tryWaitFor("#student-activities-tabs", 4000);
+    if (!tabs) return;
+
+    const pendingList = document.querySelector("#student-activities-list");
+    const reviewedList = document.querySelector(
+        "#student-activities-reviewed-list",
+    );
+    const pendingRows = pendingList
+        ? Array.from(pendingList.querySelectorAll("[data-student-activity-id]"))
         : [];
+    const reviewedRows = reviewedList
+        ? Array.from(
+              reviewedList.querySelectorAll(
+                  "[data-student-reviewed-activity-id]",
+              ),
+          )
+        : [];
+    const showReviewed = reviewedRows.length > 0;
+    const list = showReviewed ? reviewedList : pendingList;
+    const rows = showReviewed ? reviewedRows : pendingRows;
+    const rowSelector = showReviewed
+        ? "[data-student-reviewed-activity-id]"
+        : "[data-student-activity-id]";
 
     if (rows.length === 0) return;
 
@@ -463,10 +582,27 @@ export async function StartTourStudentActivities() {
     try {
         guardWindowOpen();
 
+        if (showReviewed) {
+            const reviewedTab = visibleElement(
+                '[data-activities-tab="reviewed"]',
+            );
+
+            if (reviewedTab) {
+                reviewedTab.click();
+                await sleep(250);
+            }
+        }
+
         const context =
             rows.length === 1
                 ? { ...activityContext(rows[0]), row: rows[0] }
-                : await runSelectionStep(list);
+                : await runSelectionStep(
+                      list,
+                      rowSelector,
+                      showReviewed
+                          ? "Escolha a atividade corrigida que deseja ver primeiro."
+                          : "Escolha a atividade que deseja abrir primeiro.",
+                  );
 
         if (!context?.activityId || !context?.disciplineId) {
             return;
@@ -487,7 +623,12 @@ export async function StartTourStudentActivities() {
         }
 
         lockPage();
-        await openActivityFlow(context);
+
+        if (showReviewed) {
+            await openReviewedActivityFlow(context);
+        } else {
+            await openActivityFlow(context);
+        }
     } catch (error) {
         console.error("Erro no tour de atividades do aluno:", error);
     } finally {
