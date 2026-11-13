@@ -145,6 +145,13 @@ new class extends Component {
                     <x-mary-badge value="{{ $finalGrade }}" class="badge-primary badge-lg" />
                 </div>
             @endif
+            @if (filled($finalFeedback))
+                <div id="student-result-final-feedback"
+                    class="mb-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+                    <p class="text-sm font-semibold text-emerald-800">Feedback final do professor</p>
+                    <p class="mt-1 whitespace-pre-line text-sm leading-relaxed text-emerald-900">{{ $finalFeedback }}</p>
+                </div>
+            @endif
             <div class="flex flex-col gap-4">
                 @foreach ($results as $result)
                     <div class="border border-gray-200 rounded-lg p-4" wire:key="result-{{ $result['id'] }}"

@@ -1,7 +1,7 @@
 <?php
 use Livewire\Component;
 use Livewire\Attributes\{On, Locked};
-use App\Models\Teacher\{ActivitTask, ActivityAccess, Task, TaskOptions, StudentAnwser};
+use App\Models\Teacher\{ActivitTask, ActivityAccess, Task, TaskOptions, StudentAnwser, QuestionFeedback, ActivityGrade};
 use App\Support\{ActivityNotificationService, ActivityValue};
 use Mary\Traits\Toast;
 
@@ -14,6 +14,8 @@ new class extends Component {
     public ?string $moduleTitle = null;
     public ?string $activityTotalValue = null;
     public ?string $activityDeadline = null;
+    public ?string $activityFinalGrade = null;
+    public ?string $activityFinalFeedback = null;
     // Estrutura pública segura: id/question/type/options(id,text) — sem o gabarito.
     public array $tasks = [];
     public array $selectedOptions = []; // Para múltipla escolha
@@ -66,6 +68,21 @@ new class extends Component {
             ->get()
             ->keyBy('task_id');
 
+        $feedbacks = QuestionFeedback::query()
+            ->whereIn('student_anwser_id', $existingAnswers->pluck('id'))
+            ->get()
+            ->keyBy('student_anwser_id');
+
+        $finalGrade = ActivityGrade::query()
+            ->where('activit_task_id', $activitask->id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        $this->activityFinalGrade = $finalGrade?->final_grade !== null
+            ? ActivityValue::format($finalGrade->final_grade)
+            : null;
+        $this->activityFinalFeedback = $finalGrade?->feedback;
+
         $this->show = true;
         $this->activit_task_id = $activitask->id;
         $this->activityTitle = $this->displayTitle($activitask);
@@ -100,18 +117,28 @@ new class extends Component {
         }
 
         $this->tasks = $activitask->tasks
-            ->map(fn (Task $task) => [
-                'id' => $task->id,
-                'question' => $task->question,
-                'type' => $task->type,
-                'locked' => in_array((string) $task->id, $this->lockedTaskIds, true),
-                'options' => $task->type === 'multiple_choice'
-                    ? $task->options->map(fn (TaskOptions $option) => [
-                        'id' => $option->id,
-                        'text' => $option->text,
-                    ])->values()->all()
-                    : [],
-            ])
+            ->map(function (Task $task) use ($existingAnswers, $feedbacks) {
+                $answer = $existingAnswers->get($task->id);
+                $feedback = $answer ? $feedbacks->get($answer->id) : null;
+
+                return [
+                    'id' => $task->id,
+                    'question' => $task->question,
+                    'type' => $task->type,
+                    'locked' => in_array((string) $task->id, $this->lockedTaskIds, true),
+                    'corrected' => (bool) $answer?->corrected,
+                    'grade' => $answer?->corrected && $answer->grade !== null
+                        ? ActivityValue::format($answer->grade)
+                        : null,
+                    'feedback' => $feedback?->feedback,
+                    'options' => $task->type === 'multiple_choice'
+                        ? $task->options->map(fn (TaskOptions $option) => [
+                            'id' => $option->id,
+                            'text' => $option->text,
+                        ])->values()->all()
+                        : [],
+                ];
+            })
             ->values()
             ->all();
 
@@ -291,6 +318,8 @@ new class extends Component {
             'moduleTitle',
             'activityTotalValue',
             'activityDeadline',
+            'activityFinalGrade',
+            'activityFinalFeedback',
             'tasks',
             'selectedOptions',
             'dissertativeAnswers',
@@ -379,6 +408,24 @@ new class extends Component {
         <main class="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7">
             @if ($activit_task_id)
                 <div class="mx-auto flex max-w-3xl flex-col gap-4">
+                    @if ($activityFinalGrade !== null || filled($activityFinalFeedback))
+                        <section data-student-activity-final-feedback
+                            class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <h3 class="text-sm font-semibold text-emerald-800">Resultado final da atividade</h3>
+                                @if ($activityFinalGrade !== null)
+                                    <x-mary-badge value="Nota: {{ $activityFinalGrade }}"
+                                        class="badge-success badge-sm" />
+                                @endif
+                            </div>
+                            @if (filled($activityFinalFeedback))
+                                <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-emerald-900">
+                                    <span class="font-semibold">Feedback final do professor:</span>
+                                    {{ $activityFinalFeedback }}
+                                </p>
+                            @endif
+                        </section>
+                    @endif
                     @forelse ($tasks as $task)
                         @php
                             $isMultipleChoice = $task['type'] === 'multiple_choice';
@@ -469,6 +516,31 @@ new class extends Component {
                                             {{ $message }}
                                         </p>
                                     @enderror
+                                </div>
+                            @endif
+
+                            @if ($task['corrected'] || filled($task['feedback']))
+                                <div data-student-question-feedback
+                                    class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-800">
+                                            <x-mary-icon name="o-check-badge" class="h-4 w-4" />
+                                            Correção do professor
+                                        </p>
+                                        @if ($task['corrected'])
+                                            <x-mary-badge value="Nota: {{ $task['grade'] ?? '—' }}"
+                                                class="badge-success badge-sm" />
+                                        @endif
+                                    </div>
+                                    @if (filled($task['feedback']))
+                                        <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-emerald-900">
+                                            <span class="font-semibold">Feedback:</span> {{ $task['feedback'] }}
+                                        </p>
+                                    @else
+                                        <p class="mt-2 text-sm text-emerald-800">
+                                            O professor ainda não deixou feedback para esta questão.
+                                        </p>
+                                    @endif
                                 </div>
                             @endif
                         </section>

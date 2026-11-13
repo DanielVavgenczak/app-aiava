@@ -1,9 +1,15 @@
-import { configDriver, isElementVisible, sleep } from "../utils.js";
+import {
+    AddButtonActions,
+    configDriver,
+    isElementVisible,
+    sleep,
+} from "../utils.js";
 
 const TOUR_START_EVENT = "student-activities-tour-start";
 const MODAL_CLOSE_EVENT = "student-activities-close";
 const DISCIPLINE_INDEX_URL = "/aluno/disciplina";
 const AUTO_STEP_DESCRIPTION = "Interagindo com a ferramenta...";
+const CANCEL_SELECTOR = "[data-tour-cancel='student-activities']";
 const STEP_HOLD_MS = 2000;
 
 let running = false;
@@ -12,6 +18,23 @@ let keyboardBlocked = false;
 
 function store() {
     return Alpine.store("tourguide");
+}
+
+function closeActivitiesModal() {
+    window.dispatchEvent(new CustomEvent(MODAL_CLOSE_EVENT));
+}
+
+function addCancelButton(popover) {
+    popover.nextButton?.remove();
+    popover.previousButton?.remove();
+    popover.progress?.remove();
+
+    const button = AddButtonActions(popover, "Cancelar operação");
+    button.dataset.tourCancel = "student-activities";
+
+    if (popover.footer) {
+        popover.footer.style.display = "flex";
+    }
 }
 
 function blockKeyboard(event) {
@@ -240,7 +263,17 @@ async function runSelectionStep(
     });
 
     const onWindowClick = (event) => {
+        const cancel = event.target.closest?.(CANCEL_SELECTOR);
         const row = event.target.closest?.(rowSelector);
+
+        if (cancel) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            selected = true;
+            resolveSelection(null);
+
+            return;
+        }
 
         if (!row || !list.contains(row) || selected) {
             event.preventDefault();
@@ -274,6 +307,7 @@ async function runSelectionStep(
                     side: "left",
                     align: "center",
                     showButtons: [""],
+                    onPopoverRender: addCancelButton,
                 },
             },
         ],
@@ -289,6 +323,73 @@ async function runSelectionStep(
     } catch {}
 
     return context;
+}
+
+async function runTabSelectionStep(tablist) {
+    const tabs = Array.from(tablist.querySelectorAll("[data-activities-tab]"));
+    let selected = false;
+    let resolveSelection;
+    let driver;
+
+    const selection = new Promise((resolve) => {
+        resolveSelection = resolve;
+    });
+
+    const onWindowClick = (event) => {
+        const cancel = event.target.closest?.(CANCEL_SELECTOR);
+        const tab = event.target.closest?.("[data-activities-tab]");
+
+        if (cancel) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            selected = true;
+            resolveSelection(null);
+
+            return;
+        }
+
+        if (!tab || !tabs.includes(tab) || selected) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        selected = true;
+        resolveSelection(tab);
+    };
+
+    window.addEventListener("click", onWindowClick, true);
+
+    driver = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element: tablist,
+                allowKeyboardControl: false,
+                popover: {
+                    description:
+                        "Escolha a aba que deseja explorar: pendentes ou corrigidas.",
+                    side: "bottom",
+                    align: "center",
+                    showButtons: [""],
+                    onPopoverRender: addCancelButton,
+                },
+            },
+        ],
+    });
+
+    driver.drive();
+
+    const tab = await selection;
+    window.removeEventListener("click", onWindowClick, true);
+
+    try {
+        await driver.destroy();
+    } catch {}
+
+    return tab;
 }
 
 async function ensureActivityVisible(activityId) {
@@ -545,34 +646,59 @@ async function openReviewedActivityFlow(context) {
     await openReviewedResult(context);
 }
 
+async function runActivityTabFlow({
+    listSelector,
+    rowSelector,
+    description,
+    openFlow,
+}) {
+    const list = await tryWaitFor(listSelector, 4000);
+    const rows = list ? Array.from(list.querySelectorAll(rowSelector)) : [];
+
+    if (rows.length === 0) return;
+
+    const context =
+        rows.length === 1
+            ? { ...activityContext(rows[0]), row: rows[0] }
+            : await runSelectionStep(list, rowSelector, description);
+
+    if (!context) {
+        closeActivitiesModal();
+        return;
+    }
+
+    if (!context.activityId || !context.disciplineId) {
+        return;
+    }
+
+    if (rows.length > 1) {
+        context.row.scrollIntoView({
+            block: "nearest",
+            inline: "nearest",
+        });
+        clickWithoutNavigation(context.row);
+    } else {
+        await runAutoStep({
+            element: list,
+            side: "left",
+            align: "center",
+        });
+    }
+
+    lockPage();
+    await openFlow(context);
+}
+
 export async function StartTourStudentActivities() {
     if (running) return;
 
-    const tabs = await tryWaitFor("#student-activities-tabs", 4000);
-    if (!tabs) return;
-
-    const pendingList = document.querySelector("#student-activities-list");
-    const reviewedList = document.querySelector(
-        "#student-activities-reviewed-list",
+    const pendingTab = await tryWaitFor(
+        "#student-activities-tab-pending",
+        4000,
     );
-    const pendingRows = pendingList
-        ? Array.from(pendingList.querySelectorAll("[data-student-activity-id]"))
-        : [];
-    const reviewedRows = reviewedList
-        ? Array.from(
-              reviewedList.querySelectorAll(
-                  "[data-student-reviewed-activity-id]",
-              ),
-          )
-        : [];
-    const showReviewed = reviewedRows.length > 0;
-    const list = showReviewed ? reviewedList : pendingList;
-    const rows = showReviewed ? reviewedRows : pendingRows;
-    const rowSelector = showReviewed
-        ? "[data-student-reviewed-activity-id]"
-        : "[data-student-activity-id]";
+    const tablist = pendingTab?.closest('[role="tablist"]');
 
-    if (rows.length === 0) return;
+    if (!tablist) return;
 
     running = true;
     const tourStore = store();
@@ -582,52 +708,32 @@ export async function StartTourStudentActivities() {
     try {
         guardWindowOpen();
 
-        if (showReviewed) {
-            const reviewedTab = visibleElement(
-                '[data-activities-tab="reviewed"]',
-            );
+        const selectedTab = await runTabSelectionStep(tablist);
 
-            if (reviewedTab) {
-                reviewedTab.click();
-                await sleep(250);
-            }
-        }
-
-        const context =
-            rows.length === 1
-                ? { ...activityContext(rows[0]), row: rows[0] }
-                : await runSelectionStep(
-                      list,
-                      rowSelector,
-                      showReviewed
-                          ? "Escolha a atividade corrigida que deseja ver primeiro."
-                          : "Escolha a atividade que deseja abrir primeiro.",
-                  );
-
-        if (!context?.activityId || !context?.disciplineId) {
+        if (!selectedTab) {
+            closeActivitiesModal();
             return;
         }
 
-        if (rows.length > 1) {
-            context.row.scrollIntoView({
-                block: "nearest",
-                inline: "nearest",
-            });
-            clickWithoutNavigation(context.row);
-        } else {
-            await runAutoStep({
-                element: list,
-                side: "left",
-                align: "center",
-            });
-        }
+        selectedTab.click();
+        await sleep(250);
 
-        lockPage();
-
-        if (showReviewed) {
-            await openReviewedActivityFlow(context);
+        if (selectedTab.dataset.activitiesTab === "reviewed") {
+            await runActivityTabFlow({
+                listSelector: "#student-activities-reviewed-list",
+                rowSelector: "[data-student-reviewed-activity-id]",
+                description:
+                    "Escolha a atividade corrigida que deseja ver primeiro.",
+                openFlow: openReviewedActivityFlow,
+            });
         } else {
-            await openActivityFlow(context);
+            await runActivityTabFlow({
+                listSelector: "#student-activities-list",
+                rowSelector: "[data-student-activity-id]",
+                description:
+                    "Escolha a atividade que deseja abrir primeiro.",
+                openFlow: openActivityFlow,
+            });
         }
     } catch (error) {
         console.error("Erro no tour de atividades do aluno:", error);

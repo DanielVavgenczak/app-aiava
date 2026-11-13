@@ -2,8 +2,10 @@
 
 use App\Models\Module;
 use App\Models\Teacher\ActivitTask;
+use App\Models\Teacher\ActivityGrade;
 use App\Models\Teacher\Classe;
 use App\Models\Teacher\Discipline;
+use App\Models\Teacher\QuestionFeedback;
 use App\Models\Teacher\Student;
 use App\Models\Teacher\StudentAnwser;
 use App\Models\Teacher\Task;
@@ -287,6 +289,53 @@ it('trava questão já corrigida e não apaga nota ao reenviar', function () {
     expect($answer->fresh()->answer_text)->toBe('Resposta corrigida')
         ->and((float) $answer->fresh()->grade)->toBe(8.0)
         ->and($answer->fresh()->corrected)->toBeTrue();
+});
+
+it('exibe nota e feedback do professor na atividade corrigida', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit, $task] = makeSubmissionContext($teacher, 'text');
+    $student = makeSubmissionStudent($teacher, $discipline);
+
+    $answer = StudentAnwser::create([
+        'task_id' => $task->id,
+        'student_id' => $student->id,
+        'activit_task_id' => $activit->id,
+        'answer_text' => 'Resposta corrigida',
+        'attempt_number' => 1,
+        'corrected' => true,
+        'grade' => 8,
+    ]);
+
+    QuestionFeedback::create([
+        'student_anwser_id' => $answer->id,
+        'task_id' => $task->id,
+        'student_id' => $student->id,
+        'teacher_id' => $teacher->id,
+        'feedback' => 'Boa resposta, aprofunde os exemplos.',
+    ]);
+
+    ActivityGrade::create([
+        'activit_task_id' => $activit->id,
+        'student_id' => $student->id,
+        'teacher_id' => $teacher->id,
+        'final_grade' => 8,
+        'feedback' => 'Bom trabalho na atividade.',
+    ]);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test('pages::student.discipline.lesson.show-task-lesson')
+        ->dispatch('student-event-open-task', id: $activit->id)
+        ->assertSet('tasks.0.corrected', true)
+        ->assertSet('tasks.0.grade', '8')
+        ->assertSet('tasks.0.feedback', 'Boa resposta, aprofunde os exemplos.')
+        ->assertSet('activityFinalGrade', '8')
+        ->assertSet('activityFinalFeedback', 'Bom trabalho na atividade.')
+        ->assertSee('Correção do professor')
+        ->assertSee('Nota: 8')
+        ->assertSee('Boa resposta, aprofunde os exemplos.')
+        ->assertSee('Resultado final da atividade')
+        ->assertSee('Bom trabalho na atividade.');
 });
 
 it('inicializa as respostas com uma chave por questão', function () {

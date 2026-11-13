@@ -151,6 +151,7 @@ it('mostra a nota final da atividade ao aluno', function () {
         'student_id' => $student->id,
         'teacher_id' => $teacher->id,
         'final_grade' => 92,
+        'feedback' => 'Excelente desempenho na atividade.',
     ]);
 
     $this->actingAs($student, 'student');
@@ -158,6 +159,9 @@ it('mostra a nota final da atividade ao aluno', function () {
     Livewire::test('pages::student.discipline.lesson.task-result')
         ->dispatch('student-event-open-task-result', id: $activit->id)
         ->assertSet('finalGrade', '92')
+        ->assertSet('finalFeedback', 'Excelente desempenho na atividade.')
         ->assertSee('Nota final da atividade')
+        ->assertSee('Feedback final do professor')
+        ->assertSee('Excelente desempenho na atividade.')
         ->assertSee('92');
 });
