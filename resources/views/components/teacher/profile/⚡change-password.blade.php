@@ -1,7 +1,8 @@
 <?php
 
 use Livewire\Component;
-use Livewire\Attributes\{On, Validate};
+use Livewire\Attributes\On;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Mary\Traits\Toast;
 
@@ -12,14 +13,10 @@ new class extends Component {
     public string $newPassword = '';
     public string $newPasswordConfirmation = '';
 
-    public function mount(): void
-    {
-        $this->user = Auth::guard('teacher')->user();
-    }
-
     #[On('teacher::open-change-password')]
     public function openModal(): void
     {
+        $this->resetValidation();
         $this->reset(['currentPassword', 'newPassword', 'newPasswordConfirmation']);
         $this->open = true;
     }
@@ -28,16 +25,32 @@ new class extends Component {
     {
         $this->validate([
             'currentPassword' => 'required',
-            'newPassword' => 'required|min:8|same:newPasswordConfirmation',
+            'newPassword' => 'required|min:8|same:newPasswordConfirmation|different:currentPassword',
             'newPasswordConfirmation' => 'required',
+        ], [
+            'currentPassword.required' => 'Informe sua senha atual.',
+            'newPassword.required' => 'Informe a nova senha.',
+            'newPassword.min' => 'A nova senha deve ter pelo menos 8 caracteres.',
+            'newPassword.same' => 'A confirmação da nova senha não confere.',
+            'newPassword.different' => 'A nova senha deve ser diferente da senha atual.',
+            'newPasswordConfirmation.required' => 'Confirme a nova senha.',
         ]);
 
-        if (!Hash::check($this->currentPassword, $this->user->password)) {
-            $this->addError('currentPassword', 'A senha atual não confere.');
+        $teacher = Auth::guard('teacher')->user();
+
+        if (! $teacher) {
+            $this->redirect(route('teacher.login'));
+
             return;
         }
 
-        $this->user->update([
+        if (! Hash::check($this->currentPassword, $teacher->password)) {
+            $this->addError('currentPassword', 'A senha atual não confere.');
+
+            return;
+        }
+
+        $teacher->update([
             'password' => Hash::make($this->newPassword),
         ]);
 
