@@ -10,6 +10,7 @@ new class extends Component {
     public array $results = [];
     public ?string $finalGrade = null;
     public ?string $finalFeedback = null;
+    public bool $isGraded = false;
 
     // Situação da atividade para o aluno (calculada com base nos registros).
     public ?string $statusLabel = null;
@@ -61,11 +62,12 @@ new class extends Component {
             ->keyBy('student_anwser_id');
 
         $this->activit_task_id = $activitask->id;
-        $this->results = $answers->map(function (StudentAnwser $answer) use ($feedbacks) {
+        $this->isGraded = $activitask->isGraded();
+        $this->results = $answers->map(function (StudentAnwser $answer) use ($feedbacks, $activitask) {
             return [
                 'id' => $answer->id,
                 'question' => $answer->task?->question,
-                'grade' => $answer->corrected ? $answer->grade : null,
+                'grade' => $activitask->isGraded() && $answer->corrected ? $answer->grade : null,
                 'corrected' => (bool) $answer->corrected,
                 'feedback' => $feedbacks->get($answer->id)?->feedback,
             ];
@@ -75,7 +77,7 @@ new class extends Component {
             ->where('student_id', $student->id)
             ->first();
 
-        $this->finalGrade = $final?->final_grade !== null
+        $this->finalGrade = $activitask->isGraded() && $final?->final_grade !== null
             ? \App\Support\ActivityValue::format($final->final_grade)
             : null;
         $this->finalFeedback = $final?->feedback;
@@ -91,6 +93,7 @@ new class extends Component {
             'results',
             'finalGrade',
             'finalFeedback',
+            'isGraded',
             'statusLabel',
             'statusBadge',
             'availableAt',
@@ -135,10 +138,17 @@ new class extends Component {
             </dl>
         </div>
 
+        @if (! $isGraded)
+            <div id="student-result-not-graded"
+                class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                Esta atividade não é avaliativa e não possui nota.
+            </div>
+        @endif
+
         @if (count($results) === 0)
             <p class="text-gray-500 py-6">Você ainda não respondeu esta atividade.</p>
         @else
-            @if ($finalGrade !== null)
+            @if ($isGraded && $finalGrade !== null)
                 <div id="student-result-final-grade"
                     class="mb-4 p-4 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-between">
                     <span class="text-sm font-semibold text-blue-800">Nota final da atividade</span>
@@ -160,14 +170,21 @@ new class extends Component {
                             {{ $loop->iteration }}. {{ $result['question'] }}
                         </div>
 
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-xs uppercase tracking-wide text-gray-500">Nota:</span>
-                            @if ($result['corrected'])
-                                <x-mary-badge value="{{ $result['grade'] }}" class="badge-primary" />
-                            @else
-                                <x-mary-badge value="Aguardando correção" class="badge-warning" />
-                            @endif
-                        </div>
+                        @if ($isGraded)
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs uppercase tracking-wide text-gray-500">Nota:</span>
+                                @if ($result['corrected'])
+                                    <x-mary-badge value="{{ $result['grade'] }}" class="badge-primary" />
+                                @else
+                                    <x-mary-badge value="Aguardando correção" class="badge-warning" />
+                                @endif
+                            </div>
+                        @else
+                            <div class="flex items-center gap-2 mb-2">
+                                <x-mary-badge value="{{ $result['corrected'] ? 'Corrigida' : 'Aguardando feedback' }}"
+                                    class="{{ $result['corrected'] ? 'badge-success' : 'badge-warning' }}" />
+                            </div>
+                        @endif
 
                         <div class="text-sm text-gray-600">
                             <span class="font-semibold">Feedback:</span>

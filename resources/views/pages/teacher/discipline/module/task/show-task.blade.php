@@ -337,13 +337,13 @@ new class extends Component {
 
             @if ($activitTask)
                 <div class="mt-4 flex flex-wrap items-center gap-2 text-xs">
-                    @if ($activitTask->total_value !== null)
+                    @if ($activitTask->isGraded())
                         <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
                             <x-mary-icon name="o-academic-cap" class="h-3.5 w-3.5" />
-                            Avaliativa · {{ ActivityValue::format($activitTask->total_value) }} pts
+                            Avaliativa{{ $activitTask->total_value !== null ? ' · '.ActivityValue::format($activitTask->total_value).' pts' : '' }}
                         </span>
                     @else
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-600">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-800">
                             <x-mary-icon name="o-document-text" class="h-3.5 w-3.5" />
                             Não avaliativa
                         </span>
@@ -558,7 +558,11 @@ new class extends Component {
                                         <div>
                                             <h3 class="text-sm font-semibold text-gray-900">Entregas e correção</h3>
                                             <p class="mt-1 text-sm leading-relaxed text-gray-600">
-                                                Selecione um aluno para revisar as respostas, registrar notas e enviar feedback.
+                                                @if ($activitTask?->isGraded())
+                                                    Selecione um aluno para revisar as respostas, registrar notas e enviar feedback.
+                                                @else
+                                                    Selecione um aluno para revisar as respostas e enviar feedback.
+                                                @endif
                                             </p>
                                         </div>
                                     </div>

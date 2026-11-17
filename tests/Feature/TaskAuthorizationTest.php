@@ -14,7 +14,7 @@ use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyExceptio
 use Livewire\Livewire;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-function makeTaskActivity(Teacher $teacher): array
+function makeTaskActivity(Teacher $teacher, bool $graded = true): array
 {
     $discipline = Discipline::factory()->for($teacher)->create();
     $module = Module::factory()->create(['discipline_id' => $discipline->id]);
@@ -22,6 +22,8 @@ function makeTaskActivity(Teacher $teacher): array
         'teacher_id' => $teacher->id,
         'discipline_id' => $discipline->id,
         'module_id' => $module->id,
+        'is_avaliative' => $graded,
+        'total_value' => $graded ? 100 : null,
     ]);
 
     return [$discipline, $module, $activit];
@@ -728,7 +730,8 @@ it('rejeita nota inválida e não persiste a correção', function () {
         ->set("feedbacks.{$answer->id}", 'Bom trabalho, continue assim!')
         ->set("grades.{$answer->id}", 'abc')
         ->call('sendFeedback', $answer->id)
-        ->assertHasErrors("grades.{$answer->id}");
+        ->assertHasErrors("grades.{$answer->id}")
+        ->assertSet("feedbacks.{$answer->id}", 'Bom trabalho, continue assim!');
 
     $fresh = $answer->fresh();
 
@@ -736,6 +739,41 @@ it('rejeita nota inválida e não persiste a correção', function () {
         ->and($fresh->corrected)->toBeFalsy()
         ->and(QuestionFeedback::where('student_anwser_id', $answer->id)->exists())->toBeFalse();
 });
+
+it('usa o novo placeholder, exibe a turma e limpa o feedback após salvar', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeTaskActivity($teacher);
+    $task = Task::factory()->forActivitTask($activit)->create();
+    $classe = \App\Models\Teacher\Classe::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+        'name' => 'Turma Visível',
+    ]);
+    $student = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+        'classe_id' => $classe->id,
+    ]);
+    $answer = StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $student->id,
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    $component = Livewire::test('pages::teacher.discipline.module.task.student-anwsers')
+        ->dispatch('event-teacher-show-student-answer', task_id: $task->id)
+        ->assertSee('Write feedback')
+        ->assertSee('Turma: Turma Visível')
+        ->set("feedbacks.{$answer->id}", 'Bom trabalho, continue assim!')
+        ->set("grades.{$answer->id}", '8')
+        ->call('sendFeedback', $answer->id)
+        ->assertHasNoErrors();
+
+    expect($component->get('feedbacks'))->not->toHaveKey($answer->id)
+        ->and($component->get('grades'))->not->toHaveKey($answer->id)
+        ->and($answer->fresh()->corrected)->toBeTrue();
+});
+
 
 it('rejeita nota acima de 100 no feedback', function (string $grade) {
     $teacher = Teacher::factory()->create();
@@ -784,4 +822,33 @@ it('aceita a nota máxima 100 no feedback', function () {
 
     expect((float) $fresh->grade)->toBe(100.0)
         ->and($fresh->corrected)->toBeTrue();
+});
+
+
+it('oculta campos de nota na correção de atividade não avaliativa', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, , $activit] = makeTaskActivity($teacher, false);
+    $task = Task::factory()->forActivitTask($activit)->create(['value' => 10]);
+    $student = makeTaskStudent($teacher, $discipline);
+    $answer = StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $student->id,
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    Livewire::test('pages::teacher.discipline.module.task.student-anwsers')
+        ->dispatch('event-teacher-show-student-answer', task_id: $task->id)
+        ->assertSet('isGraded', false)
+        ->assertSee('Write feedback')
+        ->assertDontSee('Insira a nota ex: 8')
+        ->assertDontSee('Total do aluno')
+        ->set("feedbacks.{$answer->id}", 'Feedback válido sem nota')
+        ->set("grades.{$answer->id}", '9')
+        ->call('sendFeedback', $answer->id)
+        ->assertHasNoErrors();
+
+    $answer->refresh();
+
+    expect($answer->corrected)->toBeTrue()
+        ->and($answer->grade)->toBeNull();
 });

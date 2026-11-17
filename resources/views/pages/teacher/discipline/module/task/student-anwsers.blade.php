@@ -26,6 +26,10 @@ new class extends Component {
     #[Locked]
     public $activityTotalValue = null;
 
+    /** Indica se a atividade possui notas. */
+    #[Locked]
+    public bool $isGraded = false;
+
     #[On('event-teacher-show-student-answer')]
     public function open($task_id)
     {
@@ -38,7 +42,7 @@ new class extends Component {
             ->first();
 
         if (! $task) {
-            $this->reset(['studentAnswer', 'task_id', 'feedbacks', 'grades', 'savedFeedbacks', 'studentTotals', 'activityTotalValue']);
+            $this->reset(['studentAnswer', 'task_id', 'feedbacks', 'grades', 'savedFeedbacks', 'studentTotals', 'activityTotalValue', 'isGraded']);
             $this->show = false;
             $this->error('Tarefa não encontrada ou você não tem permissão para acessá-la.');
             return;
@@ -49,7 +53,7 @@ new class extends Component {
         $isSameTask = $this->task_id === $task->id;
 
         $this->task_id = $task->id;
-        $this->studentAnswer = StudentAnwser::with(['student', 'answerOption', 'task'])
+        $this->studentAnswer = StudentAnwser::with(['student.classe', 'answerOption', 'task'])
             ->where('task_id', $task->id)
             ->orderBy('created_at')
             ->get();
@@ -61,7 +65,8 @@ new class extends Component {
             ->map(fn (QuestionFeedback $feedback) => $feedback->feedback)
             ->toArray();
 
-        $this->activityTotalValue = $task->activitTask?->total_value;
+        $this->isGraded = (bool) $task->activitTask?->isGraded();
+        $this->activityTotalValue = $this->isGraded ? $task->activitTask?->total_value : null;
 
         $this->studentTotals = $this->studentAnswer
             ->filter(fn (StudentAnwser $answer) => (bool) $answer->corrected && $answer->grade !== null)
@@ -90,7 +95,7 @@ new class extends Component {
         $teacher = Auth::guard('teacher')->user();
 
         $answer = StudentAnwser::query()
-            ->with('task')
+            ->with('task.activitTask')
             ->whereKey($studentAnswerId)
             ->where('task_id', $this->task_id)
             ->whereHas('task', function ($query) use ($teacher) {
@@ -103,53 +108,58 @@ new class extends Component {
             return;
         }
 
+        $isGraded = (bool) $answer->task?->activitTask?->isGraded();
         $maxGrade = $answer->task?->value !== null ? (float) $answer->task->value : 100.0;
 
-        $this->validate(
-            [
-                "feedbacks.$studentAnswerId" => 'required|string|min:6|max:1000',
-                "grades.$studentAnswerId" => [
-                    'nullable',
-                    function ($attribute, $value, $fail) use ($maxGrade) {
-                        if ($value === null || $value === '') {
-                            return;
-                        }
+        $rules = [
+            "feedbacks.$studentAnswerId" => 'required|string|min:6|max:1000',
+        ];
 
-                        $raw = trim((string) $value);
+        if ($isGraded) {
+            $rules["grades.$studentAnswerId"] = [
+                'nullable',
+                function ($attribute, $value, $fail) use ($maxGrade) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
 
-                        if (! preg_match('/^\d{1,3}$/', $raw)) {
-                            $fail('A nota deve ser um número inteiro entre 0 e 100.');
+                    $raw = trim((string) $value);
 
-                            return;
-                        }
+                    if (! preg_match('/^\d{1,3}$/', $raw)) {
+                        $fail('A nota deve ser um número inteiro entre 0 e 100.');
 
-                        $numeric = ActivityValue::toFloat($raw);
+                        return;
+                    }
 
-                        if ($numeric > 100) {
-                            $fail('A nota máxima é 100.');
+                    $numeric = ActivityValue::toFloat($raw);
 
-                            return;
-                        }
+                    if ($numeric > 100) {
+                        $fail('A nota máxima é 100.');
 
-                        if ($numeric > $maxGrade + 0.01) {
-                            $fail('A nota da questão não pode ser maior que o valor da questão ('.ActivityValue::format($maxGrade).').');
-                        }
-                    },
-                ],
-            ],
-            [
-                "feedbacks.$studentAnswerId.required" => 'O feedback é obrigatório.',
-                "feedbacks.$studentAnswerId.min" => 'O feedback deve ter pelo menos :min caracteres.',
-                "feedbacks.$studentAnswerId.max" => 'O feedback deve ter no máximo :max caracteres.',
-            ],
-        );
+                        return;
+                    }
+
+                    if ($numeric > $maxGrade + 0.01) {
+                        $fail('A nota da questão não pode ser maior que o valor da questão ('.ActivityValue::format($maxGrade).').');
+                    }
+                },
+            ];
+        }
+
+        $this->validate($rules, [
+            "feedbacks.$studentAnswerId.required" => 'O feedback é obrigatório.',
+            "feedbacks.$studentAnswerId.min" => 'O feedback deve ter pelo menos :min caracteres.',
+            "feedbacks.$studentAnswerId.max" => 'O feedback deve ter no máximo :max caracteres.',
+        ]);
 
         $feedback = $this->feedbacks[$studentAnswerId] ?? null;
         if (empty($feedback)) {
             return;
         }
 
-        $rawGrade = trim((string) ($this->grades[$studentAnswerId] ?? ''));
+        $rawGrade = $isGraded
+            ? trim((string) ($this->grades[$studentAnswerId] ?? ''))
+            : '';
         $grade = $rawGrade === '' ? null : ActivityValue::toFloat($rawGrade);
 
         try {
@@ -208,7 +218,11 @@ new class extends Component {
                                         <h3 class="text-gray-800 font-semibold ">
                                             {{ $answer->student->full_name }}
                                         </h3>
-                                        <p class=" text-gray-600 mb-2 uppercase font-bold text-xs">
+                                        <span class="mt-1 inline-flex w-fit items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                                            <x-mary-icon name="o-user-group" class="h-3.5 w-3.5" />
+                                            Turma: {{ $answer->student->classe?->name ?? 'não informada' }}
+                                        </span>
+                                        <p class=" text-gray-600 mt-1 mb-2 uppercase font-bold text-xs">
                                             {{ $answer->created_at->format('d/m/Y H:i') }}</p>
                                         @if ($activityTotalValue !== null)
                                             <p class="text-xs text-gray-500">
@@ -238,20 +252,22 @@ new class extends Component {
                                     @endif
                                 </div>
                                 <div class="flex flex-col gap-1">
-                                    <x-mary-textarea class="!outline-none border-0" placeholder="Insira o feedback"
+                                    <x-mary-textarea class="!outline-none border-0" placeholder="Write feedback"
                                         wire:model="feedbacks.{{ $answer->id }}" />
                                     <div class="flex justify-end gap-2 items-center">
 
-                                        <div class="flex flex-col" x-data="{ ...window.moneyMask }">
-                                            <x-mary-input class="!outline-none border-0"
-                                                placeholder="Insira a nota ex: 8"
-                                                inputmode="numeric"
-                                                wire:model="grades.{{ $answer->id }}"
-                                                x-on:input.capture="mask($event)" />
-                                            @error("grades.{$answer->id}")
-                                                <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                            @enderror
-                                        </div>
+                                        @if ($isGraded)
+                                            <div class="flex flex-col" x-data="{ ...window.moneyMask }">
+                                                <x-mary-input class="!outline-none border-0"
+                                                    placeholder="Insira a nota ex: 8"
+                                                    inputmode="numeric"
+                                                    wire:model="grades.{{ $answer->id }}"
+                                                    x-on:input.capture="mask($event)" />
+                                                @error("grades.{$answer->id}")
+                                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        @endif
                                         <button class="btn btn-sm btn-ghost mt-2 self-end bg-gray-200"
                                             wire:loading.attr="disabled"
                                             x-on:click.prevent="$wire.sendFeedback('{{ $answer->id }}')">
@@ -283,7 +299,11 @@ new class extends Component {
                                             <h3 class="text-gray-800 font-semibold ">
                                                 {{ $answer->student->full_name }}
                                             </h3>
-                                            <p class=" text-gray-600 mb-2 uppercase font-bold text-xs">
+                                            <span class="mt-1 inline-flex w-fit items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                                                <x-mary-icon name="o-user-group" class="h-3.5 w-3.5" />
+                                                Turma: {{ $answer->student->classe?->name ?? 'não informada' }}
+                                            </span>
+                                            <p class=" text-gray-600 mt-1 mb-2 uppercase font-bold text-xs">
                                                 {{ $answer->created_at->format('d/m/Y H:i') }}</p>
                                             @if ($activityTotalValue !== null)
                                                 <p class="text-xs text-gray-500">
@@ -299,12 +319,14 @@ new class extends Component {
                                 </div>
 
                                 <div class="mt-1 flex flex-col gap-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs uppercase tracking-wide text-gray-500">Nota:</span>
-                                        <x-mary-badge
-                                            value="{{ $answer->grade !== null ? $this->formatGrade($answer->grade) : 'Sem nota' }}"
-                                            class="{{ $answer->grade !== null ? 'badge-primary' : 'badge-ghost' }}" />
-                                    </div>
+                                    @if ($isGraded)
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs uppercase tracking-wide text-gray-500">Nota:</span>
+                                            <x-mary-badge
+                                                value="{{ $answer->grade !== null ? $this->formatGrade($answer->grade) : 'Sem nota' }}"
+                                                class="{{ $answer->grade !== null ? 'badge-primary' : 'badge-ghost' }}" />
+                                        </div>
+                                    @endif
                                     <div class="text-sm text-gray-600">
                                         <span class="font-semibold">Feedback:</span>
                                         {{ $this->savedFeedbacks[$answer->id] ?? 'Sem feedback registrado.' }}

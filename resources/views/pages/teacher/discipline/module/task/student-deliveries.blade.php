@@ -29,6 +29,10 @@ new class extends Component {
     #[Locked]
     public $activityTotalValue = null;
 
+    /** Indica se a atividade possui notas. */
+    #[Locked]
+    public bool $isGraded = false;
+
     /** Nota final digitada da atividade. */
     public $finalGrade = null;
     public string $finalFeedback = '';
@@ -58,7 +62,8 @@ new class extends Component {
         }
 
         $this->activitTaskId = $activitTask->id;
-        $this->activityTotalValue = $activitTask->total_value;
+        $this->isGraded = $activitTask->isGraded();
+        $this->activityTotalValue = $activitTask->isGraded() ? $activitTask->total_value : null;
         $this->selectedStudentId = null;
         $this->answers = [];
         $this->students = $this->buildStudentList($activitTask);
@@ -69,39 +74,35 @@ new class extends Component {
      */
     protected function buildStudentList(ActivitTask $activitTask): array
     {
-        $studentIds = Student::where('discipline_id', $activitTask->discipline_id)->pluck('id');
-
         $answersByStudent = StudentAnwser::with('task')
             ->where('activit_task_id', $activitTask->id)
-            ->whereIn('student_id', $studentIds)
             ->get()
             ->groupBy('student_id');
-
-        // Apenas alunos que efetivamente entregaram a atividade.
-        $deliveredIds = $answersByStudent->keys();
 
         $finalGrades = $activitTask->activityGrades->keyBy('student_id');
 
         return Student::with(['classe', 'discipline'])
-            ->whereIn('id', $deliveredIds)
+            ->where('discipline_id', $activitTask->discipline_id)
             ->orderBy('full_name')
             ->get()
-            ->map(function (Student $student) use ($answersByStudent, $finalGrades) {
+            ->map(function (Student $student) use ($activitTask, $answersByStudent, $finalGrades) {
                 $answers = $answersByStudent->get($student->id, collect());
-                $allCorrected = $answers->every(fn ($a) => (bool) $a->corrected);
+                $delivered = $answers->isNotEmpty();
+                $allCorrected = $delivered && $answers->every(fn ($a) => (bool) $a->corrected);
                 $finalGrade = $finalGrades->get($student->id)?->final_grade;
-
-                $status = $allCorrected ? 'corrected' : 'pending';
+                $reviewed = $delivered && ($allCorrected || $finalGrade !== null);
 
                 return [
                     'id' => $student->id,
                     'name' => $student->full_name,
                     'classe' => $student->classe?->name,
                     'discipline' => $student->discipline?->title,
-                    'delivered' => true,
-                    'status' => $status,
+                    'active' => $student->isActive(),
+                    'delivered' => $delivered,
+                    'reviewed' => $reviewed,
+                    'status' => $reviewed ? 'corrected' : 'pending',
                     'answers_count' => $answers->count(),
-                    'final_grade' => $finalGrade !== null ? ActivityValue::format($finalGrade) : null,
+                    'final_grade' => $activitTask->isGraded() && $finalGrade !== null ? ActivityValue::format($finalGrade) : null,
                     'delivered_at' => $answers->min('created_at')?->format('d/m/Y H:i'),
                 ];
             })
@@ -143,7 +144,7 @@ new class extends Component {
             'id' => $answer->id,
             'question' => $answer->task?->question,
             'type' => $answer->task?->type,
-            'value' => $answer->task?->value !== null ? ActivityValue::format($answer->task->value) : null,
+            'value' => $this->isGraded && $answer->task?->value !== null ? ActivityValue::format($answer->task->value) : null,
             'answer' => $answer->task?->type === 'multiple_choice'
                 ? ($answer->answerOption?->text ?? 'Sem alternativa selecionada.')
                 : ($answer->answer_text ?: 'Sem resposta.'),
@@ -151,7 +152,7 @@ new class extends Component {
                 ? (bool) $answer->is_correct
                 : null,
             'corrected' => (bool) $answer->corrected,
-            'grade' => $answer->grade !== null ? ActivityValue::format($answer->grade) : null,
+            'grade' => $this->isGraded && $answer->grade !== null ? ActivityValue::format($answer->grade) : null,
             'feedback' => $answer->feedbacks->last()?->feedback,
         ])->all();
 
@@ -160,14 +161,14 @@ new class extends Component {
         )->all();
 
         $this->grades = $answers->mapWithKeys(
-            fn (StudentAnwser $answer) => [$answer->id => $answer->grade !== null ? ActivityValue::format($answer->grade) : '']
+            fn (StudentAnwser $answer) => [$answer->id => $this->isGraded && $answer->grade !== null ? ActivityValue::format($answer->grade) : '']
         )->all();
 
         $finalGrade = ActivityGrade::where('activit_task_id', $activitTask->id)
             ->where('student_id', $student->id)
             ->first();
 
-        $this->finalGrade = $finalGrade?->final_grade !== null
+        $this->finalGrade = $this->isGraded && $finalGrade?->final_grade !== null
             ? ActivityValue::format($finalGrade->final_grade)
             : '';
         $this->finalFeedback = $finalGrade?->feedback ?? '';
@@ -203,11 +204,16 @@ new class extends Component {
             return;
         }
 
+        $activitTask = ActivitTask::find($answer->activit_task_id);
+        $isGraded = (bool) $activitTask?->isGraded();
         $maxGrade = $answer->task?->value !== null ? (float) $answer->task->value : 100.0;
 
-        $this->validate([
+        $rules = [
             "feedbacks.$studentAnswerId" => 'required|string|min:6|max:1000',
-            "grades.$studentAnswerId" => [
+        ];
+
+        if ($isGraded) {
+            $rules["grades.$studentAnswerId"] = [
                 'nullable',
                 function ($attribute, $value, $fail) use ($maxGrade) {
                     if ($value === null || $value === '') {
@@ -226,35 +232,43 @@ new class extends Component {
                         $fail('A nota da questão não pode ser maior que o valor da questão ('.ActivityValue::format($maxGrade).').');
                     }
                 },
-            ],
-        ], [
+            ];
+        }
+
+        $this->validate($rules, [
             "feedbacks.$studentAnswerId.required" => 'O feedback é obrigatório.',
             "feedbacks.$studentAnswerId.min" => 'O feedback deve ter pelo menos :min caracteres.',
             "feedbacks.$studentAnswerId.max" => 'O feedback deve ter no máximo :max caracteres.',
         ]);
 
-        $rawGrade = trim((string) ($this->grades[$studentAnswerId] ?? ''));
+        $rawGrade = $isGraded
+            ? trim((string) ($this->grades[$studentAnswerId] ?? ''))
+            : '';
         $grade = $rawGrade === '' ? null : ActivityValue::toFloat($rawGrade);
 
-        DB::transaction(function () use ($answer, $studentAnswerId, $teacher, $grade) {
-            QuestionFeedback::create([
-                'student_anwser_id' => $answer->id,
-                'task_id' => $answer->task_id,
-                'student_id' => $answer->student_id,
-                'teacher_id' => $teacher->id,
-                'feedback' => $this->feedbacks[$studentAnswerId],
-                'registered_at' => now(),
-            ]);
+        try {
+            DB::transaction(function () use ($answer, $studentAnswerId, $teacher, $grade) {
+                QuestionFeedback::create([
+                    'student_anwser_id' => $answer->id,
+                    'task_id' => $answer->task_id,
+                    'student_id' => $answer->student_id,
+                    'teacher_id' => $teacher->id,
+                    'feedback' => $this->feedbacks[$studentAnswerId],
+                    'registered_at' => now(),
+                ]);
 
-            $answer->update([
-                'grade' => $grade,
-                'corrected' => true,
-            ]);
-        });
+                $answer->update([
+                    'grade' => $grade,
+                    'corrected' => true,
+                ]);
+            });
+        } catch (\Exception $e) {
+            report($e);
+            $this->addError("feedbacks.$studentAnswerId", 'Não foi possível salvar a correção. Tente novamente.');
+            return;
+        }
 
         try {
-            $activitTask = ActivitTask::find($answer->activit_task_id);
-
             if ($activitTask) {
                 ActivityNotificationService::correctionCompleted($activitTask, $answer->student_id);
             }
@@ -265,6 +279,7 @@ new class extends Component {
         $this->success('Correção salva com sucesso!');
         $this->refreshDeliveries();
         $this->selectStudent($this->selectedStudentId);
+        $this->feedbacks[$studentAnswerId] = '';
         $this->dispatch('activity-notifications-updated');
     }
 
@@ -279,6 +294,11 @@ new class extends Component {
 
         if (! $activitTask || ! $this->selectedStudentId) {
             $this->error('Atividade ou aluno inválido.');
+            return;
+        }
+
+        if (! $activitTask->isGraded()) {
+            $this->error('Esta atividade não possui notas.');
             return;
         }
 
@@ -350,7 +370,11 @@ new class extends Component {
 
             @php
                 $visible = collect($students)->filter(function ($s) use ($filter) {
-                    return $filter === 'all' || $s['status'] === $filter;
+                    return match ($filter) {
+                        'pending' => ! $s['delivered'] && $s['active'],
+                        'corrected' => $s['delivered'] && $s['reviewed'],
+                        default => $s['delivered'],
+                    };
                 });
             @endphp
 
@@ -361,18 +385,22 @@ new class extends Component {
                     class="w-full p-3 mb-2 rounded border {{ $selectedStudentId === $student['id'] ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:bg-gray-50' }}">
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0">
-                            <p class="text-sm font-medium text-gray-800 truncate">{{ $student['name'] }}</p>
-                            <p class="text-xs text-gray-500 truncate">
-                                Turma: {{ $student['classe'] ?? 'não informada' }}
-                            </p>
-                            <p class="text-xs text-gray-500 truncate">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <p class="text-sm font-semibold text-gray-900 truncate">{{ $student['name'] }}</p>
+                                <span data-delivery-student-classe="{{ $student['classe'] ?? '' }}"
+                                    class="inline-flex items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                                    <x-mary-icon name="o-user-group" class="h-3.5 w-3.5" />
+                                    Turma: {{ $student['classe'] ?? 'não informada' }}
+                                </span>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500 truncate">
                                 Disciplina: {{ $student['discipline'] ?? 'não informada' }}
                             </p>
                             <div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
                                 @if ($student['delivered_at'])
                                     <span>{{ $student['delivered_at'] }}</span>
                                 @endif
-                                @if ($student['final_grade'] !== null)
+                                @if ($isGraded && $student['final_grade'] !== null)
                                     <span class="text-gray-700 font-semibold">Nota: {{ $student['final_grade'] }}</span>
                                 @endif
                             </div>
@@ -409,16 +437,31 @@ new class extends Component {
             @elseif (count($answers) === 0)
                 <p class="text-gray-500 py-6">Este aluno ainda não respondeu a atividade.</p>
             @else
-                <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-5">
                     @foreach ($answers as $answer)
-                        <div class="border border-gray-200 rounded-lg p-4" wire:key="delivery-answer-{{ $answer['id'] }}">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="font-medium text-gray-800">
-                                    {{ $loop->iteration }}. {{ $answer['question'] }}
+                        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+                            wire:key="delivery-answer-{{ $answer['id'] }}">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div class="flex min-w-0 items-start gap-3">
+                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">
+                                        {{ $loop->iteration }}
+                                    </span>
+                                    <div class="min-w-0">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            Questão {{ $loop->iteration }}
+                                        </p>
+                                        <h3 data-delivery-question
+                                            class="mt-1 break-words text-base font-medium leading-relaxed text-gray-900 whitespace-pre-line">
+                                            {{ $answer['question'] }}
+                                        </h3>
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-2">
+
+                                <div class="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
                                     @if ($answer['value'] !== null)
-                                        <span class="text-xs text-gray-500">Vale: {{ $answer['value'] }}</span>
+                                        <span class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                                            Vale: {{ $answer['value'] }}
+                                        </span>
                                     @endif
                                     @if ($answer['corrected'])
                                         <x-mary-badge value="Corrigida" class="badge-success badge-sm" />
@@ -429,72 +472,99 @@ new class extends Component {
                             </div>
 
                             @if ($answer['type'] === 'multiple_choice')
-                                <div class="{{ $answer['is_correct'] ? 'bg-green-100' : 'bg-red-100' }} p-3 rounded mb-3">
-                                    <div class="flex items-center justify-between gap-2 mb-1">
-                                        <p class="text-xs uppercase tracking-wide text-gray-600">Resposta do aluno</p>
+                                <div class="mt-4 overflow-hidden rounded-lg border {{ $answer['is_correct'] ? 'border-green-200' : 'border-red-200' }}">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 {{ $answer['is_correct'] ? 'bg-green-100' : 'bg-red-100' }}">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                            Resposta do aluno
+                                        </p>
                                         @if ($answer['is_correct'])
                                             <x-mary-badge value="Correta" class="badge-success badge-sm" />
                                         @else
                                             <x-mary-badge value="Incorreta" class="badge-error badge-sm" />
                                         @endif
                                     </div>
-                                    <p class="text-sm text-gray-800 font-medium whitespace-pre-line">{{ $answer['answer'] }}</p>
+                                    <div class="px-4 py-3.5 {{ $answer['is_correct'] ? 'bg-green-50/60' : 'bg-red-50/60' }}">
+                                        <p data-delivery-answer
+                                            class="break-words text-base font-medium leading-relaxed text-gray-900 whitespace-pre-line">
+                                            {{ $answer['answer'] }}
+                                        </p>
+                                    </div>
                                 </div>
                             @else
-                                <div class="bg-gray-100 p-3 rounded mb-3">
-                                    <p class="text-xs uppercase tracking-wide text-gray-500 mb-1">Resposta do aluno</p>
-                                    <p class="text-sm text-gray-700 whitespace-pre-line">{{ $answer['answer'] }}</p>
+                                <div class="mt-4 overflow-hidden rounded-lg border border-gray-200">
+                                    <div class="bg-gray-100 px-4 py-2.5">
+                                        <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                            Resposta do aluno
+                                        </p>
+                                    </div>
+                                    <div class="bg-gray-50 px-4 py-3.5">
+                                        <p data-delivery-answer
+                                            class="break-words text-base leading-relaxed text-gray-800 whitespace-pre-line">
+                                            {{ $answer['answer'] }}
+                                        </p>
+                                    </div>
                                 </div>
                             @endif
 
-                            <div class="flex flex-col gap-1">
-                                <x-mary-textarea class="!outline-none" placeholder="Insira o feedback"
-                                    wire:model="feedbacks.{{ $answer['id'] }}" />
-                                @error("feedbacks.{$answer['id']}")
-                                    <span class="text-red-500 text-xs">{{ $message }}</span>
-                                @enderror
+                            <div class="mt-4 border-t border-gray-100 pt-4">
+                                <div class="flex flex-col gap-2">
+                                    <label for="delivery-feedback-{{ $answer['id'] }}"
+                                        class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                        Feedback da correção
+                                    </label>
+                                    <x-mary-textarea id="delivery-feedback-{{ $answer['id'] }}" rows="3"
+                                        class="!outline-none" placeholder="Write feedback"
+                                        wire:model="feedbacks.{{ $answer['id'] }}" />
+                                    @error("feedbacks.{$answer['id']}")
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
 
-                                <div class="flex justify-end gap-2 items-center">
-                                    <div class="flex flex-col" x-data="{ ...window.moneyMask }">
-                                        <x-mary-input class="!outline-none" placeholder="Nota da questão (ex: 8)"
-                                            inputmode="numeric"
-                                            wire:model="grades.{{ $answer['id'] }}"
-                                            x-on:input.capture="mask($event)" />
-                                        @error("grades.{$answer['id']}")
-                                            <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                        @enderror
+                                    <div class="flex justify-end gap-2 items-center">
+                                        @if ($isGraded)
+                                            <div class="flex flex-col" x-data="{ ...window.moneyMask }">
+                                                <x-mary-input class="!outline-none" placeholder="Nota da questão (ex: 8)"
+                                                    inputmode="numeric"
+                                                    wire:model="grades.{{ $answer['id'] }}"
+                                                    x-on:input.capture="mask($event)" />
+                                                @error("grades.{$answer['id']}")
+                                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        @endif
+                                        <button class="btn btn-sm bg-gray-200 mt-2 self-end"
+                                            x-on:click.prevent="$wire.sendFeedback('{{ $answer['id'] }}')">
+                                            Salvar correção
+                                        </button>
                                     </div>
-                                    <button class="btn btn-sm bg-gray-200 mt-2 self-end"
-                                        x-on:click.prevent="$wire.sendFeedback('{{ $answer['id'] }}')">
-                                        Salvar correção
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     @endforeach
 
-                    {{-- Nota final da atividade --}}
-                    <div class="border-t border-gray-200 pt-4" id="teacher-deliveries-final-grade">
-                        <h3 class="text-md font-semibold text-gray-800 mb-2">Nota final da atividade</h3>
-                        <div class="flex items-end gap-3">
-                            <div class="flex flex-col">
-                                <span class="text-xs text-gray-500 mb-1">
-                                    Soma das questões:
-                                    <strong>{{ $this->formatGrade($this->sumQuestionGrades()) }}</strong>
-                                    @if ($activityTotalValue !== null)
-                                        / {{ $this->formatGrade($activityTotalValue) }}
-                                    @endif
-                                </span>
-                                <x-mary-input label="Nota final" placeholder="Ex: 85" inputmode="numeric"
-                                    wire:model="finalGrade" class="!outline-none" />
-                                @error('finalGrade')
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                    @if ($isGraded)
+                        {{-- Nota final da atividade --}}
+                        <div class="border-t border-gray-200 pt-4" id="teacher-deliveries-final-grade">
+                            <h3 class="text-md font-semibold text-gray-800 mb-2">Nota final da atividade</h3>
+                            <div class="flex items-end gap-3">
+                                <div class="flex flex-col">
+                                    <span class="text-xs text-gray-500 mb-1">
+                                        Soma das questões:
+                                        <strong>{{ $this->formatGrade($this->sumQuestionGrades()) }}</strong>
+                                        @if ($activityTotalValue !== null)
+                                            / {{ $this->formatGrade($activityTotalValue) }}
+                                        @endif
+                                    </span>
+                                    <x-mary-input label="Nota final" placeholder="Ex: 85" inputmode="numeric"
+                                        wire:model="finalGrade" class="!outline-none" />
+                                    @error('finalGrade')
+                                        <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <x-mary-button label="Salvar nota final" class="btn-primary btn-sm mb-1"
+                                    wire:click="saveFinalGrade" spinner="saveFinalGrade" />
                             </div>
-                            <x-mary-button label="Salvar nota final" class="btn-primary btn-sm mb-1"
-                                wire:click="saveFinalGrade" spinner="saveFinalGrade" />
                         </div>
-                    </div>
+                    @endif
                 </div>
             @endif
         </div>

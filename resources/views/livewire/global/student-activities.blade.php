@@ -64,6 +64,11 @@
             <div
                 role="alert"
                 data-pending-activities-alert
+                data-pending-activities-count="{{ $loginPendingCount }}"
+                data-activity-id="{{ $loginPendingActivity['activity_id'] ?? '' }}"
+                data-discipline-id="{{ $loginPendingActivity['discipline_id'] ?? '' }}"
+                data-activity-title="{{ $loginPendingActivity['title'] ?? '' }}"
+                x-init="$nextTick(() => window.dispatchEvent(new CustomEvent('student-pending-activities-tour-start')))"
                 class="fixed bottom-24 right-5 z-[1000] w-[calc(100vw-2.5rem)] max-w-sm rounded-xl border border-red-200 border-l-4 border-l-red-500 bg-red-50 p-4 shadow-xl"
             >
                 <div class="flex items-start gap-3">
@@ -79,6 +84,7 @@
                             type="button"
                             wire:click="dismissLoginAlert"
                             @click="openModal()"
+                            data-pending-activities-open
                             class="mt-3 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700"
                         >
                             Ver atividades
@@ -87,6 +93,7 @@
                     <button
                         type="button"
                         wire:click="dismissLoginAlert"
+                        data-pending-activities-dismiss
                         class="btn btn-ghost btn-xs btn-circle text-red-700"
                         aria-label="Fechar alerta de atividades pendentes"
                     >

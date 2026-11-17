@@ -161,7 +161,7 @@ it('sinaliza atividades pendentes no login do aluno', function () {
 
 it('exibe alerta vermelho persistente para atividades disponíveis pendentes', function () {
     $teacher = Teacher::factory()->create();
-    [$discipline] = makeStudentActivitiesContext($teacher);
+    [$discipline, , $activit] = makeStudentActivitiesContext($teacher);
     $student = Student::factory()->create([
         'teacher_id' => $teacher->id,
         'discipline_id' => $discipline->id,
@@ -174,12 +174,21 @@ it('exibe alerta vermelho persistente para atividades disponíveis pendentes', f
     $component = Livewire::test(StudentActivities::class, ['studentId' => $student->id])
         ->assertSet('showLoginAlert', true)
         ->assertSet('loginPendingCount', 1)
+        ->assertSet('loginPendingActivity.activity_id', (string) $activit->id)
+        ->assertSet('loginPendingActivity.discipline_id', (string) $discipline->id)
         ->assertSee('Você tem 1 atividade pendente para enviar.')
         ->assertSeeHtml('data-pending-activities-alert')
+        ->assertSeeHtml('data-pending-activities-count="1"')
+        ->assertSeeHtml('data-activity-id="'.$activit->id.'"')
+        ->assertSeeHtml('data-discipline-id="'.$discipline->id.'"')
+        ->assertSeeHtml('data-pending-activities-open')
+        ->assertSeeHtml('data-pending-activities-dismiss')
+        ->assertSeeHtml("student-pending-activities-tour-start")
         ->assertSeeHtml('role="alert"')
         ->assertSeeHtml('bg-red-50')
         ->call('dismissLoginAlert')
         ->assertSet('showLoginAlert', false)
+        ->assertSet('loginPendingActivity', null)
         ->assertDontSeeHtml('data-pending-activities-alert');
 
     expect($component->instance()->loginPendingCount)->toBe(0);

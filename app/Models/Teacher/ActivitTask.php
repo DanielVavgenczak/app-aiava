@@ -47,6 +47,14 @@ class ActivitTask extends Model
     }
 
     /**
+     * Indica se a atividade possui sistema de notas habilitado.
+     */
+    public function isGraded(): bool
+    {
+        return (bool) $this->is_avaliative;
+    }
+
+    /**
      * Indica se a atividade está dentro da janela de disponibilidade.
      * Datas nulas significam sem restrição.
      */

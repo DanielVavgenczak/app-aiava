@@ -11,13 +11,13 @@ use App\Models\Teacher\Task;
 use App\Models\Teacher\Teacher;
 use Livewire\Livewire;
 
-function makeDeliveriesContext(Teacher $teacher): array
+function makeDeliveriesContext(Teacher $teacher, bool $graded = true): array
 {
     $discipline = Discipline::factory()->for($teacher)->create();
     $module = Module::factory()->create(['discipline_id' => $discipline->id]);
     $activit = ActivitTask::factory()->forDiscipline($discipline, $module, $teacher)->create([
-        'is_avaliative' => true,
-        'total_value' => 100,
+        'is_avaliative' => $graded,
+        'total_value' => $graded ? 100 : null,
     ]);
 
     return [$discipline, $activit];
@@ -31,7 +31,7 @@ function makeDeliveriesStudent(Teacher $teacher, Discipline $discipline): Studen
     ]);
 }
 
-it('lista apenas os alunos que entregaram a atividade', function () {
+it('monta a lista com entregas e alunos sem envio', function () {
     $teacher = Teacher::factory()->create();
     [$discipline, $activit] = makeDeliveriesContext($teacher);
     $task = Task::factory()->forActivitTask($activit)->create();
@@ -56,10 +56,14 @@ it('lista apenas os alunos que entregaram a atividade', function () {
 
     $students = collect($component->get('students'));
 
-    expect($students)->toHaveCount(2)
+    expect($students)->toHaveCount(3)
+        ->and($students->pluck('id')->unique())->toHaveCount(3)
         ->and($students->firstWhere('id', $entregou->id)['status'])->toBe('corrected')
+        ->and($students->firstWhere('id', $entregou->id)['delivered'])->toBeTrue()
         ->and($students->firstWhere('id', $pendente->id)['status'])->toBe('pending')
-        ->and($students->firstWhere('id', $semEntrega->id))->toBeNull();
+        ->and($students->firstWhere('id', $pendente->id)['delivered'])->toBeTrue()
+        ->and($students->firstWhere('id', $semEntrega->id)['delivered'])->toBeFalse()
+        ->and($students->firstWhere('id', $semEntrega->id)['status'])->toBe('pending');
 });
 
 it('exibe nome, turma, disciplina e botão abrir na listagem de entregas', function () {
@@ -90,6 +94,7 @@ it('exibe nome, turma, disciplina e botão abrir na listagem de entregas', funct
     $component = Livewire::test('pages::teacher.discipline.module.task.student-deliveries', ['activityId' => $activit->id])
         ->assertSee('Aluno Entregador')
         ->assertSee('Turma: Turma B')
+        ->assertSeeHtml('data-delivery-student-classe="Turma B"')
         ->assertSee('Disciplina: '.$discipline->title)
         ->assertSee('Abrir');
 
@@ -99,7 +104,7 @@ it('exibe nome, turma, disciplina e botão abrir na listagem de entregas', funct
         ->and($listed['delivered'])->toBeTrue();
 });
 
-it('não lista aluno que não entregou a atividade', function () {
+it('exibe aluno sem entrega apenas na aba Pendentes', function () {
     $teacher = Teacher::factory()->create();
     [$discipline, $activit] = makeDeliveriesContext($teacher);
 
@@ -115,7 +120,92 @@ it('não lista aluno que não entregou a atividade', function () {
         ->assertDontSee('Aluno Sem Entrega')
         ->assertSee('Nenhuma entrega');
 
-    expect($component->get('students'))->toBeEmpty();
+    expect($component->get('students'))->toHaveCount(1)
+        ->and($component->get('students.0.id'))->toBe($student->id)
+        ->and($component->get('students.0.delivered'))->toBeFalse();
+
+    $component->set('filter', 'pending')
+        ->assertSee('Aluno Sem Entrega')
+        ->assertSee('Pendente')
+        ->set('filter', 'corrected')
+        ->assertDontSee('Aluno Sem Entrega')
+        ->assertSee('Nenhuma entrega neste filtro.');
+});
+
+
+it('separa Todos, Pendentes e Corrigidas sem duplicar alunos', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit] = makeDeliveriesContext($teacher);
+    $task = Task::factory()->forActivitTask($activit)->create();
+
+    $emCorrecao = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+        'full_name' => 'Aluno Em Correcao',
+    ]);
+    $corrigido = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+        'full_name' => 'Aluno Corrigido',
+    ]);
+    $comNotaFinal = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+        'full_name' => 'Aluno Com Nota Final',
+    ]);
+    $semEntrega = Student::factory()->create([
+        'teacher_id' => $teacher->id,
+        'discipline_id' => $discipline->id,
+        'full_name' => 'Aluno Sem Envio',
+    ]);
+
+    StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $emCorrecao->id,
+        'corrected' => false,
+    ]);
+    StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $corrigido->id,
+        'corrected' => true,
+        'grade' => 70,
+    ]);
+    StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $comNotaFinal->id,
+        'corrected' => false,
+    ]);
+    ActivityGrade::create([
+        'activit_task_id' => $activit->id,
+        'student_id' => $comNotaFinal->id,
+        'teacher_id' => $teacher->id,
+        'final_grade' => 90,
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    $component = Livewire::test('pages::teacher.discipline.module.task.student-deliveries', ['activityId' => $activit->id]);
+
+    $html = $component->html();
+
+    expect(substr_count($html, 'data-delivery-student='))->toBe(3)
+        ->and($html)->toContain('data-delivery-student="'.$emCorrecao->id.'"')
+        ->and($html)->toContain('data-delivery-student="'.$corrigido->id.'"')
+        ->and($html)->toContain('data-delivery-student="'.$comNotaFinal->id.'"')
+        ->and($html)->not->toContain('data-delivery-student="'.$semEntrega->id.'"');
+
+    $pendingHtml = $component->set('filter', 'pending')->html();
+
+    expect(substr_count($pendingHtml, 'data-delivery-student='))->toBe(1)
+        ->and($pendingHtml)->toContain('data-delivery-student="'.$semEntrega->id.'"')
+        ->and($pendingHtml)->not->toContain('data-delivery-student="'.$emCorrecao->id.'"')
+        ->and($pendingHtml)->not->toContain('data-delivery-student="'.$corrigido->id.'"')
+        ->and($pendingHtml)->not->toContain('data-delivery-student="'.$comNotaFinal->id.'"');
+
+    $reviewedHtml = $component->set('filter', 'corrected')->html();
+
+    expect(substr_count($reviewedHtml, 'data-delivery-student='))->toBe(2)
+        ->and($reviewedHtml)->toContain('data-delivery-student="'.$corrigido->id.'"')
+        ->and($reviewedHtml)->toContain('data-delivery-student="'.$comNotaFinal->id.'"')
+        ->and($reviewedHtml)->not->toContain('data-delivery-student="'.$emCorrecao->id.'"')
+        ->and($reviewedHtml)->not->toContain('data-delivery-student="'.$semEntrega->id.'"');
 });
 
 
@@ -138,7 +228,13 @@ it('carrega as respostas do aluno selecionado', function () {
     Livewire::test('pages::teacher.discipline.module.task.student-deliveries', ['activityId' => $activit->id])
         ->dispatch('event-teacher-select-student', student_id: $student->id)
         ->assertSet('selectedStudentId', $student->id)
-        ->assertSee('Minha resposta completa');
+        ->assertSee('Questão 1')
+        ->assertSee('Explique o conceito')
+        ->assertSee('Resposta do aluno')
+        ->assertSee('Minha resposta completa')
+        ->assertSee('Feedback da correção')
+        ->assertSeeHtml('data-delivery-question')
+        ->assertSeeHtml('data-delivery-answer');
 });
 
 it('rejeita aluno de outra disciplina ao selecionar', function () {
@@ -172,9 +268,38 @@ it('corrige uma questão respeitando o teto de valor', function () {
         ->set("feedbacks.{$answer->id}", 'Feedback válido para o aluno')
         ->set("grades.{$answer->id}", '11')
         ->call('sendFeedback', $answer->id)
-        ->assertHasErrors("grades.{$answer->id}");
+        ->assertHasErrors("grades.{$answer->id}")
+        ->assertSet("feedbacks.{$answer->id}", 'Feedback válido para o aluno');
 
     expect($answer->fresh()->corrected)->toBeFalse();
+});
+
+it('usa o novo placeholder, limpa o feedback salvo e preserva em caso de erro', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit] = makeDeliveriesContext($teacher);
+    $task = Task::factory()->forActivitTask($activit)->create(['value' => 10]);
+    $student = makeDeliveriesStudent($teacher, $discipline);
+    $answer = StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $student->id,
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    $component = Livewire::test('pages::teacher.discipline.module.task.student-deliveries', ['activityId' => $activit->id])
+        ->dispatch('event-teacher-select-student', student_id: $student->id)
+        ->assertSee('Write feedback')
+        ->set("feedbacks.{$answer->id}", 'curto')
+        ->set("grades.{$answer->id}", '8')
+        ->call('sendFeedback', $answer->id)
+        ->assertHasErrors("feedbacks.{$answer->id}")
+        ->assertSet("feedbacks.{$answer->id}", 'curto')
+        ->set("feedbacks.{$answer->id}", 'Feedback válido para o aluno')
+        ->call('sendFeedback', $answer->id)
+        ->assertHasNoErrors()
+        ->assertSet("feedbacks.{$answer->id}", '');
+
+    expect($answer->fresh()->corrected)->toBeTrue()
+        ->and((float) $answer->fresh()->grade)->toBe(8.0);
 });
 
 it('salva a nota final da atividade do aluno', function () {
@@ -307,4 +432,37 @@ it('marca a resposta de multipla escolha como incorreta na correcao', function (
 
     $answer = collect($component->get('answers'))->first();
     expect($answer['is_correct'])->toBeFalse();
+});
+
+
+it('oculta notas ao corrigir atividade não avaliativa', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit] = makeDeliveriesContext($teacher, false);
+    $task = Task::factory()->forActivitTask($activit)->create(['value' => 10]);
+    $student = makeDeliveriesStudent($teacher, $discipline);
+    $answer = StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $student->id,
+    ]);
+
+    $this->actingAs($teacher, 'teacher');
+
+    $component = Livewire::test('pages::teacher.discipline.module.task.student-deliveries', ['activityId' => $activit->id])
+        ->dispatch('event-teacher-select-student', student_id: $student->id)
+        ->assertSet('isGraded', false)
+        ->assertSee('Write feedback')
+        ->assertDontSee('Nota da questão (ex: 8)')
+        ->assertDontSee('Nota final da atividade')
+        ->set("feedbacks.{$answer->id}", 'Feedback sem nota para o aluno')
+        ->set("grades.{$answer->id}", '9')
+        ->call('sendFeedback', $answer->id)
+        ->assertHasNoErrors();
+
+    $answer->refresh();
+
+    expect($answer->corrected)->toBeTrue()
+        ->and($answer->grade)->toBeNull();
+
+    $component->set('finalGrade', '9')->call('saveFinalGrade');
+
+    expect(ActivityGrade::count())->toBe(0);
 });
