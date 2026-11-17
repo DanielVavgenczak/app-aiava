@@ -266,6 +266,7 @@ it('pré-carrega a resposta existente ao reabrir a atividade', function () {
 it('trava questão já corrigida e não apaga nota ao reenviar', function () {
     $teacher = Teacher::factory()->create();
     [$discipline, $activit, $task] = makeSubmissionContext($teacher, 'text');
+    $activit->update(['is_avaliative' => true, 'total_value' => 100]);
     $student = makeSubmissionStudent($teacher, $discipline);
 
     $answer = StudentAnwser::create([
@@ -294,6 +295,7 @@ it('trava questão já corrigida e não apaga nota ao reenviar', function () {
 it('exibe nota e feedback do professor na atividade corrigida', function () {
     $teacher = Teacher::factory()->create();
     [$discipline, $activit, $task] = makeSubmissionContext($teacher, 'text');
+    $activit->update(['is_avaliative' => true, 'total_value' => 100]);
     $student = makeSubmissionStudent($teacher, $discipline);
 
     $answer = StudentAnwser::create([
@@ -428,4 +430,48 @@ it('aceita e recarrega resposta dissertativa igual a zero', function () {
     Livewire::test('pages::student.discipline.lesson.show-task-lesson')
         ->dispatch('student-event-open-task', id: $activit->id)
         ->assertSet("dissertativeAnswers.{$task->id}", '0');
+});
+
+
+it('informa atividade não avaliativa e oculta notas no drawer do aluno', function () {
+    $teacher = Teacher::factory()->create();
+    [$discipline, $activit, $task] = makeSubmissionContext($teacher, 'text');
+    $student = makeSubmissionStudent($teacher, $discipline);
+
+    $answer = StudentAnwser::create([
+        'task_id' => $task->id,
+        'student_id' => $student->id,
+        'activit_task_id' => $activit->id,
+        'answer_text' => 'Resposta corrigida',
+        'attempt_number' => 1,
+        'corrected' => true,
+        'grade' => 8,
+    ]);
+
+    QuestionFeedback::create([
+        'student_anwser_id' => $answer->id,
+        'task_id' => $task->id,
+        'student_id' => $student->id,
+        'teacher_id' => $teacher->id,
+        'feedback' => 'Feedback sem nota.',
+    ]);
+
+    ActivityGrade::create([
+        'activit_task_id' => $activit->id,
+        'student_id' => $student->id,
+        'teacher_id' => $teacher->id,
+        'final_grade' => 8,
+    ]);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test('pages::student.discipline.lesson.show-task-lesson')
+        ->dispatch('student-event-open-task', id: $activit->id)
+        ->assertSet('activityIsGraded', false)
+        ->assertSet('activityFinalGrade', null)
+        ->assertSee('Não avaliativa')
+        ->assertSee('Feedback sem nota.')
+        ->assertDontSee('Nota:')
+        ->assertDontSee('Nota final da atividade')
+        ->assertDontSeeHtml('data-student-activity-final-feedback');
 });

@@ -19,6 +19,8 @@ class StudentActivities extends Component
 
     public int $loginPendingCount = 0;
 
+    public ?array $loginPendingActivity = null;
+
     public function mount(?string $studentId = null): void
     {
         $studentId = $studentId ?? Auth::guard('student')->id();
@@ -27,8 +29,12 @@ class StudentActivities extends Component
         $this->showLoginAlert = (bool) session()->pull(self::LOGIN_ALERT_SESSION_KEY, false);
 
         if ($this->showLoginAlert) {
-            $this->loginPendingCount = $this->availablePendingQuery()->count();
-            $this->showLoginAlert = $this->loginPendingCount > 0;
+            $available = $this->availablePendingQuery()->latest()->get();
+            $this->loginPendingCount = $available->count();
+            $this->showLoginAlert = $available->isNotEmpty();
+            $this->loginPendingActivity = $this->showLoginAlert
+                ? $this->present($available->first())
+                : null;
         }
     }
 
@@ -36,6 +42,7 @@ class StudentActivities extends Component
     {
         $this->showLoginAlert = false;
         $this->loginPendingCount = 0;
+        $this->loginPendingActivity = null;
     }
 
     #[On('echo-private:notifications.{studentId},.activity.notification.updated')]

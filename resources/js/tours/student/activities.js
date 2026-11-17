@@ -6,13 +6,21 @@ import {
 } from "../utils.js";
 
 const TOUR_START_EVENT = "student-activities-tour-start";
+const PENDING_TOUR_START_EVENT = "student-pending-activities-tour-start";
 const MODAL_CLOSE_EVENT = "student-activities-close";
 const DISCIPLINE_INDEX_URL = "/aluno/disciplina";
 const AUTO_STEP_DESCRIPTION = "Interagindo com a ferramenta...";
 const CANCEL_SELECTOR = "[data-tour-cancel='student-activities']";
+const BACK_SELECTOR = "[data-tour-back='student-activities']";
+const PENDING_ALERT_SELECTOR = "[data-pending-activities-alert]";
+const PENDING_ALERT_DISMISS_SELECTOR = "[data-pending-activities-dismiss]";
+const PENDING_TOUR_CONTINUE_SELECTOR =
+    "[data-tour-pending='continue']";
+const PENDING_TOUR_DISMISS_SELECTOR = "[data-tour-pending='dismiss']";
 const STEP_HOLD_MS = 2000;
 
 let running = false;
+let pendingTourRunning = false;
 let pageBlocker = null;
 let keyboardBlocked = false;
 
@@ -35,6 +43,52 @@ function addCancelButton(popover) {
     if (popover.footer) {
         popover.footer.style.display = "flex";
     }
+}
+
+function addBackButton(popover) {
+    popover.nextButton?.remove();
+    popover.previousButton?.remove();
+    popover.progress?.remove();
+
+    const button = AddButtonActions(popover, "Voltar");
+    button.dataset.tourBack = "student-activities";
+
+    if (popover.footer) {
+        popover.footer.style.display = "flex";
+    }
+}
+
+function addNavigationActions(popover) {
+    addCancelButton(popover);
+    addBackButton(popover);
+}
+
+function addPendingTourActions(popover, primaryLabel, primaryAction) {
+    popover.nextButton?.remove();
+    popover.previousButton?.remove();
+    popover.progress?.remove();
+
+    const dismiss = AddButtonActions(popover, "Agora não");
+    dismiss.dataset.tourPending = "dismiss";
+
+    const primary = AddButtonActions(popover, primaryLabel);
+    primary.dataset.tourPending = primaryAction;
+
+    if (popover.footer) {
+        popover.footer.style.display = "flex";
+    }
+}
+
+function pendingAlertDescription(alert) {
+    const count = Number.parseInt(
+        alert.dataset.pendingActivitiesCount ?? "",
+        10,
+    );
+    const pendingLabel = Number.isFinite(count)
+        ? `${count} ${count === 1 ? "atividade pendente" : "atividades pendentes"}`
+        : "atividades pendentes";
+
+    return `Este alerta aparece após o login porque você tem ${pendingLabel} para enviar. Ao continuar, você vai direto para a atividade e recebe um tour para começar.`;
 }
 
 function blockKeyboard(event) {
@@ -177,6 +231,14 @@ function activityContext(row) {
     };
 }
 
+function pendingActivityContext(alert) {
+    return {
+        activityId: alert.dataset.activityId,
+        disciplineId: alert.dataset.disciplineId,
+        activityTitle: alert.dataset.activityTitle,
+    };
+}
+
 function currentDisciplineId() {
     const match = window.location.pathname.match(
         /^\/aluno\/disciplina\/([^/]+)\/?$/,
@@ -264,13 +326,14 @@ async function runSelectionStep(
 
     const onWindowClick = (event) => {
         const cancel = event.target.closest?.(CANCEL_SELECTOR);
+        const back = event.target.closest?.(BACK_SELECTOR);
         const row = event.target.closest?.(rowSelector);
 
-        if (cancel) {
+        if (cancel || back) {
             event.preventDefault();
             event.stopImmediatePropagation();
             selected = true;
-            resolveSelection(null);
+            resolveSelection(back ? "back" : null);
 
             return;
         }
@@ -307,7 +370,7 @@ async function runSelectionStep(
                     side: "left",
                     align: "center",
                     showButtons: [""],
-                    onPopoverRender: addCancelButton,
+                    onPopoverRender: addNavigationActions,
                 },
             },
         ],
@@ -390,6 +453,61 @@ async function runTabSelectionStep(tablist) {
     } catch {}
 
     return tab;
+}
+
+async function runUnavailableTabStep(element, description) {
+    let resolveAction;
+    let driver;
+
+    const selection = new Promise((resolve) => {
+        resolveAction = resolve;
+    });
+
+    const onWindowClick = (event) => {
+        const cancel = event.target.closest?.(CANCEL_SELECTOR);
+        const back = event.target.closest?.(BACK_SELECTOR);
+
+        if (cancel || back) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            resolveAction(back ? "back" : null);
+
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    };
+
+    window.addEventListener("click", onWindowClick, true);
+
+    driver = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element,
+                allowKeyboardControl: false,
+                popover: {
+                    description,
+                    side: "left",
+                    align: "center",
+                    showButtons: [""],
+                    onPopoverRender: addNavigationActions,
+                },
+            },
+        ],
+    });
+
+    driver.drive();
+
+    const action = await selection;
+    window.removeEventListener("click", onWindowClick, true);
+
+    try {
+        await driver.destroy();
+    } catch {}
+
+    return action;
 }
 
 async function ensureActivityVisible(activityId) {
@@ -646,30 +764,71 @@ async function openReviewedActivityFlow(context) {
     await openReviewedResult(context);
 }
 
-async function runActivityTabFlow({
-    listSelector,
-    rowSelector,
-    description,
-    openFlow,
-}) {
-    const list = await tryWaitFor(listSelector, 4000);
-    const rows = list ? Array.from(list.querySelectorAll(rowSelector)) : [];
+function tabFlowConfig(tab) {
+    if (tab.dataset.activitiesTab === "reviewed") {
+        return {
+            listSelector: "#student-activities-reviewed-list",
+            rowSelector: "[data-student-reviewed-activity-id]",
+            description:
+                "Escolha a atividade corrigida que deseja ver primeiro.",
+            emptyDescription:
+                "Nenhuma atividade corrigida disponível. Escolha outra aba ou cancele o tour.",
+            openFlow: openReviewedActivityFlow,
+        };
+    }
 
-    if (rows.length === 0) return;
+    return {
+        listSelector: "#student-activities-list",
+        rowSelector: "[data-student-activity-id]",
+        description: "Escolha a atividade que deseja abrir primeiro.",
+        emptyDescription:
+            "Nenhuma atividade pendente disponível. Escolha outra aba ou cancele o tour.",
+        openFlow: openActivityFlow,
+    };
+}
+
+async function runActivityTabFlow(tab) {
+    const config = tabFlowConfig(tab);
+    const list = await tryWaitFor(config.listSelector, 4000);
+    const rows = list
+        ? Array.from(list.querySelectorAll(config.rowSelector))
+        : [];
+
+    if (rows.length === 0) {
+        const element =
+            list ??
+            tab.closest('[role="tablist"]') ??
+            tab;
+
+        const action = await runUnavailableTabStep(
+            element,
+            config.emptyDescription,
+        );
+
+        if (action === "back") return "back";
+
+        closeActivitiesModal();
+
+        return "cancelled";
+    }
 
     const context =
         rows.length === 1
             ? { ...activityContext(rows[0]), row: rows[0] }
-            : await runSelectionStep(list, rowSelector, description);
+            : await runSelectionStep(
+                  list,
+                  config.rowSelector,
+                  config.description,
+              );
+
+    if (context === "back") return "back";
 
     if (!context) {
         closeActivitiesModal();
-        return;
+        return "cancelled";
     }
 
-    if (!context.activityId || !context.disciplineId) {
-        return;
-    }
+    if (!context.activityId || !context.disciplineId) return "back";
 
     if (rows.length > 1) {
         context.row.scrollIntoView({
@@ -686,11 +845,156 @@ async function runActivityTabFlow({
     }
 
     lockPage();
-    await openFlow(context);
+    await config.openFlow(context);
+
+    return "completed";
+}
+
+async function runPendingAlertStep(
+    element,
+    description,
+    primaryLabel,
+    primaryAction,
+) {
+    let settled = false;
+    let resolveAction;
+    let driver;
+
+    const selection = new Promise((resolve) => {
+        resolveAction = resolve;
+    });
+
+    const finish = (action) => {
+        if (settled) return;
+
+        settled = true;
+        resolveAction(action);
+    };
+
+    const onWindowClick = (event) => {
+        const continueButton = event.target.closest?.(
+            PENDING_TOUR_CONTINUE_SELECTOR,
+        );
+        const dismissButton = event.target.closest?.(
+            PENDING_TOUR_DISMISS_SELECTOR,
+        );
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        if (continueButton) {
+            finish("continue");
+
+            return;
+        }
+
+        if (dismissButton) {
+            finish("dismiss");
+        }
+    };
+
+    window.addEventListener("click", onWindowClick, true);
+
+    driver = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element,
+                allowKeyboardControl: false,
+                popover: {
+                    description,
+                    side: "left",
+                    align: "center",
+                    showButtons: [""],
+                    onPopoverRender: (popover) =>
+                        addPendingTourActions(
+                            popover,
+                            primaryLabel,
+                            primaryAction,
+                        ),
+                },
+            },
+        ],
+    });
+
+    driver.drive();
+
+    const action = await selection;
+    window.removeEventListener("click", onWindowClick, true);
+
+    try {
+        await driver.destroy();
+    } catch {}
+
+    return action;
+}
+
+async function runDirectActivityTour(alert, context) {
+    const tourStore = store();
+    running = true;
+    tourStore.openMai = false;
+    tourStore.isTourActive = true;
+
+    try {
+        guardWindowOpen();
+
+        const dismissButton = alert.querySelector(
+            PENDING_ALERT_DISMISS_SELECTOR,
+        );
+
+        if (dismissButton) {
+            clickWithFocusTrapsDisabled(dismissButton);
+        }
+
+        await openActivityFlow(context);
+    } finally {
+        restoreWindowOpen();
+        unlockPage();
+        tourStore.isTourActive = false;
+        running = false;
+    }
+}
+
+export async function StartTourStudentPendingActivities() {
+    if (running || pendingTourRunning) return;
+
+    const tourStore = store();
+
+    if (tourStore.isTourActive || tourStore.openMai) return;
+
+    const alert = await tryWaitFor(PENDING_ALERT_SELECTOR, 4000);
+
+    if (!alert || alert.dataset.pendingTourStarted === "true") return;
+
+    alert.dataset.pendingTourStarted = "true";
+    pendingTourRunning = true;
+    tourStore.openMai = false;
+    tourStore.isTourActive = true;
+
+    try {
+        const firstAction = await runPendingAlertStep(
+            alert,
+            pendingAlertDescription(alert),
+            "Continuar",
+            "continue",
+        );
+
+        if (firstAction !== "continue") return;
+
+        const context = pendingActivityContext(alert);
+
+        if (!context.activityId || !context.disciplineId) return;
+
+        await runDirectActivityTour(alert, context);
+    } catch (error) {
+        console.error("Erro no tour do alerta de atividades pendentes:", error);
+    } finally {
+        pendingTourRunning = false;
+        tourStore.isTourActive = false;
+    }
 }
 
 export async function StartTourStudentActivities() {
-    if (running) return;
+    if (running || pendingTourRunning) return;
 
     const pendingTab = await tryWaitFor(
         "#student-activities-tab-pending",
@@ -708,33 +1012,25 @@ export async function StartTourStudentActivities() {
     try {
         guardWindowOpen();
 
-        const selectedTab = await runTabSelectionStep(tablist);
+        let selectedTab = await runTabSelectionStep(tablist);
 
-        if (!selectedTab) {
-            closeActivitiesModal();
-            return;
+        while (selectedTab) {
+            selectedTab.click();
+            await sleep(250);
+
+            const outcome = await runActivityTabFlow(selectedTab);
+
+            if (outcome === "completed") return;
+
+            if (outcome === "cancelled") {
+                closeActivitiesModal();
+                return;
+            }
+
+            selectedTab = await runTabSelectionStep(tablist);
         }
 
-        selectedTab.click();
-        await sleep(250);
-
-        if (selectedTab.dataset.activitiesTab === "reviewed") {
-            await runActivityTabFlow({
-                listSelector: "#student-activities-reviewed-list",
-                rowSelector: "[data-student-reviewed-activity-id]",
-                description:
-                    "Escolha a atividade corrigida que deseja ver primeiro.",
-                openFlow: openReviewedActivityFlow,
-            });
-        } else {
-            await runActivityTabFlow({
-                listSelector: "#student-activities-list",
-                rowSelector: "[data-student-activity-id]",
-                description:
-                    "Escolha a atividade que deseja abrir primeiro.",
-                openFlow: openActivityFlow,
-            });
-        }
+        closeActivitiesModal();
     } catch (error) {
         console.error("Erro no tour de atividades do aluno:", error);
     } finally {
@@ -747,4 +1043,8 @@ export async function StartTourStudentActivities() {
 
 window.addEventListener(TOUR_START_EVENT, () => {
     StartTourStudentActivities();
+});
+
+window.addEventListener(PENDING_TOUR_START_EVENT, () => {
+    StartTourStudentPendingActivities();
 });

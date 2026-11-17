@@ -14,6 +14,7 @@ new class extends Component {
     public ?string $moduleTitle = null;
     public ?string $activityTotalValue = null;
     public ?string $activityDeadline = null;
+    public bool $activityIsGraded = false;
     public ?string $activityFinalGrade = null;
     public ?string $activityFinalFeedback = null;
     // Estrutura pública segura: id/question/type/options(id,text) — sem o gabarito.
@@ -78,7 +79,8 @@ new class extends Component {
             ->where('student_id', $student->id)
             ->first();
 
-        $this->activityFinalGrade = $finalGrade?->final_grade !== null
+        $this->activityIsGraded = $activitask->isGraded();
+        $this->activityFinalGrade = $activitask->isGraded() && $finalGrade?->final_grade !== null
             ? ActivityValue::format($finalGrade->final_grade)
             : null;
         $this->activityFinalFeedback = $finalGrade?->feedback;
@@ -87,7 +89,7 @@ new class extends Component {
         $this->activit_task_id = $activitask->id;
         $this->activityTitle = $this->displayTitle($activitask);
         $this->moduleTitle = $activitask->module?->title;
-        $this->activityTotalValue = $activitask->is_avaliative && $activitask->total_value !== null
+        $this->activityTotalValue = $activitask->isGraded() && $activitask->total_value !== null
             ? ActivityValue::format($activitask->total_value)
             : null;
         $this->activityDeadline = $activitask->end?->format('d/m/Y H:i');
@@ -318,6 +320,7 @@ new class extends Component {
             'moduleTitle',
             'activityTotalValue',
             'activityDeadline',
+            'activityIsGraded',
             'activityFinalGrade',
             'activityFinalFeedback',
             'tasks',
@@ -394,6 +397,12 @@ new class extends Component {
                             <x-mary-icon name="o-academic-cap" class="h-3.5 w-3.5" />
                             {{ $activityTotalValue }} pts
                         </span>
+                    @elseif (! $activityIsGraded)
+                        <span data-student-activity-not-graded
+                            class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-800">
+                            <x-mary-icon name="o-information-circle" class="h-3.5 w-3.5" />
+                            Não avaliativa
+                        </span>
                     @endif
                     @if ($activityDeadline)
                         <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 font-medium text-gray-600">
@@ -416,6 +425,8 @@ new class extends Component {
                                 @if ($activityFinalGrade !== null)
                                     <x-mary-badge value="Nota: {{ $activityFinalGrade }}"
                                         class="badge-success badge-sm" />
+                                @elseif (! $activityIsGraded)
+                                    <x-mary-badge value="Não avaliativa" class="badge-warning badge-sm" />
                                 @endif
                             </div>
                             @if (filled($activityFinalFeedback))
@@ -527,9 +538,11 @@ new class extends Component {
                                             <x-mary-icon name="o-check-badge" class="h-4 w-4" />
                                             Correção do professor
                                         </p>
-                                        @if ($task['corrected'])
+                                        @if ($activityIsGraded && $task['corrected'])
                                             <x-mary-badge value="Nota: {{ $task['grade'] ?? '—' }}"
                                                 class="badge-success badge-sm" />
+                                        @elseif (! $activityIsGraded && $task['corrected'])
+                                            <x-mary-badge value="Corrigida" class="badge-success badge-sm" />
                                         @endif
                                     </div>
                                     @if (filled($task['feedback']))

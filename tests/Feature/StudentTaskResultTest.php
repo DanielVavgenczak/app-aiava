@@ -11,13 +11,15 @@ use App\Models\Teacher\Task;
 use App\Models\Teacher\Teacher;
 use Livewire\Livewire;
 
-function makeResultContext(Teacher $teacher, Discipline $discipline): array
+function makeResultContext(Teacher $teacher, Discipline $discipline, bool $graded = true): array
 {
     $module = Module::factory()->create(['discipline_id' => $discipline->id]);
     $activit = ActivitTask::factory()->create([
         'teacher_id' => $teacher->id,
         'discipline_id' => $discipline->id,
         'module_id' => $module->id,
+        'is_avaliative' => $graded,
+        'total_value' => $graded ? 100 : null,
     ]);
     $task = Task::factory()->forActivitTask($activit)->create([
         'type' => 'text',
@@ -164,4 +166,45 @@ it('mostra a nota final da atividade ao aluno', function () {
         ->assertSee('Feedback final do professor')
         ->assertSee('Excelente desempenho na atividade.')
         ->assertSee('92');
+});
+
+
+it('informa que a atividade não é avaliativa e oculta notas', function () {
+    $teacher = Teacher::factory()->create();
+    $discipline = Discipline::factory()->for($teacher)->create();
+    [$activit, $task] = makeResultContext($teacher, $discipline, false);
+    $student = makeResultStudent($teacher, $discipline);
+
+    $answer = StudentAnwser::factory()->forTask($task, $activit)->create([
+        'student_id' => $student->id,
+        'corrected' => true,
+        'grade' => 85,
+    ]);
+
+    QuestionFeedback::create([
+        'student_anwser_id' => $answer->id,
+        'task_id' => $task->id,
+        'student_id' => $student->id,
+        'teacher_id' => $teacher->id,
+        'feedback' => 'Feedback sem nota.',
+    ]);
+
+    \App\Models\Teacher\ActivityGrade::create([
+        'activit_task_id' => $activit->id,
+        'student_id' => $student->id,
+        'teacher_id' => $teacher->id,
+        'final_grade' => 92,
+    ]);
+
+    $this->actingAs($student, 'student');
+
+    Livewire::test('pages::student.discipline.lesson.task-result')
+        ->dispatch('student-event-open-task-result', id: $activit->id)
+        ->assertSet('isGraded', false)
+        ->assertSet('finalGrade', null)
+        ->assertSee('Esta atividade não é avaliativa e não possui nota.')
+        ->assertSee('Feedback sem nota.')
+        ->assertDontSee('Nota final da atividade')
+        ->assertDontSee('Nota:')
+        ->assertDontSeeHtml('student-result-final-grade');
 });
