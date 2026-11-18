@@ -468,11 +468,11 @@ new #[Layout(name: 'layouts::student')] class extends Component
             </div>
             <div class="flex items-center gap-3 p-4 bg-gray-100">
                 <x-mary-button
-                    class="font-medium text-pink-600 border-[1px] border-pink-600 btn hover:bg-pink-600 hover:text-gray-100"
-                    label="Como usar o chat" x-on:click="$store.tourguide.start('StartTourStudentMessages')" />
+                    class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-100"
+                    label="Iniciar uma conversa" x-on:click="$store.tourguide.start('StartTourInitChatInClasse')" />
             </div>
         </div>
-        <img src="{{ asset('images/ai-sos.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48">
     </div>
 </div>
 

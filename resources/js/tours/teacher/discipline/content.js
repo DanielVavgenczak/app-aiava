@@ -1,31 +1,29 @@
-import { AddButtonActions, configDriver } from "../../utils";
-import { ContinueUploadBlock } from "./lesson";
-export { StartEditLesson, StartDeleteLesson } from "./lesson";
+import { AddButtonActions, configDriver, sleep } from "../../utils.js";
+import { ContinueUploadBlock } from "./lesson.js";
+export { StartEditLesson, StartDeleteLesson } from "./lesson.js";
 export {
   StartTourManageActivityTask,
   StartTourActivityDeliveries,
   StartTourEditActivityTask,
-} from "./task";
+} from "./task.js";
 
 // aqu
 Livewire.on("continue-created-content", async (event) => {
+  if (!event?.continue) {
+    return;
+  }
+
   try {
-    if (!event?.continue) {
+    await sleep(2000);
+    const created = await StartTourDisciplineCreateContent(true);
+    if (!created) {
       return;
     }
-    await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    await StartTourDisciplineCreateContent(true);
+    await sleep(2000);
+    await StartTourDisciplineCreateContentUploadBlock();
   } catch (e) {
     console.error("Erro ao continuar o tour de criação de conteúdo:", e);
-  } finally {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await StartTourDisciplineCreateContentUploadBlock();
-
-    } catch (uploadErr) {
-      console.error("Erro ao iniciar bloco de upload:", uploadErr);
-    }
   }
 });
 
@@ -41,6 +39,8 @@ export async function StartTourDisciplineCreateContent(skipUpload = false) {
     let disciplineID = null;
     const btnCreateLesson = document.querySelector(`#content-lesson-create`);
     if (!btnCreateLesson) {
+      store.openMai = true;
+      resolve(false);
       return;
     }
     const driverObj = drivertour({
@@ -73,7 +73,7 @@ export async function StartTourDisciplineCreateContent(skipUpload = false) {
                 `input.lesson-input-title`,
               )
               if (title.value.trim() === "") {
-                alert("por favor preencha o campo título");
+                alert("Por favor, preencha o campo título.");
                 return;
               }
               // await driverObj.moveNext();
@@ -98,28 +98,35 @@ export async function StartTourDisciplineCreateContent(skipUpload = false) {
             },
           },
           onHighlighted: async (el) => {
-            const toCloseActions = () => {
-              Livewire.dispatch("open-modal-module", {
+            const closeActions = async () => {
+              Livewire.dispatch("tour-teacher::close-modal-new-lesson", {
                 open: false,
               });
-              store.openMai = false;
-              driverObj.destroy();
+              store.openMai = true;
+              resolve(false);
+              await driverObj.destroy();
             };
+
             const btnCancel = el.querySelector(`#module-input-cancel`);
             const btnCreate = el.querySelector(`#module-input-create`);
 
-            btnCancel.addEventListener("click", toCloseActions);
-            btnCreate.addEventListener("click", async () => {
-               await new Promise((resolve) => setTimeout(resolve, 1000));
+            if (!btnCancel || !btnCreate) {
+              resolve(false);
+              await closeActions();
+              return;
+            }
+
+            btnCancel.onclick = closeActions;
+            btnCreate.onclick = async () => {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
               const errorTitle = document.querySelector("#title_module_error");
-                await new Promise((resolve) => setTimeout(resolve, 500));
-                if(errorTitle && errorTitle.textContent.trim() !== ""){
-                    alert("Aviso: Você ja possue uma aula com esse nome.");
-                    return;
-                }
-              Livewire.dispatch("to-teste-register", {
-                open: false,
-              });
+              await new Promise((resolve) => setTimeout(resolve, 500));
+
+              if (errorTitle && errorTitle.textContent.trim() !== "") {
+                alert(errorTitle.textContent.trim());
+                return;
+              }
+
               store.openMai = false;
               resolve(true);
               await driverObj.destroy();
@@ -127,7 +134,7 @@ export async function StartTourDisciplineCreateContent(skipUpload = false) {
                 await new Promise((resolve) => setTimeout(resolve, 1000));
                 await StartTourDisciplineCreateContentUploadBlock();
               }
-            });
+            };
           },
         },
       ],
@@ -163,15 +170,15 @@ export async function StartTourDisciplineCreateContentUploadBlock(lesson_id = nu
       await waitForModuleCards();
     } catch (e) {
       console.error("Module cards não encontrados:", e);
+      resolve(false);
       return;
     }
 
     const modules = document.querySelectorAll("div.module-card");
     const lastLessonRegisted = modules[modules.length - 1].getAttribute("data-tour");
-    let moduleText = `Vamos adicionar um bloco à aula criada`
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await ContinueUploadBlock(null, lastLessonRegisted);
-    return;
+    resolve(true);
   });
 }
 

@@ -3,7 +3,7 @@ import {
     addTourFinishButton,
     waitForElement,
     sleep,
-} from "../../utils";
+} from "../../utils.js";
 
 const store = Alpine.store("tourguide");
 

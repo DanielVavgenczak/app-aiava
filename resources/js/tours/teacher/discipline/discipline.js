@@ -1,142 +1,178 @@
-import { AddButtonActions, configDriver } from "../../utils";
+import { AddButtonActions, configDriver, waitForElement } from "../../utils.js";
 const store =  Alpine.store("tourguide");
 
 export async function StartTourCreateDiscipline() {
     store.openMai = false;
     const newDisciplineButton = document.querySelector("button#discipline-create");
-    if(!newDisciplineButton){
+    if (!newDisciplineButton) {
+        store.openMai = true;
         return;
     }
-    const driverObj = drivertour({
-        ...configDriver,
-        steps: [
-            {
-                element: `#${newDisciplineButton.id}`,
-                popover: {
-                    // description: `Vou clicar no botão "+ Disciplina"`,
-                    description: `Interagindo com a ferramenta...`,
-                    showButtons: [""],
-                },
-                onHighlighted: async (el) => {
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    if (!newDisciplineButton) {
-                        return;
-                    }
-                    newDisciplineButton.click();
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    await driverObj.moveNext();
-                },
-            },
-            {
-                element: `#discipline-input-title`,
-                popover: {
-                    description: "Digite o nome da disciplina, e clique em 'Registrar'",
-                    onPopoverRender: (popover, { config, state }) => {
-                        // refatorar
-                        const nextBtn = popover.nextButton;
-                        const prevBtn = popover.previousButton;
-                        if (nextBtn) nextBtn.remove();  // remove do DOM
-                        if (prevBtn) prevBtn.remove();
-                        const actions = AddButtonActions(
-                            popover,
-                            "Cancelar operação",
-                        );
-                        actions.addEventListener("click", async () => {
-                            Livewire.dispatch("close-create-with-tour");
-                            await driverObj.destroy();
-                            store.openMai = true;
-                        });
+
+    let createdDisciplineId = null;
+    const offDisciplineCreated = Livewire.on(
+        "discipline-send-id-tour",
+        (event) => {
+            createdDisciplineId = event?.discipline_id ?? event?.disciplineId ?? null;
+        },
+    );
+
+    try {
+        const driverObj = drivertour({
+            ...configDriver,
+            steps: [
+                {
+                    element: `#${newDisciplineButton.id}`,
+                    popover: {
+                        description: `Interagindo com a ferramenta...`,
+                        showButtons: [""],
+                    },
+                    onHighlighted: async () => {
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        newDisciplineButton.click();
+                        await new Promise((resolve) => setTimeout(resolve, 1000));
+                        await driverObj.moveNext();
                     },
                 },
-                onHighlighted: async (el) => {
-                    await new Promise((resolve) => setTimeout(resolve, 500));
-                    const btnCancel = el.querySelector("#create-cancel");
-                    const btnCreate = el.querySelector("#create-confirm");
-                    let disciplineIdToManager = null;
-                    if (!btnCancel || !btnCreate) {
-                        return;
-                    }
-                    btnCancel.addEventListener("click", async () => {
-                        await Livewire.dispatch("discipline-close-modal-create");
-                        await driverObj.destroy();
-                        store.openMai = true;
-                    });
+                {
+                    element: `#discipline-input-title`,
+                    popover: {
+                        description: "Digite o nome da disciplina, e clique em 'Registrar'",
+                        onPopoverRender: (popover) => {
+                            popover.previousButton?.remove();
+                            popover.nextButton?.remove();
+                            const actions = AddButtonActions(
+                                popover,
+                                "Cancelar operação",
+                            );
+                            actions.addEventListener("click", async () => {
+                                Livewire.dispatch("close-create-with-tour");
+                                await driverObj.destroy();
+                                store.openMai = true;
+                            });
+                        },
+                    },
+                    onHighlighted: async (el) => {
+                        await new Promise((resolve) => setTimeout(resolve, 500));
+                        const btnCancel =
+                            el.querySelector("#create-cancel button") ??
+                            el.querySelector("#create-cancel");
+                        const btnCreate =
+                            el.querySelector("#create-confirm button") ??
+                            el.querySelector("#create-confirm");
 
-                    btnCreate.addEventListener("click", async () => {
-                        await new Promise((resolve) => setTimeout(resolve, 500));
-                        const errorTitle = document.querySelector("#title_discipline_error");
-                        await new Promise((resolve) => setTimeout(resolve, 500));
-                        /** Resolução temporaria até recriarmos */
-                        if(errorTitle && errorTitle.textContent.trim() !== ""){
-                            alert("Erro: Você ja possue uma disciplina com esse titulo.");
+                        if (!btnCancel || !btnCreate) {
+                            await driverObj.destroy();
+                            store.openMai = true;
                             return;
                         }
-                        await new Promise((resolve) => setTimeout(resolve, 500));
-                        /** para fechar o model  */
-                        Livewire.dispatch("discipline-close-modal-create");
-                        await driverObj.destroy();
-                        store.openMai = false;
 
-                        await new Promise((resolve) => setTimeout(resolve, 1500));
+                        btnCancel.onclick = async () => {
+                            Livewire.dispatch("discipline-close-modal-create");
+                            await driverObj.destroy();
+                            store.openMai = true;
+                        };
 
-                        const disciplinesAfterCount = document.querySelectorAll("div.discipline-card");
-                        const lastRegisted = disciplinesAfterCount[0];
-                        if(!lastRegisted) return;
-                        const dataId = lastRegisted.getAttribute("data-tour");
+                        btnCreate.onclick = async () => {
+                            await new Promise((resolve) => setTimeout(resolve, 500));
+                            const errorTitle = document.querySelector(
+                                "#title_discipline_error",
+                            );
 
-                        // Cria uma Promise que resolve quando o evento for recebido
-                        disciplineIdToManager = dataId;
+                            if (errorTitle && errorTitle.textContent.trim() !== "") {
+                                alert(errorTitle.textContent.trim());
+                                return;
+                            }
 
-                        await new Promise((resolve) => setTimeout(resolve, 1500));
+                            Livewire.dispatch("discipline-close-modal-create");
+                            await driverObj.destroy();
+                            await new Promise((resolve) => setTimeout(resolve, 1500));
 
-                        let updatedDriverObj;
-                        const continueStepe = [
-                            {
-                                element: `#discipline-${disciplineIdToManager}`,
-                                popover: {
-                                    description: `Agora vamos adicionar conteúdo a essa disciplina`,
-                                    side: "bottom",
-                                    align: "start",
-                                    showButtons:['']
+                            const disciplineId =
+                                createdDisciplineId ??
+                                document
+                                    .querySelector("div.discipline-card")
+                                    ?.getAttribute("data-tour");
+                            const card = disciplineId
+                                ? document.getElementById(`discipline-${disciplineId}`)
+                                : document.querySelector("div.discipline-card");
+
+                            if (!card) {
+                                store.openMai = true;
+                                return;
+                            }
+
+                            card.style.zIndex = "200000000";
+
+                            let updatedDriverObj;
+                            const continueSteps = [
+                                {
+                                    element: `#${card.id}`,
+                                    popover: {
+                                        description: `Agora vamos adicionar conteúdo a essa disciplina`,
+                                        side: "bottom",
+                                        align: "start",
+                                        showButtons: [""],
+                                    },
+                                    onHighlighted: async () => {
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, 3000),
+                                        );
+                                        await updatedDriverObj.moveNext();
+                                    },
                                 },
-                                onHighlighted: async (el) => {
-                                    await new Promise((resolve) => setTimeout(resolve, 3000));
-                                    await driverObj.moveNext();
-                                }
-                            },
-                            {
-                                element: `#discipline-manager-content-${disciplineIdToManager}`,
-                                popover: {
-                                    description: `Interagindo com a ferramenta...`,
-                                    side: "bottom",
-                                    align: "start",
-                                    showButtons:['']
-                                },
-                                onHighlighted: async (el) => {
-                                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                                    el.click();
-                                    await updatedDriverObj.destroy()
-                                    store.continueTour = true;
-                                    Livewire.dispatch('continue-created-content', {continue:true});
-                                }
-                            },
-                        ];
-                        updatedDriverObj = drivertour({
-                            ...configDriver,
-                            steps: continueStepe,
-                        });
-                        await updatedDriverObj.drive();
+                                {
+                                    element: `#discipline-manager-content-${card.getAttribute("data-tour")}`,
+                                    popover: {
+                                        description: `Interagindo com a ferramenta...`,
+                                        side: "bottom",
+                                        align: "start",
+                                        showButtons: [""],
+                                    },
+                                    onHighlighted: async (el) => {
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, 1000),
+                                        );
+                                        el.click();
 
-                        Livewire.on('discipline-send-id-tour', async (event) => {
-                            disciplineIdToManager = event.discipline_id;
-                            store.disciplineId = event.discipline_id;
-                        });
-                    });
+                                        try {
+                                            await waitForElement(
+                                                `#content-lesson-create`,
+                                                { timeout: 10000 },
+                                            );
+                                        } catch (error) {
+                                            console.error(
+                                                "Página de conteúdo não carregou a tempo:",
+                                                error,
+                                            );
+                                            await updatedDriverObj.destroy();
+                                            store.openMai = true;
+                                            return;
+                                        }
+
+                                        Livewire.dispatch("continue-created-content", {
+                                            continue: true,
+                                        });
+                                        await updatedDriverObj.destroy();
+                                    },
+                                },
+                            ];
+
+                            updatedDriverObj = drivertour({
+                                ...configDriver,
+                                steps: continueSteps,
+                            });
+                            await updatedDriverObj.drive();
+                        };
+                    },
                 },
-            },
-        ],
-    });
-    return await driverObj.drive();
+            ],
+        });
+
+        return await driverObj.drive();
+    } finally {
+        offDisciplineCreated();
+    }
 }
 /** Tour to edit disciplines */
 export async function StartTourEditDiscipline() {
@@ -178,6 +214,7 @@ export async function StartTourEditDiscipline() {
 
                             await driverObj.destroy();
 
+                            let updatedDriverObj;
                             const secondStep = [
                                 {
                                     element: `#${disciplineId}`,
@@ -191,7 +228,7 @@ export async function StartTourEditDiscipline() {
                                         document.activeElement?.blur();
                                         await new Promise((resolve) => setTimeout(resolve, 3000));
                                         el.style.zIndex = "0";
-                                        await driverObj.moveNext();
+                                        await updatedDriverObj.moveNext();
                                     }
                                 },
                                 {
@@ -208,7 +245,7 @@ export async function StartTourEditDiscipline() {
                                         if(!dropDownClick) return;
                                         await dropDownClick.click()
                                         el.style.zIndex = "0";
-                                        await driverObj.moveNext();
+                                        await updatedDriverObj.moveNext();
                                     }
                                 },
                                 {
@@ -226,7 +263,7 @@ export async function StartTourEditDiscipline() {
                                         while (!document.querySelector('dialog.modal[open]') && Date.now() - pollStart < 5000) {
                                             await new Promise(r => setTimeout(r, 100));
                                         }
-                                        await driverObj.moveNext();
+                                        await updatedDriverObj.moveNext();
                                     }
                                 },
                                 {
@@ -241,8 +278,8 @@ export async function StartTourEditDiscipline() {
                                             const actions =  AddButtonActions(popover, "Cancelar operação")
                                             actions.addEventListener('click', async () => {
                                                 Livewire.dispatch('to-close')
-                                                await driverObj.destroy();
-                                                store.openMai = false;
+                                                await updatedDriverObj.destroy();
+                                                store.openMai = true;
                                             })
                                         }
                                     },
@@ -252,16 +289,17 @@ export async function StartTourEditDiscipline() {
                                         const cancelButton = el.querySelector(`#discipline-edit-cancel-${dataId}`)
                                         const save = el.querySelector(`#discipline-edit-form-send-${dataId}`)
                                         const close =  async () => {
-                                            await driverObj.destroy();
-                                            store.openMai = false;
+                                            Livewire.dispatch('to-close')
+                                            await updatedDriverObj.destroy();
+                                            store.openMai = true;
                                         }
-                                        cancelButton.addEventListener('click', close)
-                                        save.addEventListener('click', close)
+                                        cancelButton?.addEventListener('click', close)
+                                        save?.addEventListener('click', close)
                                     }
                                 }
                             ];
 
-                            const updatedDriverObj = drivertour({
+                            updatedDriverObj = drivertour({
                                 ...configDriver,
                                 steps: secondStep,
                             });
@@ -337,6 +375,7 @@ export async function StartTourDeleteDiscipline() {
 
                             await driverObj.destroy();
 
+                            let updatedDriverObj;
                             const secondStep = [
                                 {
                                     element: `#${disciplineId}`,
@@ -349,7 +388,7 @@ export async function StartTourDeleteDiscipline() {
                                     onHighlighted: async (el) => {
                                         await new Promise((resolve) => setTimeout(resolve, 3000));
                                         el.style.zIndex = "0";
-                                        await driverObj.moveNext();
+                                        await updatedDriverObj.moveNext();
                                     }
                                 },
                                 {
@@ -366,7 +405,7 @@ export async function StartTourDeleteDiscipline() {
                                         if(!dropDownClick) return;
                                         await dropDownClick.click()
                                         el.style.zIndex = "0";
-                                        await driverObj.moveNext();
+                                        await updatedDriverObj.moveNext();
                                     }
                                 },
                                 {
@@ -384,7 +423,7 @@ export async function StartTourDeleteDiscipline() {
                                         while (!document.querySelector('dialog.modal[open]') && Date.now() - pollStart < 5000) {
                                             await new Promise(r => setTimeout(r, 100));
                                         }
-                                        await driverObj.moveNext();
+                                        await updatedDriverObj.moveNext();
                                     }
                                 },
                                 {
@@ -399,7 +438,7 @@ export async function StartTourDeleteDiscipline() {
                                             const actions =  AddButtonActions(popover, "Cancelar operação")
                                             actions.addEventListener('click', async () => {
                                                 Livewire.dispatch('to-close')
-                                                await driverObj.destroy();
+                                                await updatedDriverObj.destroy();
                                                 store.openMai = true;
                                             })
                                         }
@@ -409,11 +448,12 @@ export async function StartTourDeleteDiscipline() {
                                         const cancelButton = el.querySelector(`#discipline-delete-cancel-${dataId}`)
                                         const save = el.querySelector(`#discipline-delete-send-${dataId}`)
                                         const close =  async () => {
-                                            await driverObj.destroy();
+                                            Livewire.dispatch('to-close')
+                                            await updatedDriverObj.destroy();
                                             store.openMai = true;
                                         }
-                                        cancelButton.addEventListener('click', close)
-                                        save.addEventListener('click', close)
+                                        cancelButton?.addEventListener('click', close)
+                                        save?.addEventListener('click', close)
                                     }
                                 },
 
@@ -445,7 +485,7 @@ export async function StartTourDeleteDiscipline() {
                                 // }
                             ];
 
-                            const updatedDriverObj = drivertour({
+                            updatedDriverObj = drivertour({
                                 ...configDriver,
                                 steps: secondStep,
                             });
@@ -486,6 +526,7 @@ export async function StartTourSearchDiscipline(){
     store.openMai = false;
     const inputSearch = document.querySelector("#discipline-input-search");
     if(!inputSearch){
+        store.openMai = true;
         return;
     }
      const createInitialTour = () => {
@@ -497,7 +538,7 @@ export async function StartTourSearchDiscipline(){
                     popover: {
                         description: `Digite a disciplina que deseja filtrar`,
                         onPopoverRender: (popover, { config, state }) => {
-                            const actions = AddButtonActions(popover, "voltar ao inicio");
+                            const actions = AddButtonActions(popover, "Voltar ao início");
                             actions.addEventListener('click', async () => {
                                 driverObj.destroy();
                                 const removeIndex = document.querySelectorAll("div.discipline-card");
@@ -527,7 +568,8 @@ export async function StartTourSearchDiscipline(){
         });
     };
     const driverObj = createInitialTour();
-    return await driverObj.drive();
+    await driverObj.drive();
+    store.openMai = true;
 }
 export async function StartTourManagerDisciplineContent(){
     store.openMai = false;
@@ -547,7 +589,10 @@ export async function StartTourManagerDisciplineContent(){
                             popover.nextButton?.remove();
                             const actions = AddButtonActions(popover, "Cancelar operação");
                             actions.addEventListener('click', async () => {
-                                driverObj.destroy();
+                                await driverObj.destroy();
+                                document.querySelectorAll("div.discipline-card").forEach((item) => {
+                                    item.style.zIndex = "0";
+                                });
                                 store.openMai = true;
                             });
                         }
@@ -572,8 +617,7 @@ export async function StartTourManagerDisciplineContent(){
                                     },
                                     onHighlighted: async () => {
                                         await new Promise((resolve) => setTimeout(resolve, 2000));
-                                        //el.style.zIndex = "0"
-                                        await driverObj.moveNext();
+                                        await updatedDriverObj.moveNext();
                                     }
                                 },
                                 {
@@ -592,17 +636,24 @@ export async function StartTourManagerDisciplineContent(){
                                         const match = fullText.match(/(\d+)/);
                                         const count = match ? parseInt(match[1], 10) : 0;
 
-                                        if(count === 0){
-                                            el.click();
-                                            await updatedDriverObj.destroy()
-                                            store.continueTour = true;
-                                            Livewire.dispatch('continue-created-content', {continue:true});
+                                        el.click();
+
+                                        try {
+                                            await waitForElement(`#content-lesson-create`, { timeout: 10000 });
+                                        } catch (error) {
+                                            console.error("Página de conteúdo não carregou a tempo:", error);
+                                            await updatedDriverObj.destroy();
+                                            store.openMai = true;
                                             return;
                                         }
 
-                                        el.click();
-                                        await store.initTour()
-                                        await updatedDriverObj.destroy()
+                                        if(count === 0){
+                                            Livewire.dispatch('continue-created-content', {continue:true});
+                                        } else {
+                                            await store.initTour();
+                                        }
+
+                                        await updatedDriverObj.destroy();
                                     }
                                 },
                             ];

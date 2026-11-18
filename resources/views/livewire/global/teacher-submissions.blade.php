@@ -35,13 +35,12 @@
     <button
         type="button"
         @click="openModal()"
-        class="relative btn btn-circle btn-lg shadow-lg transition-transform"
+        class="relative btn btn-circle btn-lg bg-blue-400 text-white shadow-lg transition-transform"
         :class="bounce ? 'animate-bounce' : ''"
-        style="background-color: #2563eb; color: white;"
         aria-label="Ver entregas pendentes"
         title="Entregas pendentes"
     >
-        <x-mary-icon name="o-document-text" class="w-6 h-6" />
+        <x-mary-icon name="o-document-text" class="w-6 h-6 text-white" />
         <span
             x-show="count > 0"
             x-cloak

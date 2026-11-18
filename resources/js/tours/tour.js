@@ -182,7 +182,7 @@ document.addEventListener("alpine:init", () => {
                 isDynamic: false,
                 path: "/aluno/mensagens",
                 tourModule: () => import("./student/messages"),
-                tours: ["StartTourStudentMessages"],
+                tours: ["StartTourStudentMessages", "StartTourInitChatInClasse"],
             },
 
         ],
@@ -240,9 +240,10 @@ document.addEventListener("alpine:init", () => {
                 return;
             }
             try {
-                tourData.module[tourName](tourData.uuid);
+                await tourData.module[tourName](tourData.uuid);
             } catch (error) {
                 console.error(`Erro ao iniciar o tour "${tourName}":`, error);
+                this.openMai = true;
             }
         },
     });

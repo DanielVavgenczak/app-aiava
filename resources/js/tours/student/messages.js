@@ -1,15 +1,123 @@
-import { configDriver, AddButtonActions } from "../utils";
+import { configDriver, AddButtonActions } from "../utils.js";
 const store = Alpine.store("tourguide");
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function currentStudentId() {
+    return document.querySelector('[id^="student-messages-header"]')?.id.replace('student-messages-header-', '') || '';
+}
+
+async function startConversationSteps(studentId) {
+    const chatArea = document.querySelector(`#chat-area-${studentId}`);
+    const messageInput = document.querySelector(`#message-input-${studentId}`);
+    if (!chatArea || !messageInput) {
+        store.openMai = true;
+        return;
+    }
+
+    const conversationTour = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element: `#chat-area-${studentId}`,
+                popover: {
+                    description: "Aqui você pode visualizar as mensagens da conversa.",
+                    side: "left",
+                    align: "start",
+                    showButtons: [""],
+                },
+                onHighlighted: async () => {
+                    await wait(1500);
+                    await conversationTour.moveNext();
+                },
+            },
+            {
+                element: `#message-input-${studentId}`,
+                popover: {
+                    description: "Digite a mensagem que deseja enviar e clique no botão para enviar ou pressione Enter.",
+                    side: "top",
+                    align: "start",
+                    showButtons: [""],
+                },
+                onHighlighted: async () => {
+                    await wait(2000);
+                    await conversationTour.destroy();
+                    store.openMai = true;
+                },
+            },
+        ],
+    });
+
+    return await conversationTour.drive();
+}
+
+export async function StartTourInitChatInClasse() {
+    store.openMai = false;
+
+    const studentId = currentStudentId();
+    if (!studentId) {
+        console.error("ID do estudante não encontrado");
+        store.openMai = true;
+        return;
+    }
+
+    let conversationSelected = false;
+
+    const highlightSidebar = async (el, tour) => {
+        await wait(500);
+        if (!el) {
+            await tour.destroy();
+            store.openMai = true;
+            return;
+        }
+
+        const groupChat = el.querySelector(`#group-chat-${studentId}`);
+        const teacherChat = el.querySelector(`#teacher-chat-${studentId}`);
+        const classmatesList = el.querySelector(`#classmates-list-${studentId}`);
+        const classmate = classmatesList?.nextElementSibling?.tagName === 'BUTTON'
+            ? classmatesList.nextElementSibling
+            : null;
+
+        const selectConversation = async () => {
+            if (conversationSelected) return;
+            conversationSelected = true;
+            await wait(1000);
+            await tour.destroy();
+            await startConversationSteps(studentId);
+        };
+
+        groupChat?.addEventListener('click', selectConversation, { once: true });
+        teacherChat?.addEventListener('click', selectConversation, { once: true });
+        classmate?.addEventListener('click', selectConversation, { once: true });
+    };
+
+    const tour = drivertour({
+        ...configDriver,
+        steps: [
+            {
+                element: `#chat-sidebar-${studentId}`,
+                popover: {
+                    description: "Clique em chat em grupo, no professor ou em um colega para iniciar uma conversa.",
+                    side: "right",
+                    align: "start",
+                    showButtons: [""],
+                },
+                onHighlighted: (el) => highlightSidebar(el, tour),
+            },
+        ],
+    });
+
+    return await tour.drive();
+}
 
 export async function StartTourStudentMessages() {
     store.openMai = false;
 
-    const studentId = document.querySelector('[id^="student-messages-header"]')?.id.replace('student-messages-header-', '') || '';
+    const studentId = currentStudentId();
     if (!studentId) {
         console.error("ID do estudante não encontrado");
+        store.openMai = true;
         return;
     }
-    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     const driverObj = drivertour({
         ...configDriver,

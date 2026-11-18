@@ -7,7 +7,7 @@ import {
   waitForUploadComplete,
   whenElementHidden,
   sleep,
-} from "../../utils";
+} from "../../utils.js";
 
 let store;
 
@@ -146,6 +146,23 @@ async function startVideoTour(dataId) {
 // ─── TOUR DE PDF ────────────────────────────────────────────
 async function startPdfTour(dataId) {
   store = Alpine.store("tourguide");
+  let lessonId = null;
+
+  const closeTour = async () => {
+    await driverObj.destroy();
+    store.openMai = true;
+  };
+
+  const cancel = async () => {
+    Livewire.dispatch("tour-close-modal-upload_block", { open: false });
+    await closeTour();
+  };
+
+  const abort = async (error) => {
+    console.warn(`Tour de upload de PDF interrompido: ${error?.message ?? error}`);
+    await cancel();
+  };
+
   const steps = [
     {
       element: `#pdf-upload-area-${dataId}`,
@@ -156,11 +173,7 @@ async function startPdfTour(dataId) {
           popover.previousButton?.remove();
           popover.nextButton?.remove();
           const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => {
-            Livewire.dispatch("tour-close-modal-upload_block", { open: false });
-            await driverObj.destroy();
-            store.openMai = true;
-        });
+          actions.addEventListener("click", cancel);
         },
       },
       onHighlighted: async () => {
@@ -169,7 +182,7 @@ async function startPdfTour(dataId) {
         input.addEventListener("change", async () => {
           await new Promise(r => setTimeout(r, 300));
           await driverObj.moveNext();
-        });
+        }, { once: true });
       },
     },
     {
@@ -179,7 +192,7 @@ async function startPdfTour(dataId) {
         showButtons: [""],
         onPopoverRender: (popover) => {
           const actions = AddButtonActions(popover, "Cancelar operação");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
+          actions.addEventListener("click", cancel);
         },
       },
       onHighlighted: async () => {
@@ -199,20 +212,17 @@ async function startPdfTour(dataId) {
           });
           obs.observe(targetEl, { attributeFilter: ['style'] });
         }
-        await new Promise((resolve) => {
-          let cleanup;
-          const handler = (event) => {
-            if (event.module_id == dataId) {
-              if (typeof cleanup === "function") cleanup();
-              window._lastLessonId = event.lesson_id;
-              steps[2].element = `button[data-lesson-id="${event.lesson_id}"]`;
-              steps[3].element = `#pdf-viewer-${event.lesson_id}`;
-              resolve();
-            }
-          };
-          cleanup = Livewire.on("after-video-upload", handler);
-          setTimeout(() => { if (typeof cleanup === "function") cleanup(); resolve(); }, 15000);
-        });
+
+        try {
+          const event = await waitForUploadComplete(dataId, { timeout: 15000 });
+          lessonId = event.lesson_id;
+          steps[2].element = `button[data-lesson-id="${lessonId}"]`;
+          steps[3].element = `#pdf-viewer-${lessonId}`;
+        } catch (error) {
+          await abort(error);
+          return;
+        }
+
         await driverObj.moveNext();
       },
     },
@@ -220,13 +230,12 @@ async function startPdfTour(dataId) {
       popover: {
         description: "PDF adicionado!",
         side: "right", align: "center", showButtons: [""],
-       showButtons: [""],
       },
       onHighlighted: async () => {
-        const btn = document.querySelector(`button[data-lesson-id="${window._lastLessonId}"]`);
+        const btn = document.querySelector(`button[data-lesson-id="${lessonId}"]`);
         if (btn) btn.click();
         for (let i = 0; i < 50; i++) {
-          if (document.querySelector(`#pdf-viewer-${window._lastLessonId}`)) break;
+          if (document.querySelector(`#pdf-viewer-${lessonId}`)) break;
           await new Promise(r => setTimeout(r, 100));
         }
         await new Promise(r => setTimeout(r, 1000));
@@ -239,7 +248,7 @@ async function startPdfTour(dataId) {
         showButtons: [""],
         onPopoverRender: (popover) => {
           const actions = AddButtonActions(popover, "Voltar ao início");
-          actions.addEventListener("click", async () => { await driverObj.destroy(); store.openMai = true; });
+          actions.addEventListener("click", closeTour);
         },
       },
       onHighlighted: async () => {
@@ -289,11 +298,9 @@ async function startLinkTour(dataId) {
                 const lastButton = allButtons[allButtons.length - 1];
                 newLessonId = lastButton?.dataset.lessonId;
 
-                if (newLessonId) {
-                    // Destroi o tour atual
+                    if (newLessonId) {
                     await driverObj.destroy();
                     await new Promise(r => setTimeout(r, 500));
-                    // Cria novo tour com o ID correto
                     const newSteps = [
                         {
                             element: `#lesson-btn-${newLessonId}`,
@@ -304,8 +311,7 @@ async function startLinkTour(dataId) {
                             onHighlighted: async (el) => {
                                 await new Promise(r => setTimeout(r, 1000));
                                 await el.click();
-                                // Aqui você pode adicionar mais ações
-                                 await driverObj.moveNext();
+                                await newDriver.moveNext();
                             }
                         },
                         {
@@ -316,17 +322,17 @@ async function startLinkTour(dataId) {
                             },
                             onHighlighted: async (el) => {
                                 await new Promise(r => setTimeout(r, 3000));
-                                await driverObj.destroy();
+                                await newDriver.destroy();
                             }
                         }
                     ];
 
-                    const updatedriverObj = drivertour({
+                    const newDriver = drivertour({
                         ...configDriver,
                         steps: newSteps,
                         start: true
                     });
-                    await updatedriverObj.drive();
+                    await newDriver.drive();
                 }
             });
         },
@@ -409,7 +415,7 @@ export async function ContinueUploadBlock(modules, dataId) {
       },
       onHighlighted: async (el) => {
         await new Promise(r => setTimeout(r, 1000));
-        const tabs = el.querySelectorAll(`.options-${dataId} a div.whitespace-nowrap`);
+        const tabs = el.querySelectorAll(`a div.whitespace-nowrap`);
         tabs.forEach((tab) => {
           tab.addEventListener("click", async (e) => {
             const tabText = e.target.textContent.trim();
@@ -531,6 +537,7 @@ export async function StartEditLesson() {
               moduleSelected = true;
               modulesCard.forEach(other => { if (module !== other) other.style.zIndex = "0"; });
               const moduleId = module.getAttribute("data-tour");
+              await driverObj.destroy();
               await startTour(moduleId);
             });
           });
@@ -585,7 +592,7 @@ export async function StartDeleteLesson() {
         onHighlighted: async (el) => {
           const cancelButton = el.querySelector('[wire\\:click="cancelEdit"]');
           const deleteBtn = el.querySelector('[wire\\:click="deleteModule"]');
-          const close = async () => { await driverObj.destroy(); store.openMai = true; };
+          const close = async () => { Livewire.dispatch("tour::close-delete-lesson-modal"); await driverObj.destroy(); store.openMai = true; };
           if (cancelButton) cancelButton.addEventListener("click", close);
           if (deleteBtn) deleteBtn.addEventListener("click", close);
         },
@@ -636,6 +643,7 @@ export async function StartDeleteLesson() {
               moduleSelected = true;
               modulesCard.forEach(other => { if (module !== other) other.style.zIndex = "0"; });
               const moduleId = module.getAttribute("data-tour");
+              await driverObj.destroy();
               await startDeleteTour(moduleId);
             });
           });
