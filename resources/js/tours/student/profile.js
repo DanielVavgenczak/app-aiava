@@ -6,6 +6,9 @@ export async function StartTourStudentProfile() {
 
     const driverObj = drivertour({
         ...configDriver,
+        onDestroyed: () => {
+            store.openMai = true;
+        },
         steps: [
             {
                 element: `#student-profile-avatar`,
@@ -33,7 +36,6 @@ export async function StartTourStudentProfile() {
                         const actions = AddButtonActions(popover, "Finalizar Tour");
                         actions.addEventListener("click", async () => {
                             await driverObj.destroy();
-                            store.openMai = true;
                         });
                     },
                 },

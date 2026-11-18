@@ -54,6 +54,7 @@ function setupDom(markup = "") {
             async destroy() {
                 driver.destroyed = true;
                 footer.remove();
+                config.onDestroyed?.();
                 driver.resolveDrive?.();
             },
         };

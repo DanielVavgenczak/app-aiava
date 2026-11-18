@@ -31,6 +31,12 @@ new class extends Component {
         $this->open = true;
     }
 
+    #[On('student::close-new-topic-forum')]
+    public function closeFromTour(): void
+    {
+        $this->cancel();
+    }
+
     public function save()
     {
         $this->validate();
@@ -102,25 +108,29 @@ new class extends Component {
 
 <x-mary-modal wire:model="open" title="Novo tópico" subtitle="Crie um novo tópico">
     <form wire:submit.prevent="save">
-        <div class="mb-4">
+        <div id="forum-input-title" class="mb-4">
             <x-mary-input wire:model="title" label="Título" class="class-input-name !outline-none"
                 autocomplete="title" />
         </div>
 
-        @if(Auth::guard('teacher')->check())
-        <div class="mb-4">
+        <div id="forum-input-class" class="mb-4">
+            @if(Auth::guard('teacher')->check())
             <label class="block mb-1 text-sm font-medium text-gray-700">Turma</label>
             <x-mary-select wire:model="classe_id"
                 placeholder="Selecione uma turma" :options="$classes"
                 option-label="name" option-value="id" placeholder-value="0" class="w-full !outline-none" />
+            @else
+            <p class="text-sm text-gray-600">
+                Turma: <span class="font-medium">{{ optional(Auth::guard('student')->user()->classe)->name ?? 'Não informada' }}</span>
+            </p>
+            @endif
         </div>
-        @endif
 
-        <div class="mt-2 flex justify-end w-full">
-            <button type="button" class="btn btn-sm bg-ghost" wire:click="cancel">
+        <div id="forum-input-actions" class="mt-2 flex justify-end w-full">
+            <button type="button" class="btn btn-sm btn-ghost" wire:click="cancel">
                 Cancelar
             </button>
-            <button class="btn btn-sm text-gray-50 capitalize bg-blue-700 hover:bg-blue-900" type="submit" wire:loading.remove>
+            <button class="btn btn-sm text-gray-50 capitalize bg-blue-400 hover:bg-blue-500" type="submit" wire:loading.remove>
                 Cadastrar
             </button>
             <div wire:loading wire:target="save" class="flex flex-col justify-center w-full text-center">

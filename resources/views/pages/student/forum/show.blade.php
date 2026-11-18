@@ -84,7 +84,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
     // ✅ Editar tópico
     public function editTopic($topicId): void
     {
-        $this->dispatch('open-edit-topic-modal', topicId: $topicId);
+        $this->dispatch('student::open-edit-topic-forum', topicId: $topicId);
     }
 
     // ✅ Confirmar deleção
@@ -235,6 +235,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                     <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
                         <x-mary-icon name="o-view-columns" class="w-4 h-4 text-gray-500" />
                         <select
+                            id="forum-show-per-page"
                             wire:model.live="perPage"
                             class="text-sm border-0 focus:ring-0 bg-transparent"
                         >
@@ -250,7 +251,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                     <button
                         id="forum-show-new-topic"
                         @click="$wire.openNewTopicModal"
-                        class="btn btn-md bg-blue-700 text-white border-0"
+                        class="btn btn-md bg-blue-400 text-gray-50 border-0 hover:bg-blue-500"
                     >
                         <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                         Novo Tópico
@@ -371,14 +372,14 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                             @if($isMyTopic)
                                             <button
                                                 wire:click="editTopic('{{ $topic->id }}')"
-                                                class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50"
+                                                class="btn btn-sm btn-ghost text-blue-400 hover:bg-blue-50"
                                                 title="Editar"
                                             >
                                                 <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                             </button>
                                             @endif
                                             <button
-                                                @click="$dispatch('student::delete-topic-modal', topicId: {{ $topic->id }})"
+                                                @click="$dispatch('student::delete-topic-forum', { topicId: '{{ $topic->id }}' })"
                                                 class="btn btn-sm {{ $canDelete && !$isMyTopic ? 'bg-red-500 text-white hover:bg-red-700' : 'btn-ghost text-red-600 hover:bg-red-50' }}"
                                                 title="{{ $canDelete && !$isMyTopic ? 'Excluir (moderação)' : 'Excluir' }}"
                                             >
@@ -397,7 +398,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                 <p class="text-gray-500 mb-4">Seja o primeiro a iniciar uma discussão!</p>
                                 <button
                                     wire:click="$wire.openNewTopicModal"
-                                    class="btn btn-primary">
+                                    class="btn bg-blue-400 text-gray-50 border-0 hover:bg-blue-500">
                                     <x-mary-icon name="o-plus" class="w-5 h-5" />
                                     Criar Primeiro Tópico
                                 </button>
@@ -451,7 +452,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                         {{-- Título com estrela --}}
                                         <div class="flex items-center gap-2">
                                           <a
-                                                href="{{ route('student.forum.index', $topic->id) }}"
+                                                href="{{ route('student.forum.topic.replie', $topic->id) }}"
                                                 wire:navigate
                                                 class="text-lg font-bold text-gray-900 hover:text-blue-700 transition-colors truncate"
                                             >
@@ -489,7 +490,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                     <div class="flex items-center gap-2">
                                         <button
                                             x-on:click="$dispatch('student::open-edit-topic-forum', { topicId: '{{ $topic->id }}' })"
-                                            class="btn btn-sm bg-blue-500 text-white hover:bg-blue-700 border-0"
+                                            class="btn btn-sm bg-blue-400 text-gray-50 border-0 hover:bg-blue-500"
                                             title="Editar"
                                         >
                                             <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
@@ -515,7 +516,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                                 <p class="text-gray-500 mb-6">Crie seu primeiro tópico e compartilhe suas ideias!</p>
                                 <button
                                    @click="$wire.openNewTopicModal"
-                                    class="btn bg-blue-400 text-white border-0 text-gray-900"
+                                    class="btn bg-blue-400 text-gray-50 border-0 hover:bg-blue-500"
                                 >
                                     <x-mary-icon name="o-sparkles" class="w-5 h-5" />
                                     Criar Meu Primeiro Tópico
@@ -547,17 +548,25 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                <h2 class="text-sn font-bold text-gray-700">Opções do Fórum</h2>
                 <div class="flex justify-end">
                     <x-mary-button icon="o-x-mark"
-                        class="bg-white border-none btn-square hover:none hover:bg-blue-400 hover:text-gray-100"
+                        class="bg-white border-none btn-square hover:bg-blue-400 hover:text-gray-100"
                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
             </div>
-            <div class="grid grid-cols-3 gap-2">
+            <div class="grid grid-cols-4 gap-2">
               <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-50"
+                    label="Visão geral do fórum"
+                    x-on:click="$store.tourguide.start('StartTourStudentForumShow')" />
+              <x-mary-button
+                    class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-50"
                     label="Criar tópico"
                     x-on:click="$store.tourguide.start('StartTourStudentForumShowNewTopic')" />
               <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-50"
+                    label="Selecionar tópico"
+                    x-on:click="$store.tourguide.start('StartTourStudentForumShowSelectTopic')" />
+              <x-mary-button
+                    class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-50"
                     label="Selecionar meus tópicos"
                     x-on:click="$store.tourguide.start('StartTourStudentForumShowMyTopics')" />
             </div>

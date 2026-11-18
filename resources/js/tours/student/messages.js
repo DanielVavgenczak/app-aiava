@@ -2,6 +2,27 @@ import { configDriver, AddButtonActions } from "../utils.js";
 const store = Alpine.store("tourguide");
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+function scheduleTimer(timers, callback, delay) {
+    const timer = setTimeout(() => {
+        timers.delete(timer);
+        callback();
+    }, delay);
+    timers.add(timer);
+}
+
+function clearTimers(timers) {
+    timers.forEach((timer) => clearTimeout(timer));
+    timers.clear();
+}
+
+function clearMessageInput(studentId) {
+    const input = document.querySelector(`#message-input-${studentId} input`);
+    if (input) {
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
 function currentStudentId() {
     return document.querySelector('[id^="student-messages-header"]')?.id.replace('student-messages-header-', '') || '';
 }
@@ -16,6 +37,9 @@ async function startConversationSteps(studentId) {
 
     const conversationTour = drivertour({
         ...configDriver,
+        onDestroyed: () => {
+            store.openMai = true;
+        },
         steps: [
             {
                 element: `#chat-area-${studentId}`,
@@ -61,12 +85,12 @@ export async function StartTourInitChatInClasse() {
     }
 
     let conversationSelected = false;
+    let removeConversationListeners = () => {};
 
     const highlightSidebar = async (el, tour) => {
         await wait(500);
         if (!el) {
             await tour.destroy();
-            store.openMai = true;
             return;
         }
 
@@ -80,9 +104,16 @@ export async function StartTourInitChatInClasse() {
         const selectConversation = async () => {
             if (conversationSelected) return;
             conversationSelected = true;
+            removeConversationListeners();
             await wait(1000);
             await tour.destroy();
             await startConversationSteps(studentId);
+        };
+
+        removeConversationListeners = () => {
+            groupChat?.removeEventListener('click', selectConversation);
+            teacherChat?.removeEventListener('click', selectConversation);
+            classmate?.removeEventListener('click', selectConversation);
         };
 
         groupChat?.addEventListener('click', selectConversation, { once: true });
@@ -92,6 +123,12 @@ export async function StartTourInitChatInClasse() {
 
     const tour = drivertour({
         ...configDriver,
+        onDestroyed: () => {
+            removeConversationListeners();
+            if (!conversationSelected) {
+                store.openMai = true;
+            }
+        },
         steps: [
             {
                 element: `#chat-sidebar-${studentId}`,
@@ -111,6 +148,7 @@ export async function StartTourInitChatInClasse() {
 
 export async function StartTourStudentMessages() {
     store.openMai = false;
+    const timers = new Set();
 
     const studentId = currentStudentId();
     if (!studentId) {
@@ -121,6 +159,11 @@ export async function StartTourStudentMessages() {
 
     const driverObj = drivertour({
         ...configDriver,
+        onDestroyed: () => {
+            clearTimers(timers);
+            clearMessageInput(studentId);
+            store.openMai = true;
+        },
         steps: [
             {
                 element: `#student-messages-header-${studentId}`,
@@ -145,7 +188,7 @@ export async function StartTourStudentMessages() {
                     side: "right",
                     align: "start",
                     onHighlighted: () => {
-                        setTimeout(() => {
+                        scheduleTimer(timers, () => {
                             const btn = document.querySelector(`#group-chat-${studentId}`);
                             if (btn && !btn.classList.contains('bg-green-50')) btn.click();
                         }, 300);
@@ -159,7 +202,7 @@ export async function StartTourStudentMessages() {
                     side: "right",
                     align: "center",
                     onHighlighted: () => {
-                        setTimeout(() => {
+                        scheduleTimer(timers, () => {
                             const btn = document.querySelector(`#teacher-chat-${studentId}`);
                             if (btn) btn.click();
                         }, 300);
@@ -173,7 +216,7 @@ export async function StartTourStudentMessages() {
                     side: "right",
                     align: "start",
                     onHighlighted: () => {
-                        setTimeout(() => {
+                        scheduleTimer(timers, () => {
                             const list = document.querySelector(`#classmates-list-${studentId}`);
                             if (list) {
                                 const next = list.nextElementSibling;
@@ -190,7 +233,7 @@ export async function StartTourStudentMessages() {
                     side: "left",
                     align: "start",
                     onHighlighted: () => {
-                        setTimeout(() => {
+                        scheduleTimer(timers, () => {
                             const btn = document.querySelector(`#group-chat-${studentId}`);
                             if (btn) btn.click();
                         }, 300);
@@ -204,7 +247,7 @@ export async function StartTourStudentMessages() {
                     side: "top",
                     align: "start",
                     onHighlighted: () => {
-                        setTimeout(() => {
+                        scheduleTimer(timers, () => {
                             const input = document.querySelector(`#message-input-${studentId} input`);
                             if (input) {
                                 input.focus();
@@ -216,13 +259,8 @@ export async function StartTourStudentMessages() {
                     onPopoverRender: (popover) => {
                         const actions = AddButtonActions(popover, "Finalizar Tour");
                         actions.addEventListener("click", async () => {
-                            const input = document.querySelector(`#message-input-${studentId} input`);
-                            if (input) {
-                                input.value = '';
-                                input.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
+                            clearMessageInput(studentId);
                             await driverObj.destroy();
-                            store.openMai = true;
                         });
                     },
                 },

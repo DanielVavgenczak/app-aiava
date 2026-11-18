@@ -139,7 +139,7 @@ new class extends Component {
 
                 <x-mary-button
                     label="Salvar Alterações"
-                    class="btn-primary"
+                    class="bg-blue-400 text-gray-50 hover:bg-blue-500"
                     type="submit"
                     spinner="update"
                     icon="o-check-circle"

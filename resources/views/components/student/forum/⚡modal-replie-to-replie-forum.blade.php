@@ -17,7 +17,7 @@ new class extends Component {
     #[On('student::open-reply-to-reply-modal')]
     public function open(string $topic_id, string $parentReplyId = null, string $mentionName)
     {
-        //$this->reset(['content', 'parent_id']);
+        $this->reset(['content', 'parent_id']);
         $this->topic_id = $topic_id;
         $this->parent_id = $parentReplyId;
         $this->open = true;
@@ -76,7 +76,7 @@ new class extends Component {
 
 ?>
 
-<x-mary-modal wire:model="open" title="Nova resposta da resposta" size="lg">
+<x-mary-modal wire:model="open" title="Responder à resposta" size="lg">
     <form wire:submit.prevent="save" class="space-y-4">
         <textarea
             wire:model="content"
@@ -87,7 +87,7 @@ new class extends Component {
 
         <div class="flex justify-end space-x-2">
             <button type="button" class="btn btn-ghost" wire:click="cancel">Cancelar</button>
-            <button type="submit" class="btn btn-sm bg-blue-700 text-white hover:bg-blue-900">Enviar</button>
+            <button type="submit" class="btn btn-sm bg-blue-400 text-gray-50 hover:bg-blue-500">Enviar</button>
         </div>
     </form>
 </x-mary-modal>

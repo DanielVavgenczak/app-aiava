@@ -90,7 +90,7 @@ function setupDom({
             reviewedList.style.display = "";
         });
 
-    const store = { openMai: true, isTourActive: false };
+    const store = { openMai: false, isTourActive: false };
     const drivers = [];
     let activityClicks = 0;
     let resultClicks = 0;

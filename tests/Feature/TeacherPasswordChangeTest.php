@@ -34,14 +34,20 @@ it('rejeita a alteração quando a senha atual não confere', function () {
 
     $this->actingAs($teacher, 'teacher');
 
-    Livewire::test('teacher.profile.change-password')
+    $component = Livewire::test('teacher.profile.change-password')
         ->set('currentPassword', 'senha-incorreta')
         ->set('newPassword', 'nova-senha-123')
         ->set('newPasswordConfirmation', 'nova-senha-123')
         ->call('changePassword')
-        ->assertHasErrors(['currentPassword']);
+        ->assertHasErrors(['currentPassword'])
+        ->assertSet('currentPassword', '')
+        ->assertSet('newPassword', '')
+        ->assertSet('newPasswordConfirmation', '');
 
-    expect(Hash::check('senha-atual', $teacher->fresh()->password))->toBeTrue();
+    expect($component->html())
+        ->not->toContain('senha-incorreta')
+        ->not->toContain('nova-senha-123')
+        ->and(Hash::check('senha-atual', $teacher->fresh()->password))->toBeTrue();
 });
 
 it('valida a confirmação e o tamanho da nova senha', function () {
@@ -49,14 +55,22 @@ it('valida a confirmação e o tamanho da nova senha', function () {
 
     $this->actingAs($teacher, 'teacher');
 
-    Livewire::test('teacher.profile.change-password')
+    $component = Livewire::test('teacher.profile.change-password')
         ->set('currentPassword', 'senha-atual')
         ->set('newPassword', 'curta')
         ->set('newPasswordConfirmation', 'diferente')
         ->call('changePassword')
         ->assertHasErrors([
             'newPassword' => ['min', 'same'],
-        ]);
+        ])
+        ->assertSet('currentPassword', '')
+        ->assertSet('newPassword', '')
+        ->assertSet('newPasswordConfirmation', '');
+
+    expect($component->html())
+        ->not->toContain('senha-atual')
+        ->not->toContain('curta')
+        ->not->toContain('diferente');
 
     expect(Hash::check('senha-atual', $teacher->fresh()->password))->toBeTrue();
 });

@@ -1,11 +1,10 @@
 import {
     configDriver,
-    AddButtonActions,
     addTourFinishButton,
     getFirstVisible,
     sleep,
     waitForElement
-} from "../../utils";
+} from "../../utils.js";
 const store = Alpine.store("tourguide");
 
 function navigateTo(url) {
@@ -17,6 +16,15 @@ function navigateTo(url) {
     window.location.href = url;
 }
 
+function lockPage() {
+    document.body.style.cursor = 'not-allowed';
+    document.body.style.pointerEvents = 'none';
+}
+
+function unlockPage() {
+    document.body.style.cursor = '';
+    document.body.style.pointerEvents = '';
+}
 
 export async function StartTourTeacherForumInteract() {
     store.openMai = false;
@@ -28,13 +36,15 @@ export async function StartTourTeacherForumInteract() {
         return { name, url, element: card };
     }).filter(d => d.name && d.url);
 
-    if (disciplines.length === 0) return;
+    if (disciplines.length === 0) {
+        store.openMai = true;
+        return;
+    }
 
     cards.forEach(card => card.style.cursor = 'pointer');
 
-    // ==========================================
-    // FUNÇÕES DE BLOQUEIO (SÓ DEPOIS DO CLIQUE)
-    // ==========================================
+    const preventDefault = (e) => e.preventDefault();
+
     const blockUserInteraction = () => {
         document.addEventListener('keydown', preventDefault, { passive: false });
         document.addEventListener('keyup', preventDefault, { passive: false });
@@ -60,45 +70,94 @@ export async function StartTourTeacherForumInteract() {
         document.removeEventListener('keyup', preventDefault);
         document.removeEventListener('keypress', preventDefault);
 
-        const overlay = document.getElementById('tour-block-overlay');
-        if (overlay) overlay.remove();
+        document.getElementById('tour-block-overlay')?.remove();
     };
 
-    const preventDefault = (e) => e.preventDefault();
+    if (disciplines.length === 1) {
+        let navigatingAway = false;
 
-    // ==========================================
-    // CLIQUE NO CARD → TOUR AUTOMÁTICO
-    // ==========================================
+        const driverObj = drivertour({
+            ...configDriver,
+            allowKeyboardControl: false,
+            steps: [
+                {
+                    element: "#forum-discipline-card",
+                    popover: {
+                        description: "Interagindo com a ferramenta...",
+                        side: "bottom",
+                        align: "start",
+                        showButtons: [],
+                    },
+                    onHighlighted: async () => {
+                        await sleep(3000);
+                        await driverObj.moveNext();
+                    }
+                },
+                {
+                    element: "#forum-access-btn",
+                    popover: {
+                        description: "Interagindo com a ferramenta...",
+                        showButtons: [],
+                    },
+                    onHighlighted: async () => {
+                        await sleep(3000);
+                        const accessBtn = document.querySelector("#forum-access-btn");
+                        if (!accessBtn) {
+                            await driverObj.destroy();
+                            return;
+                        }
+
+                        navigatingAway = true;
+                        accessBtn.click();
+                        await driverObj.destroy();
+                    }
+                }
+            ],
+            onDestroyed: () => {
+                cards.forEach(card => card.style.cursor = '');
+                if (!navigatingAway) store.openMai = true;
+            },
+        });
+
+        return await driverObj.drive();
+    }
+
+    let navigatingAway = false;
+    let confirmDriver = null;
+    const timers = [];
+
+    const clearAutoTimers = () => {
+        timers.splice(0).forEach(clearTimeout);
+    };
+
     const handleCardClick = (e) => {
+        if (e.target.closest('a[href]')) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
         const card = e.currentTarget;
-        const d = disciplines.find(d => d.element === card);
-        if (!d) return;
+        const discipline = disciplines.find(d => d.element === card);
+        if (!discipline) return;
 
-        // Destroi o tour inicial
+        navigatingAway = true;
         driverObj.destroy();
-
-        // BLOQUEIA interações imediatamente após o clique
         blockUserInteraction();
 
         const accessBtn = card.querySelector('a[href]');
 
-        // ==========================================
-        // TOUR AUTOMÁTICO (SEM INTERAÇÃO DO USUÁRIO)
-        // ==========================================
-        const confirmDriver = drivertour({
-            animate: true,
-            opacity: 0.75,
-            padding: 10,
-            allowClose: false,
-            showButtons: false,
+        confirmDriver = drivertour({
+            ...configDriver,
             allowKeyboardControl: false,
+            allowClose: false,
             steps: [
                 {
                     element: card,
                     popover: {
-                        description: `Disciplina selecionada. Veja o botão para acessar o fórum.`,
+                        description: "Disciplina selecionada. Veja o botão para acessar o fórum.",
                         side: "bottom",
                         align: "center",
+                        showButtons: [],
                     },
                 },
                 {
@@ -107,79 +166,34 @@ export async function StartTourTeacherForumInteract() {
                         description: "Acessando o fórum automaticamente...",
                         side: "top",
                         align: "center",
+                        showButtons: [],
                     },
                 },
             ],
             onDestroyed: () => {
+                clearAutoTimers();
                 unblockUserInteraction();
             },
         });
 
         confirmDriver.drive();
 
-        // ==========================================
-        // AVANÇO AUTOMÁTICO COM DELAYS
-        // ==========================================
-        setTimeout(() => {
-            confirmDriver.moveNext(); // Vai para o botão "Acessar"
-        }, 1500);
+        timers.push(setTimeout(() => {
+            confirmDriver?.moveNext();
+        }, 1500));
 
-        setTimeout(() => {
-            unblockUserInteraction(); // Libera antes de redirecionar
-            navigateTo(d.url);
-        }, 3000);
+        timers.push(setTimeout(() => {
+            unblockUserInteraction();
+            confirmDriver?.destroy();
+            navigateTo(discipline.url);
+        }, 3000));
     };
 
-
-    if (disciplines.length === 1) {
-        const driverObj = drivertour({
-        ...configDriver,
-        steps: [
-            {
-                element: "#forum-discipline-card",
-                popover: {
-                    description: "Interagindo com a ferramenta...",
-                    side: "bottom",
-                    align: "start",
-                    showButtons:[""]
-                },
-                onHighlighted: async () => {
-                    await new Promise((resolve) => setTimeout(resolve, 3000));
-                    await driverObj.moveNext();
-                }
-            },
-            {
-                element: "#forum-access-btn",
-                popover: {
-                    description: "Interagindo com a ferramenta...",
-                    showButtons:[""]
-                },
-                onHighlighted: async () => {
-                    await new Promise((resolve) => setTimeout(resolve, 3000));
-                    const btnaccess = document.querySelector("#forum-access-btn");
-                    await btnaccess.click();
-                    await driverObj.destroy();
-                }
-
-            }
-        ]
-        });
-
-        return await driverObj.drive();
-    }
-
-    // ==========================================
-    // EVENTOS DE CLIQUE NOS CARDS
-    // ==========================================
     disciplines.forEach(d => d.element.addEventListener('click', handleCardClick));
 
-    // ==========================================
-    // TOUR INICIAL (COM INTERAÇÃO DO USUÁRIO)
-    // ==========================================
     const driverObj = drivertour({
         ...configDriver,
-
-
+        allowKeyboardControl: false,
         steps: [
             {
                 element: "#forum-discipline-grid",
@@ -191,8 +205,11 @@ export async function StartTourTeacherForumInteract() {
             },
         ],
         onDestroyed: () => {
+            clearAutoTimers();
             disciplines.forEach(d => d.element.removeEventListener('click', handleCardClick));
             cards.forEach(card => card.style.cursor = '');
+            unblockUserInteraction();
+            if (!navigatingAway) store.openMai = true;
         },
     });
 
@@ -214,6 +231,20 @@ const ownActions = (item, selector) =>
 // depois que o Livewire realmente renderizou o modal.
 const wireAdvanceOnModalOpen = ({ driver, buttons, modalSelector }) => {
     let handled = false;
+    const controller = new AbortController();
+    const originalDestroy = driver.destroy.bind(driver);
+    let cleaned = false;
+
+    const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        controller.abort();
+    };
+
+    driver.destroy = async (...args) => {
+        cleanup();
+        return originalDestroy(...args);
+    };
 
     buttons.forEach((button) => {
         button.addEventListener('click', async () => {
@@ -233,8 +264,10 @@ const wireAdvanceOnModalOpen = ({ driver, buttons, modalSelector }) => {
                 await driver.destroy();
                 store.openMai = true;
             }
-        }, { once: true });
+        }, { once: true, signal: controller.signal });
     });
+
+    return cleanup;
 };
 
 
@@ -245,17 +278,19 @@ export async function StartTourTeacherForumRepliesNewReply() {
 
     const driverObj = drivertour({
         ...configDriver,
-
+        allowKeyboardControl: false,
+        onDestroyed: () => {
+            store.openMai = true;
+        },
         steps: [
             {
                 disableActiveInteraction: true,
-                allowKeyboardControl: false,
                 element: "#forum-replies-new-btn",
                 popover: {
                     description: "Interagindo com a ferramenta...",
                     side: "left",
                     align: "center",
-                    showButtons: [""],
+                    showButtons: [],
                 },
                 onHighlighted: async (el) => {
                     if (!el) {
@@ -336,12 +371,11 @@ export async function StartTourTeacherForumRepliesNewReply() {
             {
                 element: () => lastReplyEl || document.querySelector(`${REPLY_ITEM_SELECTOR}:last-of-type`),
                 disableActiveInteraction: true,
-                allowKeyboardControl: false,
                 popover: {
                     description: "Esta é a resposta que você acabou de publicar.",
                     side: "top",
                     align: "start",
-                    showButtons: [""],
+                    showButtons: [],
                 },
                 onHighlighted: async (el) => {
                     if (!el) {
@@ -359,7 +393,9 @@ export async function StartTourTeacherForumRepliesNewReply() {
     });
 
     return await driverObj.drive();
-}export async function StartTourTeacherForumRepliesReplyToReply() {
+}
+
+export async function StartTourTeacherForumRepliesReplyToReply() {
     store.openMai = false;
 
     const cleanupHighlights = () => {
@@ -384,7 +420,10 @@ export async function StartTourTeacherForumRepliesNewReply() {
 
     const driverObj = drivertour({
         ...configDriver,
-
+        allowKeyboardControl: false,
+        onDestroyed: () => {
+            store.openMai = true;
+        },
         steps: [
             {
                 element: () => hasSingleReply ? replyable[0].reply : getFirstVisible('#forum-replies-list'),
@@ -393,21 +432,19 @@ export async function StartTourTeacherForumRepliesNewReply() {
                         description: "Interagindo com a ferramenta...",
                         side: "top",
                         align: "center",
-                        showButtons: [""],
+                        showButtons: [],
                     }
                     : {
                         description: "Escolha qual resposta deseja responder. Clique no botão 'Responder' da resposta desejada.",
                         side: "top",
                         align: "center",
-                        //showButtons: [""],
+                        //showButtons: [],
                         onPopoverRender: (popover) => {
                               popover.nextButton.remove();
                               popover.previousButton.remove();
-                            addTourFinishButton(popover, driverObj,{
+                            addTourFinishButton(popover, driverObj, {
                                 label: 'Cancelar operação',
-                                onClick: async () => {
-                                    cleanupHighlights();
-                                }
+                                onFinish: () => cleanupHighlights(),
                             });
                         },
                     },
@@ -439,10 +476,6 @@ export async function StartTourTeacherForumRepliesNewReply() {
                 onDeselected: () => {
                     if (!hasSingleReply) {
                         cleanupHighlights();
-                        if (window.__forumReplyTourClickHandler) {
-                            document.removeEventListener('click', window.__forumReplyTourClickHandler, true);
-                            delete window.__forumReplyTourClickHandler;
-                        }
                     }
                 }
             },
@@ -504,15 +537,13 @@ export async function StartTourTeacherForumRepliesNewReply() {
     const originalDestroy = driverObj.destroy.bind(driverObj);
     driverObj.destroy = async (...args) => {
         cleanupHighlights();
-        if (window.__forumReplyTourClickHandler) {
-            document.removeEventListener('click', window.__forumReplyTourClickHandler, true);
-            delete window.__forumReplyTourClickHandler;
-        }
         return originalDestroy(...args);
     };
 
     return await driverObj.drive();
-}export async function StartTourTeacherForumRepliesEditReply() {
+}
+
+export async function StartTourTeacherForumRepliesEditReply() {
     store.openMai = false;
 
     const visibleList = getFirstVisible('#forum-replies-list');
@@ -578,12 +609,11 @@ export async function StartTourTeacherForumRepliesNewReply() {
     const buttonStep = {
         element: () => selectedEditBtn,
         disableActiveInteraction: true,
-        allowKeyboardControl: false,
         popover: {
             description: "Interagindo com a ferramenta...",
             side: "top",
             align: "center",
-            showButtons: [""],
+            showButtons: [],
         },
         onHighlighted: async (el) => {
             if (!el) {
@@ -617,13 +647,13 @@ export async function StartTourTeacherForumRepliesNewReply() {
                 description: "Interagindo com a ferramenta...",
                 side: "top",
                 align: "center",
-                showButtons: [""],
+                showButtons: [],
             }
             : {
                 description: "Clique no botão 'Editar' da resposta que você deseja alterar.",
                 side: "top",
                 align: "center",
-                showButtons: [""],
+                showButtons: [],
                 onPopoverRender: (popover) => {
                     addTourFinishButton(popover, driverObj);
                 },
@@ -646,6 +676,10 @@ export async function StartTourTeacherForumRepliesNewReply() {
 
     const driverObj = drivertour({
         ...configDriver,
+        allowKeyboardControl: false,
+        onDestroyed: () => {
+            store.openMai = true;
+        },
         steps: hasSingleReply
             ? [selectionStep, buttonStep, openFormStep]
             : [selectionStep, openFormStep],
@@ -731,7 +765,7 @@ export async function StartTourTeacherForumRepliesDeleteReply() {
             description: "Interagindo com a ferramenta...",
             side: "top",
             align: "center",
-            showButtons: [""],
+            showButtons: [],
         },
         onHighlighted: async (el) => {
             if (!el) {
@@ -765,13 +799,13 @@ export async function StartTourTeacherForumRepliesDeleteReply() {
                 description: "Interagindo com a ferramenta...",
                 side: "top",
                 align: "center",
-                showButtons: [""],
+                showButtons: [],
             }
             : {
                 description: "Clique no botão 'Excluir' da resposta que você deseja remover.",
                 side: "top",
                 align: "center",
-                showButtons: [""],
+                showButtons: [],
                 onPopoverRender: (popover) => {
                     addTourFinishButton(popover, driverObj);
                 },
@@ -794,6 +828,10 @@ export async function StartTourTeacherForumRepliesDeleteReply() {
 
     const driverObj = drivertour({
         ...configDriver,
+        allowKeyboardControl: false,
+        onDestroyed: () => {
+            store.openMai = true;
+        },
         steps: hasSingleReply
             ? [selectionStep, buttonStep, confirmStep]
             : [selectionStep, confirmStep],
@@ -814,21 +852,45 @@ export async function StartTourTeacherForumShowNewTopic() {
     store.openMai = false;
 
     const buttonNewTopic = document.querySelector("#forum-show-new-topic");
-    if (!buttonNewTopic) return;
+    if (!buttonNewTopic) {
+        store.openMai = true;
+        return;
+    }
+
+    let modalCleanup = () => {};
+
     const driverObj = drivertour({
         ...configDriver,
+        allowKeyboardControl: false,
+        onDestroyed: () => {
+            modalCleanup();
+            store.openMai = true;
+        },
         steps: [
             {
                 element: "#forum-show-new-topic",
                 popover: {
                     description: "Interagindo com a ferramenta...",
-                    showButtons: [""],
+                    showButtons: [],
                 },
-
                 onHighlighted: async (el) => {
-                    await new Promise((resolve) => setTimeout(resolve, 500));
+                    if (!el) {
+                        await driverObj.destroy();
+                        return;
+                    }
+
+                    await sleep(500);
                     el.click();
-                    await new Promise((resolve) => setTimeout(resolve, 2500));
+
+                    const opened = await waitForElement("#input-register-topic")
+                        .then(() => true)
+                        .catch(() => false);
+
+                    if (!opened) {
+                        await driverObj.destroy();
+                        return;
+                    }
+
                     await driverObj.moveNext();
                 }
             },
@@ -836,39 +898,43 @@ export async function StartTourTeacherForumShowNewTopic() {
                 element: "#input-register-topic",
                 disableActiveInteraction: false,
                 popover: {
-                    description: "Escreva o título do tópico. <br/> E Selecione a Turma. <br/> Depois clique em 'Criar' para criar o tópico ou 'Cancelar' para fechar o formulário.",
+                    description: "Escreva o título do tópico, selecione a turma e clique em 'Criar' para publicar ou em 'Cancelar' para fechar o formulário.",
                     onPopoverRender: (popover) => {
-                        popover.nextButton.remove();
-                        popover.previousButton.remove();
-                        const actions = AddButtonActions(
-                        popover,
-                        "Cancelar operação",
-                        );
-                        actions.addEventListener("click", async () => {
-                            Livewire.dispatch("teacher::close-create-forum-topic");
-                            await driverObj.destroy();
-                            store.openMai = true;
+                        addTourFinishButton(popover, driverObj, {
+                            label: 'Cancelar operação',
+                            onClick: async () => {
+                                window.Livewire?.dispatch?.("teacher::close-create-forum-topic");
+                                await driverObj.destroy();
+                                store.openMai = true;
+                            },
                         });
                     },
                 },
-                onHighlighted: async (el) => {
+                onHighlighted: async () => {
                     const cancel = document.querySelector("#btn-cancel-register");
-                    const save  = document.querySelector("#btn-save-register");
+                    const save = document.querySelector("#btn-save-register");
 
-                    if(!cancel || !save)  return;
-                    cancel.addEventListener("click", async () => {
+                    if (!cancel || !save) return;
+
+                    const finishOnCancel = async () => {
                         await driverObj.destroy();
-                        Livewire.dispatch("teacher::close-create-forum-topic");
+                        window.Livewire?.dispatch?.("teacher::close-create-forum-topic");
                         store.openMai = false;
-                    })
-                    save.addEventListener("click", async () => {
-                        await new Promise((resolve) => setTimeout(resolve, 1000));
-                       await driverObj.destroy();
-                       store.openMai = false;
-                    })
+                    };
+                    const finishOnSave = async () => {
+                        await sleep(1000);
+                        await driverObj.destroy();
+                        store.openMai = false;
+                    };
 
+                    cancel.addEventListener("click", finishOnCancel, { once: true });
+                    save.addEventListener("click", finishOnSave, { once: true });
+                    modalCleanup = () => {
+                        cancel.removeEventListener("click", finishOnCancel);
+                        save.removeEventListener("click", finishOnSave);
+                    };
                 }
-          }
+            }
         ]
     });
 
@@ -878,23 +944,33 @@ export async function StartTourTeacherForumShowNewTopic() {
 export async function StartTourTeacherForumShowSelectTopic() {
     store.openMai = false;
 
-    const visibleList = Array.from(
-        document.querySelectorAll('#forum-show-all-topics, #forum-show-my-topics')
-    ).find(list => list.offsetParent !== null);
+    const visibleList = getFirstVisible('#forum-show-all-topics, #forum-show-my-topics');
+    if (!visibleList) {
+        store.openMai = true;
+        return;
+    }
 
-    if (!visibleList) return;
-
-    const topics = visibleList.querySelectorAll('.topic-item');
-    if (topics.length === 0) return;
+    const topics = Array.from(visibleList.querySelectorAll('.topic-item'));
+    let navigatingAway = false;
+    if (topics.length === 0) {
+        store.openMai = true;
+        return;
+    }
 
     topics.forEach(t => t.style.cursor = 'pointer');
 
     const handleTopicClick = (e) => {
+        if (e.target.closest('a, button')) return;
+
         const topic = e.currentTarget;
         const link = topic.querySelector('a[href]');
         if (!link) return;
 
-        driverObj.destroy();
+        e.preventDefault();
+        e.stopPropagation();
+
+        navigatingAway = true;
+        void driverObj.destroy();
         topics.forEach(t => t.removeEventListener('click', handleTopicClick));
         topics.forEach(t => t.style.cursor = '');
 
@@ -905,6 +981,7 @@ export async function StartTourTeacherForumShowSelectTopic() {
 
     const driverObj = drivertour({
         ...configDriver,
+        allowKeyboardControl: false,
         steps: [
             {
                 element: visibleList,
@@ -912,12 +989,18 @@ export async function StartTourTeacherForumShowSelectTopic() {
                     description: "Clique em qualquer tópico da lista para visualizar suas respostas e participar da discussão.",
                     side: "top",
                     align: "center",
+                    onPopoverRender: (popover) => {
+                        addTourFinishButton(popover, driverObj, {
+                            label: 'Finalizar Tour',
+                        });
+                    },
                 },
             },
         ],
         onDestroyed: () => {
             topics.forEach(t => t.removeEventListener('click', handleTopicClick));
             topics.forEach(t => t.style.cursor = '');
+            if (!navigatingAway) store.openMai = true;
         },
     });
 
@@ -925,49 +1008,59 @@ export async function StartTourTeacherForumShowSelectTopic() {
 }
 
 export async function StartTourTeacherForumShowMyTopics() {
-
-    // TODO: refatorar depois criar uma function para reaproveitar
-    document.body.style.cursor = 'not-allowed';
-    document.body.style.pointerEvents = 'none';
+    lockPage();
     store.openMai = false;
 
     const driverObj = drivertour({
         ...configDriver,
-
+        allowKeyboardControl: false,
+        onDestroyed: () => {
+            unlockPage();
+            store.openMai = true;
+        },
         steps: [
             {
-                disableActiveInteraction:true,
-                allowKeyboardControl:false,
-                stageCursor:'not-allowed',
+                disableActiveInteraction: true,
                 element: "#my-topics-created",
                 popover: {
                     description: "Interagindo com a ferramenta...",
                     side: "top",
                     align: "center",
-                    showButtons: [""],
+                    showButtons: [],
                 },
                 onHighlighted: async (el) => {
-                    //document.body.style.cursor = 'not-allowed';
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    await el.click();
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                    if (!el) {
+                        await driverObj.destroy();
+                        return;
+                    }
+
+                    await sleep(1000);
+                    el.click();
+
+                    const opened = await waitForElement('#forum-show-my-topics')
+                        .then(() => true)
+                        .catch(() => false);
+
+                    if (!opened) {
+                        await driverObj.destroy();
+                        return;
+                    }
+
                     await driverObj.moveNext();
                 }
             },
             {
-                disableActiveInteraction:true,
-                stageCursor:'not-allowed',
+                disableActiveInteraction: true,
                 element: "#forum-show-my-topics",
                 popover: {
                     description: "Interagindo com a ferramenta...",
                     side: "top",
                     align: "center",
-                    showButtons: [""],
+                    showButtons: [],
                 },
-                onHighlighted: async (el) => {
-                    document.body.style.cursor = '';
-                    document.body.style.pointerEvents = '';
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                onHighlighted: async () => {
+                    unlockPage();
+                    await sleep(2000);
                     await driverObj.destroy();
                 }
             }
@@ -980,49 +1073,66 @@ export async function StartTourTeacherForumShowMyTopics() {
 
 
 export async function StartTourTeacherForumShowAllTopics() {
-    const allTopicsTab = document.querySelector('#forum-show-tabs a[role="tab"]:first-of-type');
-    if (!allTopicsTab) return;
-
-    document.body.style.cursor = 'not-allowed';
-    document.body.style.pointerEvents = 'none';
     store.openMai = false;
+
+    const allTopicsTab = document.querySelector('#forum-show-tabs a[role="tab"]:first-of-type');
+    if (!allTopicsTab) {
+        store.openMai = true;
+        return;
+    }
+
+    lockPage();
 
     const driverObj = drivertour({
         ...configDriver,
-
+        allowKeyboardControl: false,
+        onDestroyed: () => {
+            unlockPage();
+            store.openMai = true;
+        },
         steps: [
             {
                 disableActiveInteraction: true,
-                allowKeyboardControl: false,
-                stageCursor: 'not-allowed',
                 element: '#forum-show-tabs a[role="tab"]:first-of-type',
                 popover: {
                     description: "Interagindo com a ferramenta...",
                     side: "top",
                     align: "center",
-                    showButtons: [""],
+                    showButtons: [],
                 },
                 onHighlighted: async (el) => {
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    await el.click();
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                    if (!el) {
+                        await driverObj.destroy();
+                        return;
+                    }
+
+                    await sleep(1000);
+                    el.click();
+
+                    const opened = await waitForElement('#forum-show-all-topics')
+                        .then(() => true)
+                        .catch(() => false);
+
+                    if (!opened) {
+                        await driverObj.destroy();
+                        return;
+                    }
+
                     await driverObj.moveNext();
                 }
             },
             {
                 disableActiveInteraction: true,
-                stageCursor: 'not-allowed',
                 element: "#forum-show-all-topics",
                 popover: {
                     description: "Interagindo com a ferramenta...",
                     side: "top",
                     align: "center",
-                    showButtons: [""],
+                    showButtons: [],
                 },
                 onHighlighted: async () => {
-                    document.body.style.cursor = '';
-                    document.body.style.pointerEvents = '';
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                    unlockPage();
+                    await sleep(2000);
                     await driverObj.destroy();
                 }
             }
@@ -1035,7 +1145,7 @@ export async function StartTourTeacherForumShowAllTopics() {
 const EDIT_TOPIC_SELECTOR = '[data-tour="edit-topic"]';
 const TOPIC_ITEM_SELECTOR = '.topic-item';
 const TOPIC_TITLE_SELECTOR = '[data-tour="topic-title"]';
-const EDIT_MODAL_FORM_SELECTOR = '#form-edit-topic, .modal-box form';
+const EDIT_MODAL_FORM_SELECTOR = '#form-edit-topic';
 const EDIT_MODAL_INPUT_SELECTOR = '#form-edit-topic input, #input-edit-topic input, #input-edit-topic';
 
 export async function StartTourTeacherForumShowEditTopic() {
@@ -1088,6 +1198,8 @@ export async function StartTourTeacherForumShowEditTopic() {
     const guardEvents = ['mousedown', 'mouseup', 'click', 'keydown'];
 
     const handleGuardedEvent = (event) => {
+        if (event.target.closest('button') || event.target.closest(EDIT_TOPIC_SELECTOR)) return;
+
         event.preventDefault();
         event.stopPropagation();
 
@@ -1095,8 +1207,6 @@ export async function StartTourTeacherForumShowEditTopic() {
         if (event.type === 'keydown') return;
 
         if (event.type !== 'click' || selectionHandled) return;
-
-        if (event.target.closest('button') || event.target.closest(EDIT_TOPIC_SELECTOR)) return;
 
         const topic = event.target.closest(TOPIC_ITEM_SELECTOR);
         if (!topic || !editableTopics.includes(topic)) return;
@@ -1149,6 +1259,7 @@ export async function StartTourTeacherForumShowEditTopic() {
 
     const driverObj = drivertour({
         ...configDriver,
+        allowKeyboardControl: false,
 
         steps: [
             {
@@ -1158,13 +1269,13 @@ export async function StartTourTeacherForumShowEditTopic() {
                         description: "Interagindo com a ferramenta...",
                         side: "top",
                         align: "center",
-                        showButtons: [""],
+                        showButtons: [],
                     }
                     : {
                         description: "Clique no título do tópico que você deseja editar.",
                         side: "top",
                         align: "center",
-                        showButtons: [""],
+                        showButtons: [],
                         onPopoverRender: (popover) => {
 
                             addTourFinishButton(popover, driverObj);
@@ -1180,12 +1291,11 @@ export async function StartTourTeacherForumShowEditTopic() {
             {
                 element: resolveEditButton,
                 disableActiveInteraction: true,
-                allowKeyboardControl: false,
                 popover: {
                     description: "Interagindo com a ferramenta...",
                     side: "top",
                     align: "center",
-                    showButtons: [""],
+                    showButtons: [],
                 },
                 onHighlighted: async (el) => {
                     if (!el) {
@@ -1263,8 +1373,10 @@ export async function StartTourTeacherForumShowEditTopic() {
             }
         ],
 
-        onDestroyStarted: () => detachGuard(),
-        onDestroyed: () => detachGuard(),
+        onDestroyed: () => {
+            detachGuard();
+            store.openMai = true;
+        },
     });
 
     return await driverObj.drive();
@@ -1295,6 +1407,7 @@ export async function StartTourTeacherForumShowDeleteTopic() {
     let selectionHandled = false;
     let selectedTopic = null;
     let selectedTopicKey = null;
+    let revealedActions = null;
 
     deletableTopics.forEach((topic) => {
         const title = topic.querySelector(TOPIC_TITLE_SELECTOR);
@@ -1324,13 +1437,13 @@ export async function StartTourTeacherForumShowDeleteTopic() {
     const guardEvents = ['mousedown', 'mouseup', 'click', 'keydown'];
 
     const handleGuardedEvent = (event) => {
+        if (event.target.closest('button') || event.target.closest(DELETE_TOPIC_SELECTOR)) return;
+
         event.preventDefault();
         event.stopPropagation();
 
         if (event.type === 'keydown') return;
         if (event.type !== 'click' || selectionHandled) return;
-
-        if (event.target.closest('button') || event.target.closest(DELETE_TOPIC_SELECTOR)) return;
 
         const topic = event.target.closest(TOPIC_ITEM_SELECTOR);
         if (!topic || !deletableTopics.includes(topic)) return;
@@ -1351,6 +1464,11 @@ export async function StartTourTeacherForumShowDeleteTopic() {
             if (title) title.style.cursor = '';
         });
 
+        if (revealedActions) {
+            revealedActions.style.opacity = '';
+            revealedActions = null;
+        }
+
         if (!guardAttached) return;
 
         guardEvents.forEach((type) => visibleList.removeEventListener(type, handleGuardedEvent, true));
@@ -1365,6 +1483,9 @@ export async function StartTourTeacherForumShowDeleteTopic() {
         selectedTopicKey = topic.getAttribute('wire:key');
 
         detachGuard();
+
+        revealedActions = topic.querySelector(DELETE_TOPIC_SELECTOR)?.closest('div') ?? null;
+        if (revealedActions) revealedActions.style.opacity = '1';
 
         topic.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         await sleep(300);
@@ -1382,6 +1503,7 @@ export async function StartTourTeacherForumShowDeleteTopic() {
 
     const driverObj = drivertour({
         ...configDriver,
+        allowKeyboardControl: false,
 
         steps: [
             {
@@ -1391,13 +1513,13 @@ export async function StartTourTeacherForumShowDeleteTopic() {
                         description: "Interagindo com a ferramenta...",
                         side: "top",
                         align: "center",
-                        showButtons: [""],
+                        showButtons: [],
                     }
                     : {
                         description: "Clique no título do tópico que você deseja excluir.",
                         side: "top",
                         align: "center",
-                        showButtons: [""],
+                        showButtons: [],
                         onPopoverRender: (popover) => {
                             addTourFinishButton(popover, driverObj);
                         },
@@ -1412,12 +1534,11 @@ export async function StartTourTeacherForumShowDeleteTopic() {
             {
                 element: resolveDeleteButton,
                 disableActiveInteraction: true,
-                allowKeyboardControl: false,
                 popover: {
                     description: "Interagindo com a ferramenta...",
                     side: "top",
                     align: "center",
-                    showButtons: [""],
+                    showButtons: [],
                 },
                 onHighlighted: async (el) => {
                     if (!el) {
@@ -1484,8 +1605,10 @@ export async function StartTourTeacherForumShowDeleteTopic() {
             }
         ],
 
-        onDestroyStarted: () => detachGuard(),
-        onDestroyed: () => detachGuard(),
+        onDestroyed: () => {
+            detachGuard();
+            store.openMai = true;
+        },
     });
 
     return await driverObj.drive();

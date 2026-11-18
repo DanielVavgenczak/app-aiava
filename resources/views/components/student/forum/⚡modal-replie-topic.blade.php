@@ -86,7 +86,7 @@ new class extends Component {
 
         <div class="flex justify-end space-x-2">
             <button type="button" class="btn btn-sm btn-ghost" wire:click="cancel">Cancelar</button>
-            <button type="submit" class="btn btn-sm bg-blue-700 text-white hover:bg-blue-900">Enviar</button>
+            <button type="submit" class="btn btn-sm bg-blue-400 text-gray-50 hover:bg-blue-500">Enviar</button>
         </div>
     </form>
 </x-mary-modal>

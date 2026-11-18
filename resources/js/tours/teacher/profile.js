@@ -1,4 +1,4 @@
-import { configDriver, AddButtonActions } from "../utils";
+import { configDriver, AddButtonActions } from "../utils.js";
 const store = Alpine.store("tourguide");
 
 export async function StartTourTeacherProfile() {
@@ -6,6 +6,9 @@ export async function StartTourTeacherProfile() {
 
     const driverObj = drivertour({
         ...configDriver,
+        onDestroyed: () => {
+            store.openMai = true;
+        },
         steps: [
             {
                 element: `#teacher-profile-avatar`,
@@ -33,7 +36,6 @@ export async function StartTourTeacherProfile() {
                         const actions = AddButtonActions(popover, "Finalizar Tour");
                         actions.addEventListener("click", async () => {
                             await driverObj.destroy();
-                            store.openMai = true;
                         });
                     },
                 },

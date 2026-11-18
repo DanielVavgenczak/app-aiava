@@ -182,7 +182,7 @@ new #[Layout('layouts::student')] class extends Component {
                                                             @else
                                                                 title="Prazo encerrado em {{ $activitTask->end->format('d/m/Y H:i') }}"
                                                             @endif
-                                                            class="tasks-open border-[1px] border-gray-300 flex-1 flex items-center gap-2 px-4 py-3 text-blue-600 font-semibold text-xs uppercase tracking-wider transition-colors rounded {{ $isOpenForAnswers ? 'hover:bg-blue-50' : 'cursor-not-allowed opacity-50' }}"
+                                                            class="tasks-open border-[1px] border-blue-400 flex-1 flex items-center gap-2 px-4 py-3 text-blue-400 font-semibold text-xs uppercase tracking-wider transition-colors rounded {{ $isOpenForAnswers ? 'hover:bg-blue-400 hover:text-gray-50' : 'cursor-not-allowed opacity-50' }}"
                                                         >
                                                             <x-mary-icon name="o-document-text" class="w-4 h-4" />
                                                             Atividade <span class="text-xs font-normal text-gray-500">({{ $activitTask->created_at->diffForHumans() }} )</span>

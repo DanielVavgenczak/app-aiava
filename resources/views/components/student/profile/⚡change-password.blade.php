@@ -1,8 +1,11 @@
 <?php
 
+use App\Models\Teacher\Student;
 use Livewire\Component;
 use Livewire\Attributes\{On, Validate};
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Mary\Traits\Toast;
 
 new class extends Component {
@@ -12,13 +15,17 @@ new class extends Component {
     public string $currentPassword = '';
     public string $newPassword = '';
     public string $newPasswordConfirmation = '';
-    public $user;
+
+    private function student(): ?Student
+    {
+        return Auth::guard('student')->user();
+    }
 
     public function mount(): void
     {
-        $this->user = Auth::guard('student')->user();
+        $student = $this->student();
 
-        if ($this->user && $this->user->must_change_password) {
+        if ($student && $student->must_change_password) {
             $this->forceChange = true;
             $this->open = true;
         }
@@ -27,48 +34,67 @@ new class extends Component {
     #[On('student::open-change-password')]
     public function openModal($force = false): void
     {
+        $this->resetValidation();
         $this->forceChange = $force;
         $this->reset(['currentPassword', 'newPassword', 'newPasswordConfirmation']);
         $this->open = true;
     }
 
-    public function changePassword(): void
+    public function closeModal(): void
     {
-        $this->validate([
-            'currentPassword' => 'required',
-            'newPassword' => 'required|min:8|same:newPasswordConfirmation|different:currentPassword',
-            'newPasswordConfirmation' => 'required',
-        ], [
-            'newPassword.different' => 'A nova senha deve ser diferente da senha temporária.',
-            'newPassword.min' => 'A nova senha deve ter pelo menos 8 caracteres.',
-            'newPassword.same' => 'A confirmação da nova senha não confere.',
-        ]);
-
-        // Verifica se a senha atual (temporária) está correta
-        if (!Hash::check($this->currentPassword, $this->user->password)) {
-            $this->addError('currentPassword', 'A senha atual não confere.');
+        if ($this->forceChange) {
             return;
         }
 
-        // Atualiza a senha e marca como alterada
-        $this->user->update([
+        $this->resetValidation();
+        $this->reset(['currentPassword', 'newPassword', 'newPasswordConfirmation']);
+        $this->open = false;
+    }
+
+    public function changePassword(): void
+    {
+        try {
+            $this->validate([
+                'currentPassword' => 'required',
+                'newPassword' => 'required|min:8|same:newPasswordConfirmation|different:currentPassword',
+                'newPasswordConfirmation' => 'required',
+            ], [
+                'newPassword.different' => 'A nova senha deve ser diferente da senha atual.',
+                'newPassword.min' => 'A nova senha deve ter pelo menos 8 caracteres.',
+                'newPassword.same' => 'A confirmação da nova senha não confere.',
+            ]);
+        } catch (ValidationException $exception) {
+            $this->reset(['currentPassword', 'newPassword', 'newPasswordConfirmation']);
+            throw $exception;
+        }
+
+        $student = $this->student();
+        if (! $student) {
+            $this->reset(['currentPassword', 'newPassword', 'newPasswordConfirmation']);
+            $this->redirect(route('student.login'));
+
+            return;
+        }
+
+        if (! Hash::check($this->currentPassword, $student->password)) {
+            $this->reset(['currentPassword', 'newPassword', 'newPasswordConfirmation']);
+            $this->addError('currentPassword', 'A senha atual não confere.');
+
+            return;
+        }
+
+        $student->update([
             'password' => Hash::make($this->newPassword),
-            'temporary_password' => null, // Limpa a senha temporária
-            'must_change_password' => false, // Marca como alterada
-            'password_changed_at' => now(), // Registra quando foi alterada
+            'temporary_password' => null,
+            'must_change_password' => false,
+            'password_changed_at' => now(),
         ]);
 
-        // Remove a flag da sessão
         session()->forget('must_change_password');
 
         $this->reset(['currentPassword', 'newPassword', 'newPasswordConfirmation']);
         $this->open = false;
         $this->success('Senha alterada com sucesso!');
-
-        // // Se era forçado, redireciona para o dashboard
-        // if ($this->forceChange) {
-        //     return redirect()->route('student.dashboard');
-        // }
     }
 }; ?>
 
@@ -82,30 +108,22 @@ new class extends Component {
         @endif
     </div>
 
-    {{-- @if($forceChange)
-        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-            <p class="font-semibold mb-1">Suas credenciais de acesso:</p>
-            <p class="text-sm">Email: <strong>{{ $user->email }}</strong></p>
-            <p class="text-sm">Senha temporária: <strong>{{ $user->temporary_password }}</strong></p>
-        </div>
-    @endif --}}
-
     <form wire:submit="changePassword" class="flex flex-col gap-4">
         <div>
-            <x-mary-input label="Senha atual (temporária)" type="password" wire:model="currentPassword"
-                icon="o-lock-closed" />
+            <x-mary-input label="Senha atual" type="password" wire:model.defer="currentPassword"
+                autocomplete="current-password" icon="o-lock-closed" />
         </div>
         <div>
-            <x-mary-input label="Nova senha" type="password" wire:model="newPassword"
-                icon="o-lock-closed" />
+            <x-mary-input label="Nova senha" type="password" wire:model.defer="newPassword"
+                autocomplete="new-password" icon="o-lock-closed" />
         </div>
         <div>
-            <x-mary-input label="Confirmar nova senha" type="password" wire:model="newPasswordConfirmation"
-                icon="o-lock-closed" />
+            <x-mary-input label="Confirmar nova senha" type="password" wire:model.defer="newPasswordConfirmation"
+                autocomplete="new-password" icon="o-lock-closed" />
         </div>
         <div class="flex justify-end gap-2 mt-4">
             @if(!$forceChange)
-                <x-mary-button label="Cancelar" wire:click="$set('open', false)" class="btn-ghost" />
+                <x-mary-button label="Cancelar" wire:click="closeModal" class="btn-ghost" />
             @endif
             <x-mary-button label="Salvar" type="submit" class="bg-blue-400 text-gray-50" />
         </div>

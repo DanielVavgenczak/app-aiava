@@ -108,7 +108,6 @@ document.addEventListener("alpine:init", () => {
                 path: "/professor/forum/replies",
                 tourModule: () => import("./teacher/forum/forum"),
                 tours: [
-                    "StartTourTeacherForumReplies",
                     "StartTourTeacherForumRepliesNewReply",
                     "StartTourTeacherForumRepliesReplyToReply",
                     "StartTourTeacherForumRepliesEditReply",

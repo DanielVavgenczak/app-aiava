@@ -111,14 +111,27 @@ function clickWithoutNavigation(element) {
     }
 }
 
+const removedFocusTraps = [];
+
 function disableFocusTraps() {
     document.querySelectorAll("*").forEach((element) => {
         Array.from(element.attributes).forEach((attribute) => {
             if (attribute.name.startsWith("x-trap")) {
+                removedFocusTraps.push([element, attribute.name, attribute.value]);
                 element.removeAttribute(attribute.name);
             }
         });
     });
+}
+
+function restoreFocusTraps() {
+    while (removedFocusTraps.length > 0) {
+        const [element, name, value] = removedFocusTraps.pop();
+
+        if (element.isConnected) {
+            element.setAttribute(name, value);
+        }
+    }
 }
 
 let nativeWindowOpen = null;
@@ -180,6 +193,7 @@ function lockPage() {
 function unlockPage() {
     pageBlocker?.remove();
     pageBlocker = null;
+    restoreFocusTraps();
 
     if (keyboardBlocked) {
         document.removeEventListener("keydown", blockKeyboard, true);
@@ -961,16 +975,17 @@ export async function StartTourStudentPendingActivities() {
 
     if (tourStore.isTourActive || tourStore.openMai) return;
 
-    const alert = await tryWaitFor(PENDING_ALERT_SELECTOR, 4000);
-
-    if (!alert || alert.dataset.pendingTourStarted === "true") return;
-
-    alert.dataset.pendingTourStarted = "true";
     pendingTourRunning = true;
-    tourStore.openMai = false;
     tourStore.isTourActive = true;
 
     try {
+        const alert = await tryWaitFor(PENDING_ALERT_SELECTOR, 4000);
+
+        if (!alert || alert.dataset.pendingTourStarted === "true") return;
+
+        alert.dataset.pendingTourStarted = "true";
+        tourStore.openMai = false;
+
         const firstAction = await runPendingAlertStep(
             alert,
             pendingAlertDescription(alert),
@@ -996,22 +1011,25 @@ export async function StartTourStudentPendingActivities() {
 export async function StartTourStudentActivities() {
     if (running || pendingTourRunning) return;
 
-    const pendingTab = await tryWaitFor(
-        "#student-activities-tab-pending",
-        4000,
-    );
-    const tablist = pendingTab?.closest('[role="tablist"]');
+    const tourStore = store();
 
-    if (!tablist) return;
+    if (tourStore.isTourActive || tourStore.openMai) return;
 
     running = true;
-    const tourStore = store();
-    tourStore.openMai = false;
     tourStore.isTourActive = true;
 
     try {
         guardWindowOpen();
 
+        const pendingTab = await tryWaitFor(
+            "#student-activities-tab-pending",
+            4000,
+        );
+        const tablist = pendingTab?.closest('[role="tablist"]');
+
+        if (!tablist) return;
+
+        tourStore.openMai = false;
         let selectedTab = await runTabSelectionStep(tablist);
 
         while (selectedTab) {
@@ -1033,6 +1051,7 @@ export async function StartTourStudentActivities() {
         closeActivitiesModal();
     } catch (error) {
         console.error("Erro no tour de atividades do aluno:", error);
+        closeActivitiesModal();
     } finally {
         restoreWindowOpen();
         unlockPage();

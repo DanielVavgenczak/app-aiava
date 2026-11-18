@@ -252,7 +252,8 @@ new #[Layout('layouts::student')] class extends Component {
     }
 
     #[On('reply-event')]
-    public function refresh($type, $message): void
+    #[On('reply-created')]
+    public function refresh($type = 'create', $message = 'Resposta enviada com sucesso!'): void
     {
         $this->loadTopic();
 
@@ -324,7 +325,7 @@ new #[Layout('layouts::student')] class extends Component {
                     </div>
 
                     <button id="forum-replies-new-btn" wire:click="createReply"
-                        class="btn btn-sm bg-blue-600 text-white hover:bg-blue-700 border-0 shadow-lg flex-shrink-0">
+                        class="btn btn-sm bg-blue-400 text-gray-50 border-0 hover:bg-blue-500 shadow-lg flex-shrink-0">
                         <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                         <span class="hidden sm:inline">Nova Resposta</span>
                     </button>
@@ -333,7 +334,7 @@ new #[Layout('layouts::student')] class extends Component {
         </div>
 
         {{-- Lista de Respostas --}}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" id="forum-replies-list">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <div class="flex items-center justify-between">
                     <h2 class="font-bold text-gray-900 flex items-center gap-2">
@@ -344,7 +345,7 @@ new #[Layout('layouts::student')] class extends Component {
             </div>
 
             @if ($this->repliesWithChildren->count() > 0)
-                <div class="divide-y divide-gray-200" id="forum-replies-list">
+                <div class="divide-y divide-gray-200">
                     @foreach ($this->repliesWithChildren as $item)
                         @php
                             $reply = $item['reply'];
@@ -395,7 +396,7 @@ new #[Layout('layouts::student')] class extends Component {
                                             <div class="flex items-center gap-2">
                                                 @if ($this->isMyReply($reply))
                                                 <button wire:click="editReply('{{ $reply->id }}')"
-                                                    class="btn btn-sm bg-blue-100 text-blue-600" title="Editar">
+                                                    class="btn btn-sm bg-blue-400 text-gray-50 hover:bg-blue-500" title="Editar">
                                                     <x-mary-icon name="o-pencil-square" class="w-4 h-4" />
                                                 </button>
                                                 @endif
@@ -414,7 +415,7 @@ new #[Layout('layouts::student')] class extends Component {
                                     </div>
 
                                     <button wire:click="replyToReply('{{ $reply->id }}')"
-                                        class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-50">
+                                        class="btn btn-sm btn-ghost text-blue-400 hover:bg-blue-50">
                                         <x-mary-icon name="o-chat-bubble-left" class="w-4 h-4" />
                                         Responder
                                     </button>
@@ -470,7 +471,7 @@ new #[Layout('layouts::student')] class extends Component {
                                                                         @if ($this->isMyReply($subReply))
                                                                         <button
                                                                             wire:click="editReply('{{ $subReply->id }}')"
-                                                                            class="btn btn-xs bg-gray-100 text-blue-600">
+                                                                            class="btn btn-xs bg-blue-400 text-gray-50 hover:bg-blue-500">
                                                                             <x-mary-icon name="o-pencil"
                                                                                 class="w-3 h-3" />
                                                                         </button>
@@ -490,7 +491,7 @@ new #[Layout('layouts::student')] class extends Component {
                                                                 {{ $subReply->content }}</p>
 
                                                             <button wire:click="replyToReply('{{ $subReply->id }}')"
-                                                                class="btn btn-xs btn-ghost text-blue-600 mt-2">
+                                                                class="btn btn-xs btn-ghost text-blue-400 mt-2">
                                                                 <x-mary-icon name="o-chat-bubble-left"
                                                                     class="w-3 h-3" />
                                                                 Responder
@@ -503,7 +504,7 @@ new #[Layout('layouts::student')] class extends Component {
                                                         <button wire:click="loadMoreChildren('{{ $reply->id }}')"
                                                             wire:loading.attr="disabled"
                                                             wire:target="loadMoreChildren('{{ $reply->id }}')"
-                                                            class="btn btn-ghost btn-sm text-blue-600 hover:bg-blue-50 transition-all gap-2">
+                                                            class="btn btn-ghost btn-sm text-blue-400 hover:bg-blue-50 transition-all gap-2">
                                                             <span wire:loading.remove
                                                                 wire:target="loadMoreChildren('{{ $reply->id }}')">
                                                                 <x-mary-icon name="o-chevron-down" class="w-4 h-4" />
@@ -555,7 +556,7 @@ new #[Layout('layouts::student')] class extends Component {
                         Seja o primeiro a responder este tópico e iniciar a discussão!
                     </p>
                     <button wire:click="createReply"
-                        class="btn bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0">
+                        class="btn bg-blue-400 text-gray-50 border-0 hover:bg-blue-500">
                         <x-mary-icon name="o-plus-circle" class="w-5 h-5" />
                         Adicionar Primeira Resposta
                     </button>
@@ -570,7 +571,7 @@ new #[Layout('layouts::student')] class extends Component {
             <p class="text-gray-500 mb-6">
                 O tópico que você está procurando não existe ou foi removido.
             </p>
-            <a href="{{ route('student.forum.index') }}" wire:navigate class="btn btn-primary">
+            <a href="{{ route('student.forum.index') }}" wire:navigate class="btn bg-blue-400 text-gray-50 border-0 hover:bg-blue-500">
                 <x-mary-icon name="o-arrow-left" class="w-5 h-5" />
                 Voltar aos Fóruns
             </a>
@@ -616,4 +617,28 @@ new #[Layout('layouts::student')] class extends Component {
             </div>
         </div>
     </x-mary-modal>
+
+    {{-- Tour Modal --}}
+    <div class="fixed inset-0 z-40 bg-gray-900/50" x-data x-show="$store.tourguide.openMai">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2
+            -translate-y-1/2 w-full max-w-4xl sm:w-2/3 bg-white rounded-lg
+            shadow-lg border-[1px] border-pink-200 p-6 flex flex-col gap-5">
+            <div class="flex justify-between items-center">
+                <h2 class="text-sm font-bold text-gray-700">Opções da Resposta</h2>
+                <div class="flex justify-end">
+                    <x-mary-button icon="o-x-mark"
+                        class="bg-white border-none btn-square hover:bg-blue-400 hover:text-gray-50"
+                        x-on:click="$store.tourguide.cancelOptionsTourPage()" />
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <x-mary-button
+                    class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-50"
+                    label="Visão geral das respostas"
+                    x-on:click="$store.tourguide.start('StartTourStudentForumReplies')" />
+            </div>
+        </div>
+        <img src="{{ asset('images/rb-aiava.png') }}" class="fixed right-0 w-64 bottom-4 sm:w-48" />
+    </div>
 </div>

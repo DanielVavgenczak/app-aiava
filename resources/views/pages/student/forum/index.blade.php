@@ -97,7 +97,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                             <span>{{ $discipline->forum_topics_count }} {{ Str::plural('tópico', $discipline->forum_topics_count) }}</span>
                         </div>
                         <a id="forum-access-btn" href="{{ route('student.forum.show', $discipline->id) }}" wire:navigate
-                            class="btn btn-block btn-sm bg-gradient-to-r from-blue-700 to-blue-500 text-white border-0 hover:from-blue-700 hover:to-blue-500 transition-all">
+                            class="btn btn-block btn-sm bg-blue-400 text-gray-50 border-0 hover:bg-blue-500 transition-all">
                             <x-mary-icon name="o-arrow-right-circle" class="w-4 h-4" />
                             Acessar
                         </a>
@@ -145,7 +145,7 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                     <p>{{ $disciplineClasseInfo->classe->name }}</p>
                     {{-- Botão de Acesso --}}
                     <a id="forum-access-btn" href="{{ route('student.forum.show', $disciplineClasseInfo->discipline->id) }}" wire:navigate
-                        class="btn btn-block btn-sm bg-gradient-to-r from-blue-700 to-blue-500 text-white border-0 hover:from-blue-700 hover:to-blue-500 group-hover:shadow-lg transition-all">
+                        class="btn btn-block btn-sm bg-blue-400 text-gray-50 border-0 hover:bg-blue-500 group-hover:shadow-lg transition-all">
                         <x-mary-icon name="o-arrow-right-circle" class="w-4 h-4" />
                         Acessar
                     </a>
@@ -165,13 +165,13 @@ new #[Layout(name: 'layouts::student')] class extends Component {
                <h2 class="text-lg font-normal text-gray-700">Opções do Fórum</h2>
                 <div class="flex justify-end">
                     <x-mary-button icon="o-x-mark"
-                        class="bg-white border-none btn-square hover:none hover:bg-pink-600 hover:text-gray-100"
+                        class="bg-white border-none btn-square hover:bg-pink-600 hover:text-gray-100"
                         x-on:click="$store.tourguide.cancelOptionsTourPage()" />
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2">
               <x-mary-button
-                    class="font-medium text-blue-600 border-[1px] border-blue-600 btn hover:bg-blue-600 hover:text-gray-100"
+                    class="font-medium text-blue-400 border-[1px] border-blue-400 btn hover:bg-blue-400 hover:text-gray-50"
                     label="Visão geral do Fórum"
                     x-on:click="$store.tourguide.start('StartTourStudentForum')" />
             </div>
