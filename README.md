@@ -60,6 +60,82 @@ O IAVA (antigo Ailumnus) centraliza o dia a dia de uma turma: o professor organi
 - Evento `ActivityNotificationUpdated` para criar/remover notificações.
 - Processamento assíncrono com Redis e `queue:work`.
 
+## Tours guiados
+
+Os tours são um menu de ajuda contextual, não uma gravação de tela. Cada tour manipula a interface real: destaca elementos, clica botões, espera modais do Livewire/Alpine e registra listeners temporários para acompanhar o fluxo do usuário.
+
+Tudo gira em torno do store Alpine `tourguide`:
+
+- `openMai`: controla o modal com as opções de tour da página.
+- `loading`: indica que o módulo do tour está sendo carregado.
+- `isTourActive`: usado por componentes que não devem reagir a `Esc` enquanto um tour está rodando.
+
+### Como usar
+
+1. Clique no ícone de ajuda (`?`) no painel.
+2. Escolha uma ação, por exemplo “Criar tópico” ou “Selecionar tópico”.
+3. Navegue com `Próximo`/`Anterior`.
+4. Use `Finalizar Tour` ou `Cancelar operação` para encerrar.
+5. Se o tour navegar para outra página, a limpeza acontece automaticamente.
+
+### Fluxo resumido
+
+```mermaid
+flowchart TD
+    A["Usuário clica no botão de ajuda"] --> B["store.tourguide.initTour()"]
+    B --> C["Fecha modais abertos: tour::close-opened-modals"]
+    C --> D["Lê window.location.pathname"]
+    D --> E{"Rota cadastrada?"}
+    E -- "Não" --> F["Nada acontece"]
+    E -- "Sim" --> G["Importa o módulo da página"]
+    G --> H["Abre o menu: openMai = true"]
+    H --> I["Usuário escolhe start('NomeDoTour')"]
+    I --> J["initTour() novamente + busca a função exportada"]
+    J --> K["Cria o driver: configDriver + steps"]
+    K --> L["drive() destaca os elementos"]
+    L --> M["onHighlighted: clica, espera e registra listeners reais"]
+    M --> N{"Conclui, cancela ou navega?"}
+    N -- "Sim" --> O["destroy()"]
+    O --> P["onDestroyed limpa listeners, estilos e reabre openMai"]
+```
+
+### Onde fica cada parte
+
+| Arquivo | Responsabilidade |
+| --- | --- |
+| `resources/js/app.js` | Importa o CSS do Driver.js, registra `window.drivertour` e carrega `tours/tour`. |
+| `resources/js/tours/tour.js` | Define o store, o catálogo de rotas e as funções `initTour()` e `start()`. |
+| `resources/js/tours/teacher/`, `resources/js/tours/student/` | Funções `StartTour...` com os passos de cada fluxo. |
+| `resources/js/tours/utils.js` | Configuração padrão do driver e helpers como `waitForElement`, `getFirstVisible` e `addTourFinishButton`. |
+| `resources/views/layouts/*.blade.php` | Botão de ajuda que chama `initTour()`. |
+| `resources/views/pages/**/*.blade.php` | Modal de opções e botões que chamam `start('NomeDoTour')`. |
+
+O catálogo em `tour.js` usa `path`, `exact` e `isDynamic`:
+
+- `exact: true` para rotas fixas, como `/aluno/forum`.
+- `isDynamic: true` para páginas com UUID, como `/professor/forum/replies/{uuid}`.
+- `tourModule` é um `import()` dinâmico, então o código do tour só é baixado quando a página combina.
+
+### Como adicionar um tour
+
+1. Crie uma função exportada, por exemplo `export async function StartTourStudentForumShow() { ... }`, no módulo da área.
+2. Monte o driver com `drivertour({ ...configDriver, steps: [...] })` e chame `drive()`.
+3. Registre o nome da função em `pages` dentro de `resources/js/tours/tour.js`.
+4. Adicione um botão no Blade: `x-on:click="$store.tourguide.start('StartTourStudentForumShow')"`.
+5. Use IDs/classes estáveis nos elementos do passo, como `#forum-show-new-topic`.
+6. Para elementos criados pelo Livewire/Alpine, use `waitForElement(selector, { visible: true })` em vez de `document.querySelector` imediato.
+7. No `onDestroyed`, remova listeners, restaure `cursor`/`pointer-events`, dispare eventos de fechamento e reabra `openMai`.
+
+Regras práticas para evitar regressões:
+
+- `element` pode ser uma função; use `getFirstVisible()` quando houver mais de uma lista/tabela na tela.
+- Se o tour clicar em um botão real, registre o listener antes de clicar e remova-o na destruição.
+- Se o tour navegar, use uma flag como `navigatingAway` para não reabrir o menu sobre a nova página.
+- Prefira `addTourFinishButton()` para manter o botão de encerrar consistente.
+- Não use chaves antigas do Driver.js como `opacity`, `padding` ou `stageCursor`; use `overlayOpacity` e `stagePadding`.
+
+Os testes dos tours ficam em `tests/js/*tour*.test.js` e usam um mock JSDOM do Driver.js, do Alpine e do Livewire. Eles cobrem abertura de modais, limpeza, seleção de elementos e botões de cancelar/finalizar.
+
 ## Stack
 
 | Camada | Tecnologia |
@@ -319,27 +395,255 @@ A aplicação injeta a configuração pública do Reverb em runtime pelo partial
 | `MAIL_MAILER` | `log` em desenvolvimento; SMTP em produção. |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` | Configuração SMTP. |
 
-## Banco de dados e domínio
+## Modelagem de dados
 
-As principais entidades são:
+O modelo é organizado em torno de `Teacher` e `Discipline`. Um professor possui disciplinas, turmas, módulos, aulas, atividades e tópicos de fórum. Cada disciplina concentra conteúdo (`modules`/`lessons`), turmas (`classes`), avaliações (`activit_tasks`) e discussões (`forum_topics`).
 
-- `Teacher` e `Student`: usuários autenticáveis em guards separados.
-- `TeacherProfile` e `StudentProfile`: dados complementares e avatar.
-- `Discipline`: disciplina pertencente a um professor.
-- `Module`: módulo de uma disciplina.
-- `Lesson`: aula em vídeo, PDF, texto ou link.
-- `Classe`: turma vinculada a uma disciplina e a um professor.
-- `ActivitTask`: atividade com prazo, valor e flag avaliativa.
-- `Task` e `TaskOptions`: questões e alternativas.
-- `StudentAnwser`: respostas dos alunos, nota e status de correção.
-- `QuestionFeedback`: feedback por questão.
-- `ActivityGrade`: nota final e feedback da atividade.
-- `ActivityAccess`: controle de acesso/progresso em atividades.
-- `ActivityNotification`: notificações persistidas de atividades.
-- `ForumTopic` e `ForumReplie`: fórum com respostas aninhadas e soft deletes.
-- `Message`: mensagens privadas e em grupo.
+Todas as tabelas de domínio usam chave primária UUID. Soft delete existe em `disciplines`, `forum_topics`, `forum_replies` e `messages`. O aluno não é excluído logicamente: seu estado é controlado por `status` (`active` ou `inactive`).
 
-A maior parte dos modelos utiliza UUID. Disciplinas, tópicos e respostas possuem soft deletes quando aplicável.
+Os diagramas abaixo usam nomes conceituais legíveis. Relacionamentos tracejados representam associações polimórficas (`*_id` + `*_type`), sem foreign key no banco.
+
+### Núcleo acadêmico
+
+```mermaid
+erDiagram
+    TEACHER ||--o{ DISCIPLINE : "possui"
+    TEACHER ||--o| TEACHER_PROFILE : "perfil"
+    TEACHER ||--o{ CLASSE : "cria"
+    TEACHER ||--o{ STUDENT : "gerencia"
+    TEACHER ||--o{ LESSON : "cria"
+    DISCIPLINE ||--o{ MODULE : "contém"
+    DISCIPLINE ||--o{ CLASSE : "tem turmas"
+    DISCIPLINE ||--o{ STUDENT : "matricula"
+    CLASSE ||--o{ STUDENT : "agrupa"
+    MODULE ||--o{ LESSON : "contém"
+    STUDENT ||--o| STUDENT_PROFILE : "perfil"
+
+    TEACHER {
+        uuid id PK
+        string first_name
+        string last_name
+        string email UK
+    }
+    TEACHER_PROFILE {
+        uuid id PK
+        uuid teacher_id FK
+        string avatar
+    }
+    STUDENT {
+        uuid id PK
+        uuid teacher_id FK
+        uuid classe_id FK
+        uuid discipline_id FK
+        string full_name
+        string status
+        boolean must_change_password
+    }
+    STUDENT_PROFILE {
+        uuid id PK
+        uuid student_id FK
+        string avatar
+    }
+    DISCIPLINE {
+        uuid id PK
+        uuid teacher_id FK
+        string title
+        datetime deleted_at
+    }
+    MODULE {
+        uuid id PK
+        uuid discipline_id FK
+        string title
+    }
+    CLASSE {
+        uuid id PK
+        uuid discipline_id FK
+        uuid teacher_id FK
+        string name
+    }
+    LESSON {
+        uuid id PK
+        uuid module_id FK
+        uuid teacher_id FK
+        string title
+        string type
+        string path_file
+        string link
+    }
+```
+
+Não existe tabela de matrícula. `students` guarda diretamente `teacher_id`, `classe_id` e `discipline_id`, o que simplifica consultas do painel do aluno, mas exige que a aplicação mantenha esses três vínculos coerentes. Os “blocos” de conteúdo são linhas de `lessons` diferenciadas por `type` (`video`, `text` ou `link`); não existe tabela `lesson_blocks`.
+
+### Avaliação e progresso
+
+```mermaid
+erDiagram
+    TEACHER ||--o{ ACTIVITY : "cria"
+    DISCIPLINE ||--o{ ACTIVITY : "escopo"
+    MODULE ||--o{ ACTIVITY : "módulo"
+    ACTIVITY |o--o{ QUESTION : "questões"
+    QUESTION ||--o{ OPTION : "alternativas"
+    QUESTION ||--o{ STUDENT_ANSWER : "respostas"
+    STUDENT ||--o{ STUDENT_ANSWER : "responde"
+    ACTIVITY |o--o{ STUDENT_ANSWER : "tentativas"
+    OPTION |o--o{ STUDENT_ANSWER : "alternativa escolhida"
+    STUDENT_ANSWER ||--o{ QUESTION_FEEDBACK : "feedback"
+    QUESTION ||--o{ QUESTION_FEEDBACK : "questão"
+    STUDENT ||--o{ QUESTION_FEEDBACK : "aluno"
+    TEACHER ||--o{ QUESTION_FEEDBACK : "professor"
+    ACTIVITY ||--o{ FINAL_GRADE : "nota final"
+    STUDENT ||--o{ FINAL_GRADE : "aluno"
+    TEACHER ||--o{ FINAL_GRADE : "lança"
+    ACTIVITY ||--o{ ACTIVITY_ACCESS : "acesso"
+    STUDENT ||--o{ ACTIVITY_ACCESS : "aluno"
+    ACTIVITY ||--o{ ACTIVITY_NOTIFICATION : "atividade"
+    STUDENT ||--o{ ACTIVITY_NOTIFICATION : "aluno"
+    TEACHER ||..o{ ACTIVITY_NOTIFICATION : "notifiable"
+    STUDENT ||..o{ ACTIVITY_NOTIFICATION : "notifiable"
+
+    ACTIVITY {
+        uuid id PK
+        uuid teacher_id FK
+        uuid discipline_id FK
+        uuid module_id FK
+        text title
+        datetime start
+        datetime end
+        boolean is_avaliative
+        decimal total_value
+    }
+    QUESTION {
+        uuid id PK
+        uuid activit_task_id FK
+        text question
+        string type
+        decimal value
+        integer order
+    }
+    OPTION {
+        uuid id PK
+        uuid task_id FK
+        text text
+        boolean correct
+        integer order
+    }
+    STUDENT_ANSWER {
+        uuid id PK
+        uuid task_id FK
+        uuid student_id FK
+        uuid activit_task_id FK
+        uuid answer_option_id FK
+        text answer_text
+        boolean is_correct
+        boolean corrected
+        decimal grade
+        integer attempt_number
+    }
+    QUESTION_FEEDBACK {
+        uuid id PK
+        uuid student_anwser_id FK
+        uuid task_id FK
+        uuid student_id FK
+        uuid teacher_id FK
+        text feedback
+    }
+    FINAL_GRADE {
+        uuid id PK
+        uuid activit_task_id FK
+        uuid student_id FK
+        uuid teacher_id FK
+        decimal final_grade
+        text feedback
+    }
+    ACTIVITY_ACCESS {
+        uuid id PK
+        uuid activit_task_id FK
+        uuid student_id FK
+        datetime first_accessed_at
+    }
+    ACTIVITY_NOTIFICATION {
+        uuid id PK
+        string notifiable_type
+        uuid notifiable_id
+        string dedupe_key UK
+        string type
+        uuid activit_task_id FK
+        uuid student_id FK
+    }
+```
+
+A avaliação tem dois níveis: `ACTIVITY` representa a atividade e `QUESTION` representa cada questão. `STUDENT_ANSWER` registra uma resposta por questão, aluno e tentativa; `QUESTION_FEEDBACK` guarda o comentário do professor por resposta. `FINAL_GRADE` e `ACTIVITY_ACCESS` são únicos por par `(atividade, aluno)`. `ACTIVITY_NOTIFICATION` é uma tabela própria, com `dedupe_key` única para não duplicar eventos de publicação, entrega e correção.
+
+O status exibido ao aluno — não acessado, pendente, respondido ou atrasado — é calculado em `app/Support/ActivityProgress.php` a partir de `ACTIVITY_ACCESS`, `STUDENT_ANSWER` e da janela `start`/`end`; ele não é persistido.
+
+### Fórum e chat
+
+```mermaid
+erDiagram
+    DISCIPLINE ||--o{ FORUM_TOPIC : "escopo"
+    CLASSE |o--o{ FORUM_TOPIC : "turma"
+    TEACHER ||..o{ FORUM_TOPIC : "autor"
+    STUDENT ||..o{ FORUM_TOPIC : "autor"
+    FORUM_TOPIC ||--o{ FORUM_REPLY : "respostas"
+    FORUM_REPLY |o--o{ FORUM_REPLY : "hierarquia"
+    TEACHER ||..o{ FORUM_REPLY : "autor"
+    STUDENT ||..o{ FORUM_REPLY : "autor"
+    CLASSE ||--o{ MESSAGE : "canal"
+    TEACHER ||..o{ MESSAGE : "remetente"
+    STUDENT ||..o{ MESSAGE : "remetente"
+    TEACHER ||..o{ MESSAGE : "destinatário"
+    STUDENT ||..o{ MESSAGE : "destinatário"
+
+    FORUM_TOPIC {
+        uuid id PK
+        uuid discipline_id FK
+        uuid classe_id FK
+        uuid owner_id
+        string owner_type
+        text title
+        datetime deleted_at
+    }
+    FORUM_REPLY {
+        uuid id PK
+        uuid topic_id FK
+        uuid parent_id
+        uuid author_id
+        string author_type
+        integer depth
+        text content
+        datetime deleted_at
+    }
+    MESSAGE {
+        uuid id PK
+        uuid classe_id FK
+        uuid sender_id
+        string sender_type
+        uuid receiver_id
+        string receiver_type
+        text content
+        boolean is_read
+        datetime read_at
+        datetime deleted_at
+    }
+```
+
+O fórum suporta respostas aninhadas com `parent_id` e `depth`; `parent_id` não possui foreign key, então a hierarquia é validada pela aplicação. Autoria de tópicos/respostas e remetente/destinatário de mensagens são polimórficos (`Teacher` ou `Student`). Em `MESSAGE`, `receiver_id` nulo representa uma mensagem para toda a turma.
+
+### Nomes no código
+
+Alguns nomes vêm de versões anteriores do projeto e aparecem nos diagramas de forma simplificada:
+
+| Diagrama | Modelo | Tabela |
+| --- | --- | --- |
+| Atividade | `ActivitTask` | `activit_tasks` |
+| Questão | `Task` | `tasks` |
+| Opção | `TaskOptions` | `task_options` |
+| Resposta do aluno | `StudentAnwser` | `student_anwsers` |
+| Feedback por questão | `QuestionFeedback` | `question_feedback` |
+| Nota final | `ActivityGrade` | `activity_grades` |
+| Acesso à atividade | `ActivityAccess` | `activity_accesses` |
+| Turma | `Classe` | `classes` |
+| Resposta do fórum | `ForumReplie` | `forum_replies` |
 
 ## Uploads e streaming de mídia
 
